@@ -15,6 +15,7 @@
     "drizzle-zod": "^0.8.2",
     "hono": "^4.8.5",
     "mysql2": "^3.14.2",
+    "nanoid": "^5.1.5",
     "zod": "^4.0.5"
   },
   "devDependencies": {
