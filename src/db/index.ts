@@ -1,8 +1,11 @@
-import 'dotenv/config';
-import { drizzle } from "drizzle-orm/mysql2";
-import mysql from "mysql2/promise";
-import env from '../middleware/env';
-  
-const pool = mysql.createPool(env.DATABASE_URL)
+import type { Context } from 'hono'
+import { drizzle } from 'drizzle-orm/mysql2'
+import mysql from 'mysql2/promise'
 
-const db = drizzle({ client: pool })
+export function createDb(c: Context) {
+  const pool = mysql.createPool(c.env.DATABASE_URL as string)
+
+  const db = drizzle({ client: pool })
+
+  return { db, pool }
+}

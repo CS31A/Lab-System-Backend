@@ -1,25 +1,19 @@
-import { ZodError } from "zod"
-import { config } from "dotenv"
-import { expand } from "dotenv-expand"
-import { z } from "zod/mini"
-
-expand(config())
+import { z } from 'zod'
 
 const EnvSchema = z.object({
-    DATABASE_URL: z.string(),
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  NODE_ENV: z.string(),
+  DATABASE_URL: z.string(),
 })
 
-export type Env = z.infer<typeof EnvSchema>
+export type Environment = z.infer<typeof EnvSchema>
 
-let env: Env
+export function parseEnv(data: any) {
+  const { data: env, error } = EnvSchema.safeParse(data)
 
-try {
-    env = EnvSchema.parse(process.env)
-} catch (e) {
-    const error = e as ZodError
-    console.log('Invalid environment variables')
-    console.error(z.treeifyError(error))
-    process.exit(1)
+  if (error) {
+    throw new Error(JSON.stringify(error))
+  }
+
+  return env
 }
-
-export default env

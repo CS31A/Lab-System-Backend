@@ -1,6 +1,7 @@
-import { mysqlTable, varchar, timestamp } from 'drizzle-orm/mysql-core';
-import { createSelectSchema } from 'drizzle-zod';
-import { nanoid } from 'nanoid';
+import { z } from '@hono/zod-openapi'
+import { mysqlTable, timestamp, varchar } from 'drizzle-orm/mysql-core'
+import { createSchemaFactory } from 'drizzle-zod'
+import { nanoid } from 'nanoid'
 
 // const customId = (length = 12): string => {
 //   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
@@ -12,12 +13,40 @@ import { nanoid } from 'nanoid';
 export const users = mysqlTable('users', {
   id: varchar({ length: 12 }).primaryKey().$default(() => nanoid(12)),
   email: varchar({ length: 255 }).notNull().unique(),
-  password_hash: varchar({ length: 255 }).notNull(),
+  password: varchar({ length: 255 }).notNull(),
   first_name: varchar({ length: 100 }).notNull(),
   last_name: varchar({ length: 100 }).notNull(),
   user_type: varchar({ length: 20 }).notNull(), // 'teacher', 'technical_staff', 'admin'
   created_at: timestamp().notNull().defaultNow(),
   updated_at: timestamp().notNull().defaultNow().onUpdateNow(),
-});
+})
+
+const { createSelectSchema, createInsertSchema } = createSchemaFactory({ zodInstance: z })
 
 export const userSelectSchema = createSelectSchema(users)
+
+export const userInsertSchema = createInsertSchema(users, {
+  first_name: (schema: any) => schema.openapi({ example: 'John' }),
+})
+  .required({
+    password: true,
+    first_name: true,
+    last_name: true,
+    user_type: true,
+    email: true,
+  })
+  .omit({
+    id: true,
+    created_at: true,
+    updated_at: true,
+  })
+  .extend({
+    email: z.email(),
+    password: z.string().min(8).regex(/^(?=.*[A-Z])(?=.*\d)/i),
+    confirmPassword: z.string(),
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    error: 'Passwords don\'t match',
+  })
+
+export const patchUserSchema = userInsertSchema.partial()

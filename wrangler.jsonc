@@ -2,10 +2,20 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "lab-system-backend",
   "main": "src/index.ts",
-  "compatibility_date": "2025-07-18"
-  // "compatibility_flags": [
-  //   "nodejs_compat"
-  // ],
+  "compatibility_date": "2025-07-18",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "env": {
+    "dev": {
+      "vars": {
+        "DOTENV_CONFIG_PATH": ".env"
+      }
+    }
+  },
+  "vars": {
+    "NODE_ENV": "production"
+  },
   // "vars": {
   //   "MY_VAR": "my-variable"
   // },
