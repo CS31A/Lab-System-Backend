@@ -1,16 +1,31 @@
-```txt
-npm install
-npm run dev
-```
+# Lab System Backend
+
+This project uses **bun** as the package manager instead of npm.
+
+## Installation
 
 ```txt
-npm run deploy
+bun install
 ```
+
+## Development
+
+```txt
+bun run dev
+```
+
+## Deployment
+
+```txt
+bun run deploy
+```
+
+## Type Generation
 
 [For generating/synchronizing types based on your Worker configuration run](https://developers.cloudflare.com/workers/wrangler/commands/#types):
 
 ```txt
-npm run cf-typegen
+bun run cf-typegen
 ```
 
 Pass the `CloudflareBindings` as generics when instantiation `Hono`:
