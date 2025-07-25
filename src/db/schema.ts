@@ -1,5 +1,5 @@
 import { z } from '@hono/zod-openapi'
-import { mysqlTable, timestamp, varchar } from 'drizzle-orm/mysql-core'
+import { pgTable, timestamp, varchar } from 'drizzle-orm/pg-core'
 import { createSchemaFactory } from 'drizzle-zod'
 import { nanoid } from 'nanoid'
 
@@ -10,7 +10,7 @@ import { nanoid } from 'nanoid'
 //   return result
 // }
 
-export const users = mysqlTable('users', {
+export const users = pgTable('users', {
   id: varchar({ length: 12 }).primaryKey().$default(() => nanoid(12)),
   email: varchar({ length: 255 }).notNull().unique(),
   password: varchar({ length: 255 }).notNull(),
@@ -18,7 +18,7 @@ export const users = mysqlTable('users', {
   last_name: varchar({ length: 100 }).notNull(),
   user_type: varchar({ length: 20 }).notNull(), // 'teacher', 'technical_staff', 'admin'
   created_at: timestamp().notNull().defaultNow(),
-  updated_at: timestamp().notNull().defaultNow().onUpdateNow(),
+  updated_at: timestamp().notNull().defaultNow().$onUpdateFn(() => new Date()),
 })
 
 const { createSelectSchema, createInsertSchema } = createSchemaFactory({ zodInstance: z })
