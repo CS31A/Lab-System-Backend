@@ -12,17 +12,19 @@
   "dependencies": {
     "@cloudflare/vitest-pool-workers": "^0.8.55",
     "@hono/zod-openapi": "^1.0.1",
+    "@neondatabase/serverless": "^1.0.1",
     "@scalar/hono-api-reference": "^0.9.11",
     "@types/node": "^24.0.14",
+    "bcryptjs": "^3.0.2",
     "dotenv": "^17.2.0",
     "dotenv-expand": "^12.0.2",
     "drizzle-orm": "^0.44.3",
     "drizzle-zod": "^0.8.2",
     "hono": "^4.8.5",
     "hono-pino": "^0.9.1",
-    "mysql2": "^3.14.2",
     "nanoid": "^5.1.5",
     "pino-pretty": "^13.0.0",
+    "postgres": "^3.4.7",
     "zod": "^4.0.5"
   },
   "devDependencies": {
@@ -32,6 +34,6 @@
     "eslint": "^9.31.0",
     "eslint-plugin-format": "^1.0.1",
     "tsx": "^4.20.3",
-    "wrangler": "^4.4.0"
+    "wrangler": "4.26.0"
   }
 }
