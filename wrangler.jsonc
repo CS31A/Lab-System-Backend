@@ -6,16 +6,16 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
-  "env": {
-    "dev": {
-      "vars": {
-        "DOTENV_CONFIG_PATH": ".env"
-      }
-    }
-  },
+  // "env": {
+  //   "dev": {
+  //     "vars": {
+  //       "DOTENV_CONFIG_PATH": ".env"
+  //     }
+  //   }
+  // },
   "vars": {
     "NODE_ENV": "production"
-  },
+  }
   // "vars": {
   //   "MY_VAR": "my-variable"
   // },
