@@ -1,4 +1,5 @@
 import { z } from '@hono/zod-openapi'
+import { sql } from 'drizzle-orm'
 import { pgTable, timestamp, varchar } from 'drizzle-orm/pg-core'
 import { createSchemaFactory } from 'drizzle-zod'
 import { nanoid } from 'nanoid'
@@ -11,27 +12,28 @@ import { nanoid } from 'nanoid'
 // }
 
 export const users = pgTable('users', {
+  created_at: timestamp().notNull().defaultNow(),
+  updated_at: timestamp().notNull().defaultNow().$onUpdate(() => sql`NOW()`),
   id: varchar({ length: 12 }).primaryKey().$default(() => nanoid(12)),
   email: varchar({ length: 255 }).notNull().unique(),
   password: varchar({ length: 255 }).notNull(),
-  first_name: varchar({ length: 100 }).notNull(),
-  last_name: varchar({ length: 100 }).notNull(),
+  username: varchar({ length: 255 }).notNull().unique(),
   user_type: varchar({ length: 20 }).notNull(), // 'teacher', 'technical_staff', 'admin'
-  created_at: timestamp().notNull().defaultNow(),
-  updated_at: timestamp().notNull().defaultNow().$onUpdateFn(() => new Date()),
 })
 
-const { createSelectSchema, createInsertSchema } = createSchemaFactory({ zodInstance: z })
+const {
+  createSelectSchema,
+  createInsertSchema,
+} = createSchemaFactory({ zodInstance: z })
 
 export const userSelectSchema = createSelectSchema(users)
 
 export const userInsertSchema = createInsertSchema(users, {
-  first_name: (schema: any) => schema.openapi({ example: 'John' }),
+  username: (schema: any) => schema.openapi({ example: 'JohnDoeSuper12' }),
 })
   .required({
     password: true,
-    first_name: true,
-    last_name: true,
+    username: true,
     user_type: true,
     email: true,
   })
@@ -50,3 +52,17 @@ export const userInsertSchema = createInsertSchema(users, {
   })
 
 export const patchUserSchema = userInsertSchema.partial()
+
+export const teachers = pgTable('teachers', {
+  created_at: timestamp().notNull().defaultNow(),
+  updated_at: timestamp().notNull().defaultNow().$onUpdate(() => sql`NOW()`),
+  id: varchar({ length: 12 }).primaryKey().$default(() => nanoid(12)),
+  user_id: varchar({ length: 12 }).notNull().references(() => users.id),
+  first_name: varchar({ length: 100 }).notNull(),
+  last_name: varchar({ length: 100 }).notNull(),
+  attendance: varchar({ length: 20 }).notNull().default('present'), // 'present', 'absent', 'late', 'excused'
+})
+
+export const teacherSelectSchema = createSelectSchema(teachers)
+
+export const teacherInsertSchema = createInsertSchema(teachers)
