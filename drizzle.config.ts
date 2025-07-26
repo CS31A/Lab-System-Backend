@@ -5,7 +5,7 @@ import 'dotenv/config'
 export default defineConfig({
   out: './drizzle',
   schema: './src/db/schema.ts',
-  dialect: 'mysql',
+  dialect: 'postgresql',
   dbCredentials: {
     url: env.DATABASE_URL,
   },
