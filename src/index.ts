@@ -14,9 +14,4 @@ routes.forEach((route) => {
   app.route('/', route)
 })
 
-app.get('/', (c) => {
-  c.var.logger.info('Root endpoint accessed')
-  return c.text('Hello Hono!')
-})
-
 export default app

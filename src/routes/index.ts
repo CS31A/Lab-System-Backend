@@ -21,5 +21,26 @@ const router = createRouter()
       message: 'Hono API',
     })
   })
+  .openapi(createRoute({
+    tags: ['Health Check'],
+    method: 'get',
+    path: '/health',
+    responses: {
+      [httpStatusCodes.OK]: jsonContent(
+        z.object({
+          message: z.string(),
+          status: z.string(),
+          timestamp: z.string(),
+        }),
+        'Health Check Endpoint of the API',
+      ),
+    },
+  }), (c) => {
+    return c.json({
+      message: 'Server is running',
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+    })
+  })
 
 export default router
