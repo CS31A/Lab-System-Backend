@@ -1,6 +1,6 @@
 import { z } from '@hono/zod-openapi'
 import { sql } from 'drizzle-orm'
-import { pgTable, timestamp, varchar } from 'drizzle-orm/pg-core'
+import { boolean, pgTable, timestamp, varchar } from 'drizzle-orm/pg-core'
 import { createSchemaFactory } from 'drizzle-zod'
 import { nanoid } from 'nanoid'
 
@@ -77,3 +77,63 @@ export const teacherInsertSchema = createInsertSchema(teachers)
     created_at: true,
     updated_at: true,
   })
+
+export const patchTeacherSchema = createInsertSchema(teachers).partial()
+
+export const technical_staff = pgTable('technical_staff', {
+  created_at: timestamp().notNull().defaultNow(),
+  updated_at: timestamp().notNull().defaultNow().$onUpdate(() => sql`NOW()`),
+  id: varchar({ length: 12 }).primaryKey().$default(() => nanoid(12)),
+  user_id: varchar({ length: 12 }).notNull().references(() => users.id),
+  first_name: varchar({ length: 100 }).notNull(),
+  last_name: varchar({ length: 100 }).notNull(),
+})
+
+export const technicalStaffSelectSchema = createSelectSchema(teachers)
+
+export const technicalStaffInsertSchema = createInsertSchema(teachers)
+  .required({
+    first_name: true,
+    last_name: true,
+  })
+  .omit({
+    id: true,
+    created_at: true,
+    updated_at: true,
+  })
+
+export const patchTechnicalStaffSchema = createInsertSchema(teachers).partial()
+
+export const admins = pgTable('admins', {
+  created_at: timestamp().notNull().defaultNow(),
+  updated_at: timestamp().notNull().defaultNow().$onUpdate(() => sql`NOW()`),
+  id: varchar({ length: 12 }).primaryKey().$default(() => nanoid(12)),
+  user_id: varchar({ length: 12 }).notNull().references(() => users.id),
+  first_name: varchar({ length: 100 }).notNull(),
+  last_name: varchar({ length: 100 }).notNull(),
+})
+
+export const adminSelectSchema = createSelectSchema(teachers)
+
+export const adminInsertSchema = createInsertSchema(teachers)
+  .required({
+    first_name: true,
+    last_name: true,
+  })
+  .omit({
+    id: true,
+    created_at: true,
+    updated_at: true,
+  })
+
+export const patchAdminSchema = createInsertSchema(teachers).partial()
+
+export const laboratory = pgTable('laboratory', {
+  created_at: timestamp().notNull().defaultNow(),
+  updated_at: timestamp().notNull().defaultNow().$onUpdate(() => sql`NOW()`),
+  id: varchar({ length: 12 }).primaryKey().$default(() => nanoid(12)),
+  name: varchar({ length: 128 }).notNull(),
+  status: boolean().default(true),
+  time_in: timestamp(),
+  time_out: timestamp(),
+})
