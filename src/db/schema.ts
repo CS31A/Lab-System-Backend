@@ -60,9 +60,20 @@ export const teachers = pgTable('teachers', {
   user_id: varchar({ length: 12 }).notNull().references(() => users.id),
   first_name: varchar({ length: 100 }).notNull(),
   last_name: varchar({ length: 100 }).notNull(),
-  attendance: varchar({ length: 20 }).notNull().default('present'), // 'present', 'absent', 'late', 'excused'
+  attendance: varchar({ length: 20 })
+    .notNull()
+    .default('present'),
 })
 
 export const teacherSelectSchema = createSelectSchema(teachers)
 
 export const teacherInsertSchema = createInsertSchema(teachers)
+  .required({
+    first_name: true,
+    last_name: true,
+  })
+  .omit({
+    id: true,
+    created_at: true,
+    updated_at: true,
+  })

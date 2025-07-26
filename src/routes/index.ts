@@ -29,6 +29,8 @@ const router = createRouter()
       [httpStatusCodes.OK]: jsonContent(
         z.object({
           message: z.string(),
+          status: z.string(),
+          timestamp: z.string(),
         }),
         'Health Check Endpoint of the API',
       ),
@@ -36,6 +38,8 @@ const router = createRouter()
   }), (c) => {
     return c.json({
       message: 'Server is running',
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
     })
   })
 
