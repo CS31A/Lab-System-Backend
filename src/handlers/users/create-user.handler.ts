@@ -33,7 +33,7 @@ export const CreateUserHandler: AppRouteHandler<CreateUserRoute> = async (c) => 
     )
   }
   catch (err) {
-    console.error('User creation error:', err)
+    c.var.logger.error('User creation error', JSON.stringify(err))
     return c.json(
       {
         message: 'Internal Server Error',

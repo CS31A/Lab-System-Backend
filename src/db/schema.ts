@@ -46,8 +46,8 @@ export const userInsertSchema = createInsertSchema(users, {
     email: z.email(),
     password: z.string().min(8).regex(/^(?=.*[A-Z])(?=.*\d)/i),
     confirmPassword: z.string(),
-    firstname: z.string().min(1, 'First name is required'),
-    lastname: z.string().min(1, 'Last name is required'),
+    // firstname: z.string().min(1, 'First name is required'),
+    // lastname: z.string().min(1, 'Last name is required'),
   })
   .refine(data => data.password === data.confirmPassword, {
     error: 'Passwords don\'t match',
@@ -91,9 +91,9 @@ export const technical_staff = pgTable('technical_staff', {
   lastname: varchar({ length: 100 }).notNull(),
 })
 
-export const technicalStaffSelectSchema = createSelectSchema(teachers)
+export const technicalStaffSelectSchema = createSelectSchema(technical_staff)
 
-export const technicalStaffInsertSchema = createInsertSchema(teachers)
+export const technicalStaffInsertSchema = createInsertSchema(technical_staff)
   .required({
     firstname: true,
     lastname: true,
@@ -104,7 +104,7 @@ export const technicalStaffInsertSchema = createInsertSchema(teachers)
     updated_at: true,
   })
 
-export const patchTechnicalStaffSchema = createInsertSchema(teachers).partial()
+export const patchTechnicalStaffSchema = createInsertSchema(technical_staff).partial()
 
 export const admins = pgTable('admins', {
   created_at: timestamp().notNull().defaultNow(),
@@ -115,9 +115,9 @@ export const admins = pgTable('admins', {
   lastname: varchar({ length: 100 }).notNull(),
 })
 
-export const adminSelectSchema = createSelectSchema(teachers)
+export const adminSelectSchema = createSelectSchema(admins)
 
-export const adminInsertSchema = createInsertSchema(teachers)
+export const adminInsertSchema = createInsertSchema(admins)
   .required({
     firstname: true,
     lastname: true,
@@ -128,7 +128,7 @@ export const adminInsertSchema = createInsertSchema(teachers)
     updated_at: true,
   })
 
-export const patchAdminSchema = createInsertSchema(teachers).partial()
+export const patchAdminSchema = createInsertSchema(admins).partial()
 
 export const laboratory = pgTable('laboratory', {
   created_at: timestamp().notNull().defaultNow(),
