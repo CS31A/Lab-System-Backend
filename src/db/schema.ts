@@ -53,8 +53,9 @@ export const userInsertSchema = createInsertSchema(users, {
       .min(8)
       .regex(/^(?=.*[A-Z])(?=.*\d)/i),
     confirmPassword: z.string(),
-    // firstname: z.string().min(1, 'First name is required'),
-    // lastname: z.string().min(1, 'Last name is required'),
+    user_type: z.string().transform(val => val.toLowerCase()),
+    firstname: z.preprocess(val => val === '' ? undefined : val, z.string().min(1).optional()),
+    lastname: z.preprocess(val => val === '' ? undefined : val, z.string().min(1).optional()),
   })
   .refine(data => data.password === data.confirmPassword, {
     error: 'Passwords don\'t match',
