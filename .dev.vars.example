@@ -1,0 +1,10 @@
+# Database
+#DATABASE_URL=connection string here
+
+# Logger
+# info | fatal | error | warn | debug | trace | silent
+LOG_LEVEL=debug
+
+# Node Environment
+# development | production
+NODE_ENV=development
