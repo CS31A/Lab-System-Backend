@@ -9,13 +9,14 @@ import configureOpenAPI from '@/lib/openapi-configuration'
 
 // Imports the index routes of each route group in the routes directory
 import index from '@/routes/index'
+import teachers from '@/routes/teachers/teachers.index'
 import users from '@/routes/users/users.index'
 
 // Create main app with middleware, logging, and error handling
 const app = createApp()
 
 // Array of all index routes to register
-const routes = [index, users]
+const routes = [index, users, teachers]
 
 // Setup OpenAPI documentation at /docs and /reference
 configureOpenAPI(app as AppOpenAPI)
