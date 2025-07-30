@@ -20,9 +20,6 @@ export const GetTeachersHandler: AppRouteHandler<GetTeachers> = async (c) => {
     const offset = (page - 1) * limit
 
     const db = createDb(c)
-    // const page = Math.max(1, Number.parseInt(query.page || 1, 10))
-    // const limit = Math.min(100, Math.max(1, Number.parseInt(query.limit || 10, 10)))
-    // const offset = (page - 1) * limit
 
     const [totalResult, teachersData] = await Promise.all([
       db.select({ count: count() })
@@ -35,32 +32,8 @@ export const GetTeachersHandler: AppRouteHandler<GetTeachers> = async (c) => {
         .orderBy(teachers.created_at),
     ])
 
-    // Validate pagination parameters
-    // if (Number.isNaN(page) || Number.isNaN(limit)) {
-    //   return c.json(
-    //     {
-    //       message: 'Invalid pagination parameters',
-    //       errors: 'Page and limit must be valid numbers',
-    //     },
-    //     httpStatusCodes.BAD_REQUEST,
-    //   )
-    // }
-
-    // Get total count for pagination metadata
-    // const [totalResult] = await db
-    //   .select({ count: count() })
-    //   .from(teachers)
-
     const total = totalResult[0].count
     const totalPages = Math.ceil(total / limit)
-
-    // Get paginated teachers data
-    // const teachersData = await db
-    //   .select()
-    //   .from(teachers)
-    //   .limit(limit)
-    //   .offset(offset)
-    //   .orderBy(teachers.created_at)
 
     // Calculate pagination metadata
     const pagination = {
