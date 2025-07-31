@@ -3,7 +3,8 @@
  */
 
 import { createRoute, z } from '@hono/zod-openapi'
-import { userInsertSchema } from '@/db/schema'
+import { patchUserSchema, userInsertSchema, userSelectSchema } from '@/db/schema'
+import IdParamsSchema from '@/middleware/utils/id-params-validator'
 import jsonContent, { jsonContentRequired } from '@/middleware/utils/json-content'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 
@@ -25,7 +26,8 @@ export const createUserRoute = createRoute({
     [httpStatusCodes.CREATED]: jsonContent(
       z.object({
         message: z.string(),
-        data: userInsertSchema.omit({ password: true, confirmPassword: true }),
+        // data: userInsertSchema.omit({ password: true, confirmPassword: true }),
+        data: userSelectSchema.omit({ password: true }),
       }),
       'User successfully created',
     ),
@@ -46,4 +48,48 @@ export const createUserRoute = createRoute({
   },
 })
 
+export const updateUserRoute = createRoute({
+  tags: ['Users'],
+  method: 'patch',
+  path: '/users/{id}',
+  request: {
+    params: IdParamsSchema,
+    body: jsonContent(
+      patchUserSchema,
+      'The user data to update',
+    ),
+  },
+  responses: {
+    [httpStatusCodes.OK]: jsonContent(
+      z.object({
+        message: z.string(),
+        data: userSelectSchema.omit({ password: true }),
+      }),
+      'User successfully updated',
+    ),
+    [httpStatusCodes.NOT_FOUND]: jsonContent(
+      z.object({
+        message: z.string(),
+      }),
+      'User not found',
+    ),
+    [httpStatusCodes.BAD_REQUEST]: jsonContent(
+      z.object({
+        message: z.string(),
+        errors: z.any(),
+      }),
+      'Bad Request',
+    ),
+    [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({
+        message: z.string(),
+        errors: z.any(),
+      }),
+      'Internal Server Error',
+    ),
+  },
+})
+
 export type CreateUserRoute = typeof createUserRoute
+
+export type UpdateUserRoute = typeof updateUserRoute
