@@ -8,6 +8,7 @@ import createApp from '@/lib/create-app'
 import configureOpenAPI from '@/lib/openapi-configuration'
 
 // Imports the index routes of each route group in the routes directory
+import auth from '@/routes/auth/auth.index'
 import index from '@/routes/index'
 import teachers from '@/routes/teachers/teachers.index'
 import users from '@/routes/users/users.index'
@@ -16,7 +17,7 @@ import users from '@/routes/users/users.index'
 const app = createApp()
 
 // Array of all index routes to register
-const routes = [index, users, teachers]
+const routes = [index, users, teachers, auth]
 
 // Setup OpenAPI documentation at /docs and /reference
 configureOpenAPI(app as AppOpenAPI)
@@ -25,5 +26,4 @@ configureOpenAPI(app as AppOpenAPI)
 routes.forEach(route =>
   app.route('/', route),
 )
-
 export default app
