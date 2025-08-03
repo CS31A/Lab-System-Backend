@@ -48,6 +48,37 @@ export const createUserRoute = createRoute({
   },
 })
 
+export const getUserRoute = createRoute({
+  tags: ['Users'],
+  method: 'get',
+  path: '/users/{id}',
+  request: {
+    params: IdParamsSchema,
+  },
+  responses: {
+    [httpStatusCodes.OK]: jsonContent(
+      z.object({
+        message: z.string(),
+        data: userSelectSchema.omit({ password: true }),
+      }),
+      'User successfully retrieved',
+    ),
+    [httpStatusCodes.NOT_FOUND]: jsonContent(
+      z.object({
+        message: z.string(),
+      }),
+      'User not found',
+    ),
+    [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({
+        message: z.string(),
+        errors: z.any(),
+      }),
+      'Internal Server Error',
+    ),
+  },
+})
+
 export const updateUserRoute = createRoute({
   tags: ['Users'],
   method: 'patch',
@@ -93,3 +124,5 @@ export const updateUserRoute = createRoute({
 export type CreateUserRoute = typeof createUserRoute
 
 export type UpdateUserRoute = typeof updateUserRoute
+
+export type GetUserRoute = typeof getUserRoute
