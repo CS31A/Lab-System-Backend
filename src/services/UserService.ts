@@ -23,6 +23,21 @@ export interface CreateUserResult {
   roleRecord: RoleRecord | null // or pwede pud any | null nya remove the type def below
 }
 
+export interface UpdateUserData {
+  username?: string
+  email?: string
+  password?: string
+  user_type?: string
+  firstname?: string | null
+  lastname?: string | null
+  confirmPassword?: string
+}
+
+export interface UpdateUserResult {
+  user: typeof users.$inferSelect
+  roleRecord: RoleRecord | null
+}
+
 export type RoleRecord = | typeof teachers.$inferInsert | typeof technical_staff.$inferInsert | typeof admins.$inferInsert
 
 export class UserService {
@@ -176,5 +191,214 @@ export class UserService {
       })
       throw cleanupError
     }
+  }
+
+  /**
+   * Updates an existing user and their role-specific profile
+   * Handles password hashing, role changes, and data validation
+   */
+  async updateUser(userId: string, updateData: UpdateUserData): Promise<UpdateUserResult> {
+    // First, check if user exists
+    const existingUser = await this.getUserById(userId)
+    if (!existingUser) {
+      throw new Error('User not found')
+    }
+
+    // Prepare user update data
+    const userUpdateData: Partial<typeof users.$inferInsert> = {}
+
+    // Handle password update if provided
+    if (updateData.password) {
+      if (updateData.confirmPassword && updateData.password !== updateData.confirmPassword)
+        throw new Error('Passwords don\'t match')
+      userUpdateData.password = await bcrypt.hash(updateData.password, 10)
+    }
+
+    // Add other user fields if provided
+    if (updateData.username)
+      userUpdateData.username = updateData.username
+    if (updateData.email)
+      userUpdateData.email = updateData.email
+    if (updateData.user_type)
+      userUpdateData.user_type = updateData.user_type.toLowerCase()
+
+    let updatedUser: typeof users.$inferSelect
+    let roleRecord: RoleRecord | null = null
+
+    try {
+      // Update user record
+      if (Object.keys(userUpdateData).length > 0) {
+        [updatedUser] = await this.db
+          .update(users)
+          .set(userUpdateData)
+          .where(eq(users.id, userId))
+          .returning()
+      }
+      else {
+        updatedUser = existingUser
+      }
+
+      // Handle role profile updates if firstname/lastname provided or user_type changed
+      const shouldUpdateRole = updateData.firstname !== undefined
+        || updateData.lastname !== undefined
+        || (updateData.user_type && updateData.user_type !== existingUser.user_type)
+
+      if (shouldUpdateRole) {
+        const targetUserType = updateData.user_type || existingUser.user_type
+        roleRecord = await this.updateUserProfile(userId, targetUserType, {
+          firstname: updateData.firstname,
+          lastname: updateData.lastname,
+        })
+      }
+
+      this.logger.info('User updated successfully', {
+        user_id: userId,
+        updated_fields: Object.keys(userUpdateData),
+        role_updated: !!roleRecord,
+        timestamp: new Date().toISOString(),
+      })
+
+      return { user: updatedUser, roleRecord }
+    }
+    catch (error) {
+      this.logger.error('User update failed', {
+        user_id: userId,
+        error: (error as Error).message,
+        timestamp: new Date().toISOString(),
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Updates role-specific user profile based on user_type
+   * Creates new role record if user_type changed, updates existing if found
+   */
+  async updateUserProfile(
+    userId: string,
+    userType: string,
+    profileData: { firstname?: string | null, lastname?: string | null },
+  ): Promise<RoleRecord | null> {
+    const { firstname, lastname } = profileData
+
+    // Prepare update data (only include defined values)
+    const updateData: any = {}
+    if (firstname !== undefined)
+      updateData.firstname = firstname
+    if (lastname !== undefined)
+      updateData.lastname = lastname
+
+    // If no profile data to update, return null
+    if (Object.keys(updateData).length === 0) {
+      return null
+    }
+
+    switch (userType) {
+      case 'teacher': {
+        // Try to update existing teacher record
+        const [existingTeacher] = await this.db
+          .select()
+          .from(teachers)
+          .where(eq(teachers.user_id, userId))
+          .limit(1)
+
+        if (existingTeacher) {
+          const [updatedTeacher] = await this.db
+            .update(teachers)
+            .set(updateData)
+            .where(eq(teachers.user_id, userId))
+            .returning()
+          return updatedTeacher
+        }
+        else {
+          // Create new teacher record if doesn't exist
+          const [newTeacher] = await this.db
+            .insert(teachers)
+            .values({
+              user_id: userId,
+              ...updateData,
+              attendance: 'present',
+            })
+            .returning()
+          return newTeacher
+        }
+      }
+
+      case 'technical_staff': {
+        const [existingStaff] = await this.db
+          .select()
+          .from(technical_staff)
+          .where(eq(technical_staff.user_id, userId))
+          .limit(1)
+
+        if (existingStaff) {
+          const [updatedStaff] = await this.db
+            .update(technical_staff)
+            .set(updateData)
+            .where(eq(technical_staff.user_id, userId))
+            .returning()
+          return updatedStaff
+        }
+        else {
+          const [newStaff] = await this.db
+            .insert(technical_staff)
+            .values({
+              user_id: userId,
+              ...updateData,
+            })
+            .returning()
+          return newStaff
+        }
+      }
+
+      case 'admin': {
+        const [existingAdmin] = await this.db
+          .select()
+          .from(admins)
+          .where(eq(admins.user_id, userId))
+          .limit(1)
+
+        if (existingAdmin) {
+          const [updatedAdmin] = await this.db
+            .update(admins)
+            .set(updateData)
+            .where(eq(admins.user_id, userId))
+            .returning()
+          return updatedAdmin
+        }
+        else {
+          const [newAdmin] = await this.db
+            .insert(admins)
+            .values({
+              user_id: userId,
+              ...updateData,
+            })
+            .returning()
+          return newAdmin
+        }
+      }
+
+      default:
+        this.logger.warn('Unknown user_type for profile update', {
+          user_type: userType,
+          user_id: userId,
+          timestamp: new Date().toISOString(),
+        })
+        return null
+    }
+  }
+
+  /**
+   * Retrieves a user by ID
+   * Used for validation before updates
+   */
+  async getUserById(userId: string): Promise<typeof users.$inferSelect | null> {
+    const [user] = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1)
+
+    return user || null
   }
 }

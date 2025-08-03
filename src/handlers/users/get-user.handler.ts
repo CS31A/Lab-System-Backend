@@ -1,0 +1,62 @@
+import type { AppRouteHandler } from '@/lib/types/app-types'
+import type { GetUserRoute } from '@/routes/users/users.route'
+import * as httpStatusCodes from '@/openapi/http-status-codes'
+import { UserService } from '@/services/UserService'
+
+export const GetUserHandler: AppRouteHandler<GetUserRoute> = async (c) => {
+  const { id: userId } = c.req.valid('param')
+
+  try {
+    const userService = new UserService(c)
+
+    const userData = await userService.getUserById(userId)
+
+    if (!userData) {
+      return c.json(
+        {
+          message: 'User not found',
+        },
+        httpStatusCodes.NOT_FOUND,
+      )
+    }
+
+    const { password, ...userWithoutPassword } = userData
+
+    return c.json({
+      message: `User of Id ${userId} is successfully retrieved`,
+      data: userWithoutPassword,
+    }, httpStatusCodes.OK)
+  }
+  catch (err) {
+    const errorMessage = (err as Error).message
+
+    // Handle specific error cases
+    if (errorMessage === 'User not found') {
+      c.var.logger.warn('User update failed - user not found', {
+        user_id: userId,
+        timestamp: new Date().toISOString(),
+      })
+
+      return c.json(
+        {
+          message: 'User not found',
+        },
+        httpStatusCodes.NOT_FOUND,
+      )
+    }
+    // Log error with context for debugging
+    c.var.logger.error('User update failed', {
+      error: errorMessage,
+      user_id: userId,
+      timestamp: new Date().toISOString(),
+    })
+
+    return c.json(
+      {
+        message: 'Internal Server Error',
+        errors: errorMessage,
+      },
+      httpStatusCodes.INTERNAL_SERVER_ERROR,
+    )
+  }
+}
