@@ -7,17 +7,22 @@ import type { AppOpenAPI } from './lib/types/app-types'
 import createApp from '@/lib/create-app'
 import configureOpenAPI from '@/lib/openapi-configuration'
 
+import { publicAuthRouter, protectedAuthRouter } from '@/routes/auth/auth.index'
+
 // Imports the index routes of each route group in the routes directory
-import auth from '@/routes/auth/auth.index'
 import index from '@/routes/index'
 import teachers from '@/routes/teachers/teachers.index'
 import users from '@/routes/users/users.index'
 
 // Create main app with middleware, logging, and error handling
 const app = createApp()
+app.route('/auth', publicAuthRouter)
+
+// The "me" route will be at GET /auth/me
+app.route('/auth', protectedAuthRouter)
 
 // Array of all index routes to register
-const routes = [index, users, teachers, auth]
+const routes = [index, users, teachers]
 
 // Setup OpenAPI documentation at /docs and /reference
 configureOpenAPI(app as AppOpenAPI)
