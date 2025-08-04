@@ -5,7 +5,7 @@
 
 import type { Context } from 'hono'
 import bcrypt from 'bcryptjs'
-import { eq } from 'drizzle-orm'
+import { count, eq } from 'drizzle-orm'
 import { createDb } from '@/db'
 import { admins, teachers, technical_staff, users } from '@/db/schema'
 
@@ -400,5 +400,46 @@ export class UserService {
       .limit(1)
 
     return user || null
+  }
+
+  /**
+   * Lists users with pagination
+   */
+  async listUsers(params: { page: number, limit: number }): Promise<{ users: Array<typeof users.$inferSelect>, pagination: { page: number, limit: number, total: number, totalPages: number, hasNext: boolean, hasPrev: boolean } }> {
+    const { page, limit } = params
+    const offset = (page - 1) * limit
+
+    const [{ count: total }, usersData] = await Promise.all([
+      this.db.select({ count: count() })
+        .from(users)
+        .then(r => r[0] || { count: 0 }),
+      this.db.select()
+        .from(users)
+        .limit(limit)
+        .offset(offset)
+        .orderBy(users.created_at),
+    ])
+
+    const totalPages = Math.ceil((total || 0) / limit) || 1
+
+    return {
+      users: usersData,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    }
+  }
+
+  /**
+   * Retrieves all users
+   */
+  async getAllUsers(): Promise<Array<typeof users.$inferSelect>> {
+    const allUsers = await this.db.select().from(users)
+    return allUsers
   }
 }

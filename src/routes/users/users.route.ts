@@ -4,6 +4,7 @@
 
 import { createRoute, z } from '@hono/zod-openapi'
 import { patchUserSchema, userInsertSchema, userSelectSchema } from '@/db/schema'
+import { pagination, paginationQuery } from '@/lib/zod-schemas'
 import IdParamsSchema from '@/middleware/utils/id-params-validator'
 import jsonContent, { jsonContentRequired } from '@/middleware/utils/json-content'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
@@ -121,8 +122,36 @@ export const updateUserRoute = createRoute({
   },
 })
 
+export const listUsersRoute = createRoute({
+  tags: ['Users'],
+  method: 'get',
+  path: '/users',
+  request: {
+    query: paginationQuery,
+  },
+  responses: {
+    [httpStatusCodes.OK]: jsonContent(
+      z.object({
+        message: z.string(),
+        data: z.array(userSelectSchema.omit({ password: true })),
+        pagination,
+      }),
+      'Users successfully retrieved',
+    ),
+    [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({
+        message: z.string(),
+        errors: z.any(),
+      }),
+      'Internal Server Error',
+    ),
+  },
+})
+
 export type CreateUserRoute = typeof createUserRoute
 
 export type UpdateUserRoute = typeof updateUserRoute
 
 export type GetUserRoute = typeof getUserRoute
+
+export type ListUsersRoute = typeof listUsersRoute
