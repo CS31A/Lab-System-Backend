@@ -4,7 +4,7 @@
 
 import * as createHandlers from '@/handlers/users/create-user.handler'
 import { GetUserHandler } from '@/handlers/users/get-user.handler'
-import { ListUsersHandler } from '@/handlers/users/get-users.handler'
+import { ListUsersHandler } from '@/handlers/users/list-users.handler'
 import * as updateHandlers from '@/handlers/users/update-user.handler'
 import { createRouter } from '@/lib/create-app'
 import * as routes from '@/routes/users/users.route'

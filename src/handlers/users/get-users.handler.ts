@@ -1,26 +1,6 @@
-import type { AppRouteHandler } from '@/lib/types/app-types'
-import type { ListUsersRoute } from '@/routes/users/users.route'
-import * as httpStatusCodes from '@/openapi/http-status-codes'
-import { UserService } from '@/services/UserService'
-
-export const ListUsersHandler: AppRouteHandler<ListUsersRoute> = async (c) => {
-  const userService = new UserService(c)
-  const { page, limit } = c.req.valid('query')
-  const { users, pagination } = await userService.listUsers({ page, limit })
-
-  return c.json(
-    {
-      message: 'Users successfully retrieved',
-      data: users.map(user => ({
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        user_type: user.user_type,
-        created_at: user.created_at,
-        updated_at: user.updated_at,
-      })),
-      pagination,
-    },
-    httpStatusCodes.OK,
-  )
-}
+/**
+ * @deprecated Renamed file to list-users.handler.ts to align with conventions.
+ * Temporary re-export to maintain backward compatibility during transition.
+ */
+// new file will exist after migration
+export * from './list-users.handler'
