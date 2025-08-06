@@ -69,33 +69,13 @@ export const laboratory = pgTable('laboratory', {
   timeOut: timestamp('time_out', { mode: 'string' }),
 })
 
-export const labActivityLog = pgTable('lab_activity_log', {
+export const subjects = pgTable('subjects', {
   id: varchar({ length: 12 }).primaryKey().notNull(),
-  laboratoryId: varchar('laboratory_id', { length: 12 }).notNull(),
-  scheduleId: varchar('schedule_id', { length: 12 }),
-  seatingId: varchar('seating_id', { length: 12 }),
-  status: varchar({ length: 50 }).notNull(),
-  timeIn: timestamp('time_in', { mode: 'string' }),
-  timeOut: timestamp('time_out', { mode: 'string' }),
+  subjectName: varchar('subject_name', { length: 255 }).notNull(),
+  subjectCode: varchar('subject_code', { length: 50 }).notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
-}, table => [
-  foreignKey({
-    columns: [table.laboratoryId],
-    foreignColumns: [laboratory.id],
-    name: 'lab_activity_log_laboratory_id_laboratory_id_fk',
-  }),
-  foreignKey({
-    columns: [table.scheduleId],
-    foreignColumns: [schedule.id],
-    name: 'lab_activity_log_schedule_id_schedule_id_fk',
-  }),
-  foreignKey({
-    columns: [table.seatingId],
-    foreignColumns: [seatingHistory.id],
-    name: 'lab_activity_log_seating_id_seating_history_id_fk',
-  }),
-])
+})
 
 export const schedule = pgTable('schedule', {
   id: varchar({ length: 12 }).primaryKey().notNull(),
@@ -125,43 +105,6 @@ export const schedule = pgTable('schedule', {
     name: 'schedule_subject_id_subjects_id_fk',
   }),
 ])
-
-export const seatingHistory = pgTable('seating_history', {
-  id: varchar({ length: 12 }).primaryKey().notNull(),
-  laboratoryId: varchar('laboratory_id', { length: 12 }).notNull(),
-  studentId: varchar('student_id', { length: 12 }).notNull(),
-  seatingId: varchar('seating_id', { length: 12 }).notNull(),
-  monitor: varchar({ length: 255 }).notNull(),
-  mouse: varchar({ length: 255 }).notNull(),
-  keyboard: varchar({ length: 255 }).notNull(),
-  cables: varchar({ length: 255 }).notNull(),
-  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
-}, table => [
-  foreignKey({
-    columns: [table.laboratoryId],
-    foreignColumns: [laboratory.id],
-    name: 'seating_history_laboratory_id_laboratory_id_fk',
-  }),
-  foreignKey({
-    columns: [table.studentId],
-    foreignColumns: [students.id],
-    name: 'seating_history_student_id_students_id_fk',
-  }),
-  foreignKey({
-    columns: [table.seatingId],
-    foreignColumns: [seatingPlan.id],
-    name: 'seating_history_seating_id_seating_plan_id_fk',
-  }),
-])
-
-export const subjects = pgTable('subjects', {
-  id: varchar({ length: 12 }).primaryKey().notNull(),
-  subjectName: varchar('subject_name', { length: 255 }).notNull(),
-  subjectCode: varchar('subject_code', { length: 50 }).notNull(),
-  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
-})
 
 export const students = pgTable('students', {
   id: varchar({ length: 12 }).primaryKey().notNull(),
@@ -203,5 +146,62 @@ export const seatingPlan = pgTable('seating_plan', {
     columns: [table.studentId],
     foreignColumns: [students.id],
     name: 'seating_plan_student_id_students_id_fk',
+  }),
+])
+
+export const seatingHistory = pgTable('seating_history', {
+  id: varchar({ length: 12 }).primaryKey().notNull(),
+  laboratoryId: varchar('laboratory_id', { length: 12 }).notNull(),
+  studentId: varchar('student_id', { length: 12 }).notNull(),
+  seatingId: varchar('seating_id', { length: 12 }).notNull(),
+  monitor: varchar({ length: 255 }).notNull(),
+  mouse: varchar({ length: 255 }).notNull(),
+  keyboard: varchar({ length: 255 }).notNull(),
+  cables: varchar({ length: 255 }).notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.laboratoryId],
+    foreignColumns: [laboratory.id],
+    name: 'seating_history_laboratory_id_laboratory_id_fk',
+  }),
+  foreignKey({
+    columns: [table.studentId],
+    foreignColumns: [students.id],
+    name: 'seating_history_student_id_students_id_fk',
+  }),
+  foreignKey({
+    columns: [table.seatingId],
+    foreignColumns: [seatingPlan.id],
+    name: 'seating_history_seating_id_seating_plan_id_fk',
+  }),
+])
+
+export const labActivityLog = pgTable('lab_activity_log', {
+  id: varchar({ length: 12 }).primaryKey().notNull(),
+  laboratoryId: varchar('laboratory_id', { length: 12 }).notNull(),
+  scheduleId: varchar('schedule_id', { length: 12 }),
+  seatingId: varchar('seating_id', { length: 12 }),
+  status: varchar({ length: 50 }).notNull(),
+  timeIn: timestamp('time_in', { mode: 'string' }),
+  timeOut: timestamp('time_out', { mode: 'string' }),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.laboratoryId],
+    foreignColumns: [laboratory.id],
+    name: 'lab_activity_log_laboratory_id_laboratory_id_fk',
+  }),
+  foreignKey({
+    columns: [table.scheduleId],
+    foreignColumns: [schedule.id],
+    name: 'lab_activity_log_schedule_id_schedule_id_fk',
+  }),
+  foreignKey({
+    columns: [table.seatingId],
+    foreignColumns: [seatingHistory.id],
+    name: 'lab_activity_log_seating_id_seating_history_id_fk',
   }),
 ])
