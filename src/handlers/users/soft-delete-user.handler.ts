@@ -20,7 +20,7 @@ export const SoftDeleteUserHandler: AppRouteHandler<typeof import('@/routes/user
     )
   }
   catch (err) {
-    const errorMessage = (err as Error).message
+    const errorMessage = err instanceof Error ? err.message : String(err)
 
     if (errorMessage === 'User not found') {
       return c.json(
