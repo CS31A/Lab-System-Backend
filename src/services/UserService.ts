@@ -392,6 +392,34 @@ export class UserService {
    * Retrieves a user by ID
    * Used for validation before updates
    */
+  async softDeleteUser(userId: string): Promise<typeof users.$inferSelect> {
+    const existingUser = await this.getUserById(userId)
+    if (!existingUser)
+      throw new Error('User not found')
+
+    const [updated] = await this.db
+      .update(users)
+      .set({ is_deleted: true, deleted_at: new Date() })
+      .where(eq(users.id, userId))
+      .returning()
+
+    return updated
+  }
+
+  async restoreUser(userId: string): Promise<typeof users.$inferSelect> {
+    const existingUser = await this.getUserById(userId)
+    if (!existingUser)
+      throw new Error('User not found')
+
+    const [updated] = await this.db
+      .update(users)
+      .set({ is_deleted: false, deleted_at: null as any })
+      .where(eq(users.id, userId))
+      .returning()
+
+    return updated
+  }
+
   async getUserById(userId: string): Promise<typeof users.$inferSelect | null> {
     const [user] = await this.db
       .select()

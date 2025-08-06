@@ -122,6 +122,58 @@ export const updateUserRoute = createRoute({
   },
 })
 
+export const softDeleteUserRoute = createRoute({
+  tags: ['Users'],
+  method: 'patch',
+  path: '/users/{id}/delete',
+  request: {
+    params: IdParamsSchema,
+  },
+  responses: {
+    [httpStatusCodes.OK]: jsonContent(
+      z.object({
+        message: z.string(),
+        data: userSelectSchema.omit({ password: true }),
+      }),
+      'User soft-deleted successfully',
+    ),
+    [httpStatusCodes.NOT_FOUND]: jsonContent(
+      z.object({ message: z.string() }),
+      'User not found',
+    ),
+    [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({ message: z.string(), errors: z.any() }),
+      'Internal Server Error',
+    ),
+  },
+})
+
+export const restoreUserRoute = createRoute({
+  tags: ['Users'],
+  method: 'patch',
+  path: '/users/{id}/restore',
+  request: {
+    params: IdParamsSchema,
+  },
+  responses: {
+    [httpStatusCodes.OK]: jsonContent(
+      z.object({
+        message: z.string(),
+        data: userSelectSchema.omit({ password: true }),
+      }),
+      'User restored successfully',
+    ),
+    [httpStatusCodes.NOT_FOUND]: jsonContent(
+      z.object({ message: z.string() }),
+      'User not found',
+    ),
+    [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({ message: z.string(), errors: z.any() }),
+      'Internal Server Error',
+    ),
+  },
+})
+
 export const listUsersRoute = createRoute({
   tags: ['Users'],
   method: 'get',
@@ -155,3 +207,7 @@ export type UpdateUserRoute = typeof updateUserRoute
 export type GetUserRoute = typeof getUserRoute
 
 export type ListUsersRoute = typeof listUsersRoute
+
+export type SoftDeleteUserRoute = typeof softDeleteUserRoute
+
+export type RestoreUserRoute = typeof restoreUserRoute
