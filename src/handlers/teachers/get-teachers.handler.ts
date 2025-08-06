@@ -15,7 +15,7 @@ export const GetTeachersHandler: AppRouteHandler<GetTeachers> = async (c) => {
   try {
     // Parse and validate query parameters
     const { page, limit } = c.req.valid('query')
-    
+
     const teacherService = new TeacherService(c)
     const { teachers, pagination } = await teacherService.listTeachers({ page, limit })
 

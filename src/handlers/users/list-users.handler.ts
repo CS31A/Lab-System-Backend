@@ -22,6 +22,8 @@ export const ListUsersHandler: AppRouteHandler<ListUsersRoute> = async (c) => {
         username: user.username,
         email: user.email,
         user_type: user.user_type,
+        is_deleted: user.is_deleted ?? null,
+        deleted_at: user.deleted_at ?? null,
         created_at: user.created_at,
         updated_at: user.updated_at,
       })),

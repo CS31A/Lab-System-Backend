@@ -389,9 +389,53 @@ export class UserService {
   }
 
   /**
-   * Retrieves a user by ID
-   * Used for validation before updates
+   * Soft deletes a user by setting is_deleted flag and deleted_at timestamp
+   * Returns the updated user record
    */
+  async softDeleteUser(userId: string): Promise<typeof users.$inferSelect> {
+    const existingUser = await this.getUserById(userId)
+    if (!existingUser)
+      throw new Error('User not found')
+
+    try {
+      const [updated] = await this.db
+        .update(users)
+        .set({ is_deleted: true, deleted_at: new Date() })
+        .where(eq(users.id, userId))
+        .returning()
+
+      this.logger.info('User soft deleted successfully', {
+        user_id: userId,
+        username: existingUser.username,
+        timestamp: new Date().toISOString(),
+      })
+
+      return updated
+    }
+    catch (error) {
+      this.logger.error('Soft delete operation failed', {
+        user_id: userId,
+        error: (error as Error).message,
+        timestamp: new Date().toISOString(),
+      })
+      throw error
+    }
+  }
+
+  async restoreUser(userId: string): Promise<typeof users.$inferSelect> {
+    const existingUser = await this.getUserById(userId)
+    if (!existingUser)
+      throw new Error('User not found')
+
+    const [updated] = await this.db
+      .update(users)
+      .set({ is_deleted: false, deleted_at: null as any })
+      .where(eq(users.id, userId))
+      .returning()
+
+    return updated
+  }
+
   async getUserById(userId: string): Promise<typeof users.$inferSelect | null> {
     const [user] = await this.db
       .select()
