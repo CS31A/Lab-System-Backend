@@ -2,11 +2,12 @@
 import { createRouter } from '@/lib/create-app'
 
 // Import blueprints
-import { loginRoute, getMeRoute } from './auth.routes'
+import { loginRoute, getMeRoute, logoutRoute } from './auth.routes'
 
 // Import handlers
 import { LoginHandler } from '@/handlers/auth/login.handler'
 import { GetMeHandler } from '@/handlers/auth/get-me.handler'
+import { LogoutHandler } from '@/handlers/auth/logout.handlers'
 
 // Import middleware
 import { authMiddleware } from '@/middleware/auth'
@@ -19,3 +20,4 @@ publicAuthRouter.openapi(loginRoute, LoginHandler)
 export const protectedAuthRouter = createRouter()
 protectedAuthRouter.use('/*', authMiddleware)
 protectedAuthRouter.openapi(getMeRoute, GetMeHandler)
+protectedAuthRouter.openapi(logoutRoute, LogoutHandler)

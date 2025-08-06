@@ -38,7 +38,7 @@ export const loginRoute = createRoute({
 const MeResponseSchema = z.object({
   sub: z.string().openapi({
     description: 'The user\'s unique ID',
-    example:'user_asdasd2d',
+    example: 'user_asdasd2d',
 
   }),
   role: z.string().openapi({
@@ -60,7 +60,7 @@ export const getMeRoute = createRoute({
       }),
     }),
   },
-  responses:{
+  responses: {
     [httpStatusCodes.OK]: jsonContent(
       MeResponseSchema,
       'Successfully retrieved user information from toke',
@@ -71,6 +71,40 @@ export const getMeRoute = createRoute({
         message: z.string()
       }),
       'Unauthorized. Invalid or missing token'
+    )
+  }
+})
+
+export const logoutRoute = createRoute({
+  tags: ['Auth'],
+  method: 'post',
+  path: '/logout',
+  request: {
+    headers: z.object({
+      authorization: z.string().openapi({
+        description: 'Bearer token for authentication.',
+        example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+      }),
+    }),
+  },
+  responses: {
+    [httpStatusCodes.OK]: jsonContent(
+      z.object({
+        message: z.string().openapi({
+          description: 'Logout successful message',
+          example: 'Logout successful',
+        })
+      }),
+      'Logout successful, user logged out',
+    ),
+    [httpStatusCodes.UNAUTHORIZED]: jsonContent(
+      z.object({
+        message: z.string().openapi({
+          description: 'Unauthorized. Invalid or missing token',
+          example: 'Unauthorized. Invalid or missing token',
+        }),
+      }),
+      'Unauthorized. Invalid or missing token',
     )
   }
 })
