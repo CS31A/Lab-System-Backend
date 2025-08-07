@@ -200,6 +200,28 @@ export const listUsersRoute = createRoute({
   },
 })
 
+export const getAllUsersRoute = createRoute({
+  tags: ['Users'],
+  method: 'get',
+  path: '/users/all',
+  responses: {
+    [httpStatusCodes.OK]: jsonContent(
+      z.object({
+        message: z.string(),
+        data: z.array(userSelectSchema.omit({ password: true })),
+      }),
+      'All users successfully retrieved',
+    ),
+    [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({
+        message: z.string(),
+        errors: z.any(),
+      }),
+      'Internal Server Error',
+    ),
+  },
+})
+
 export type CreateUserRoute = typeof createUserRoute
 
 export type UpdateUserRoute = typeof updateUserRoute
@@ -207,6 +229,8 @@ export type UpdateUserRoute = typeof updateUserRoute
 export type GetUserRoute = typeof getUserRoute
 
 export type ListUsersRoute = typeof listUsersRoute
+
+export type GetAllUsersRoute = typeof getAllUsersRoute
 
 export type SoftDeleteUserRoute = typeof softDeleteUserRoute
 
