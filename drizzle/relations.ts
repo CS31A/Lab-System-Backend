@@ -1,20 +1,6 @@
 import { relations } from 'drizzle-orm/relations'
 import { admins, labActivityLog, laboratory, schedule, seatingHistory, seatingPlan, students, subjects, teachers, technicalStaff, users } from './schema'
 
-export const teachersRelations = relations(teachers, ({ one, many }) => ({
-  user: one(users, {
-    fields: [teachers.userId],
-    references: [users.id],
-  }),
-  schedules: many(schedule),
-}))
-
-export const usersRelations = relations(users, ({ many }) => ({
-  teachers: many(teachers),
-  admins: many(admins),
-  technicalStaffs: many(technicalStaff),
-}))
-
 export const adminsRelations = relations(admins, ({ one }) => ({
   user: one(users, {
     fields: [admins.userId],
@@ -22,11 +8,10 @@ export const adminsRelations = relations(admins, ({ one }) => ({
   }),
 }))
 
-export const technicalStaffRelations = relations(technicalStaff, ({ one }) => ({
-  user: one(users, {
-    fields: [technicalStaff.userId],
-    references: [users.id],
-  }),
+export const usersRelations = relations(users, ({ many }) => ({
+  admins: many(admins),
+  teachers: many(teachers),
+  technicalStaffs: many(technicalStaff),
 }))
 
 export const labActivityLogRelations = relations(labActivityLog, ({ one }) => ({
@@ -84,6 +69,14 @@ export const seatingHistoryRelations = relations(seatingHistory, ({ one, many })
   }),
 }))
 
+export const teachersRelations = relations(teachers, ({ one, many }) => ({
+  schedules: many(schedule),
+  user: one(users, {
+    fields: [teachers.userId],
+    references: [users.id],
+  }),
+}))
+
 export const subjectsRelations = relations(subjects, ({ many }) => ({
   schedules: many(schedule),
 }))
@@ -106,5 +99,12 @@ export const seatingPlanRelations = relations(seatingPlan, ({ one, many }) => ({
   student: one(students, {
     fields: [seatingPlan.studentId],
     references: [students.id],
+  }),
+}))
+
+export const technicalStaffRelations = relations(technicalStaff, ({ one }) => ({
+  user: one(users, {
+    fields: [technicalStaff.userId],
+    references: [users.id],
   }),
 }))

@@ -18,6 +18,8 @@ export const users = pgTable('users', {
   password: varchar({ length: 255 }).notNull(),
   username: varchar({ length: 255 }).notNull().unique(),
   user_type: varchar({ length: 20 }).notNull(), // 'teacher', 'technical_staff', 'admin'
+  is_deleted: boolean().default(false),
+  deleted_at: timestamp({ mode: 'date' }),
   created_at: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updated_at: timestamp({ mode: 'date' })
     .notNull()
@@ -51,13 +53,13 @@ export const userInsertSchema = createInsertSchema(users, {
       .string()
       .min(8)
       .regex(/^(?=.*[A-Z])(?=.*\d)/i),
-    confirmPassword: z.string(),
+    confirm_password: z.string(),
     user_type: z.string().transform(val => val.toLowerCase()),
     username: z.string().min(8).transform(val => val.toLowerCase()),
     firstname: z.preprocess(val => val === '' ? undefined : val, z.string().min(1).optional()),
     lastname: z.preprocess(val => val === '' ? undefined : val, z.string().min(1).optional()),
   })
-  .refine(data => data.password === data.confirmPassword, {
+  .refine(data => data.password === data.confirm_password, {
     error: 'Passwords don\'t match',
   })
 
@@ -113,15 +115,15 @@ export const patchUserSchema = z.object({
     .transform(val => val === '' ? undefined : val),
 
   // Confirm password - for password updates
-  confirmPassword: z.string()
+  confirm_password: z.string()
     .optional()
     .transform(val => val === '' ? undefined : val),
 })
   .refine(
     (data) => {
     // Only check password confirmation if both password and confirmPassword are provided
-      if (data.password && data.confirmPassword) {
-        return data.password === data.confirmPassword
+      if (data.password && data.confirm_password) {
+        return data.password === data.confirm_password
       }
       return true
     },
@@ -437,12 +439,17 @@ export const lab_activity_log = pgTable('lab_activity_log', {
   laboratory_id: varchar({ length: 12 })
     .notNull()
     .references(() => laboratory.id),
-  schedule_id: varchar({ length: 12 }).references(() => schedule.id),
-  seating_id: varchar({ length: 12 }).references(() => seating_history.id),
-  status: varchar({ length: 50 }).notNull(),
+  schedule_id: varchar({ length: 12 })
+    .references(() => schedule.id),
+  seating_id: varchar({ length: 12 })
+    .references(() => seating_history.id),
+  status: varchar({ length: 50 })
+    .notNull(),
   time_in: timestamp({ mode: 'date' }),
   time_out: timestamp({ mode: 'date' }),
-  created_at: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  created_at: timestamp({ mode: 'date' })
+    .notNull()
+    .defaultNow(),
   updated_at: timestamp({ mode: 'date' })
     .notNull()
     .defaultNow()
@@ -468,3 +475,29 @@ export const labActivityLogInsertSchema = createInsertSchema(lab_activity_log)
 
 export const patchLabActivityLogSchema
   = createInsertSchema(lab_activity_log).partial()
+
+export const refreshTokens = pgTable('refresh_tokens', {
+  id: varchar({ length: 12 })
+    .primaryKey()
+    .$default(() => nanoid(12)),
+  user_id: varchar('user_id', { length: 12 })
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  token_hash: varchar('token_hash', { length: 255 })
+    .notNull()
+    .unique(),
+  expires_at: timestamp('expires_at', { mode: 'date' })
+    .notNull()
+    .unique(),
+  created_at: timestamp({ mode: 'date' })
+    .notNull()
+    .defaultNow(),
+  updated_at: timestamp({ mode: 'date' })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+})
+
+export const refreshTokenSelectSchema = createSelectSchema(refreshTokens)
+export const refreshTokenInsertSchema = createInsertSchema(refreshTokens)
+  .omit({ id: true, createdAt: true, updatedAt: true })

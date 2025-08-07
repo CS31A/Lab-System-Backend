@@ -6,9 +6,12 @@ This directory contains all business logic handlers for API endpoints. Handlers 
 
 ```
 handlers/
-├── README.md              # This file - handler patterns and guidelines
+├── README.md                      # This file - handler patterns and guidelines
 └── users/
-    └── create-user.handler.ts    # User creation business logic
+    ├── create-user.handler.ts     # Create user
+    ├── get-user.handler.ts        # Get single user
+    ├── list-users.handler.ts      # List users (paginated)
+    └── update-user.handler.ts     # Update user
 ```
 
 ## 🏗️ Handler Architecture

@@ -1,54 +1,28 @@
 /**
- * @fileoverview Teachers retrieval handler with pagination and database integration
+ * @fileoverview Teachers retrieval handler - delegates to TeacherService for business logic
  */
 
 import type { AppRouteHandler } from '@/lib/types/app-types'
 import type { GetTeachers } from '@/routes/teachers/teachers.routes'
-import { count } from 'drizzle-orm'
-import { createDb } from '@/db'
-import { teachers } from '@/db/schema'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
+import { TeacherService } from '@/services/TeacherService'
 
 /**
  * Retrieves paginated list of teachers from the database.
- * Supports pagination with configurable page size and includes metadata.
+ * Delegates business logic to TeacherService for better separation of concerns.
  */
 export const GetTeachersHandler: AppRouteHandler<GetTeachers> = async (c) => {
   try {
     // Parse and validate query parameters
     const { page, limit } = c.req.valid('query')
-    const offset = (page - 1) * limit
 
-    const db = createDb(c)
-
-    const [totalResult, teachersData] = await Promise.all([
-      db.select({ count: count() })
-        .from(teachers),
-      db
-        .select()
-        .from(teachers)
-        .limit(limit)
-        .offset(offset)
-        .orderBy(teachers.created_at),
-    ])
-
-    const total = totalResult[0].count
-    const totalPages = Math.ceil(total / limit)
-
-    // Calculate pagination metadata
-    const pagination = {
-      page,
-      limit,
-      total,
-      totalPages,
-      hasNext: page < totalPages,
-      hasPrev: page > 1,
-    }
+    const teacherService = new TeacherService(c)
+    const { teachers, pagination } = await teacherService.listTeachers({ page, limit })
 
     return c.json(
       {
         message: 'List of teachers retrieved successfully',
-        data: teachersData,
+        data: teachers,
         pagination,
       },
       httpStatusCodes.OK,

@@ -5,7 +5,7 @@
 
 import type { Context } from 'hono'
 import bcrypt from 'bcryptjs'
-import { eq } from 'drizzle-orm'
+import { count, eq } from 'drizzle-orm'
 import { createDb } from '@/db'
 import { admins, teachers, technical_staff, users } from '@/db/schema'
 
@@ -389,9 +389,53 @@ export class UserService {
   }
 
   /**
-   * Retrieves a user by ID
-   * Used for validation before updates
+   * Soft deletes a user by setting is_deleted flag and deleted_at timestamp
+   * Returns the updated user record
    */
+  async softDeleteUser(userId: string): Promise<typeof users.$inferSelect> {
+    const existingUser = await this.getUserById(userId)
+    if (!existingUser)
+      throw new Error('User not found')
+
+    try {
+      const [updated] = await this.db
+        .update(users)
+        .set({ is_deleted: true, deleted_at: new Date() })
+        .where(eq(users.id, userId))
+        .returning()
+
+      this.logger.info('User soft deleted successfully', {
+        user_id: userId,
+        username: existingUser.username,
+        timestamp: new Date().toISOString(),
+      })
+
+      return updated
+    }
+    catch (error) {
+      this.logger.error('Soft delete operation failed', {
+        user_id: userId,
+        error: (error as Error).message,
+        timestamp: new Date().toISOString(),
+      })
+      throw error
+    }
+  }
+
+  async restoreUser(userId: string): Promise<typeof users.$inferSelect> {
+    const existingUser = await this.getUserById(userId)
+    if (!existingUser)
+      throw new Error('User not found')
+
+    const [updated] = await this.db
+      .update(users)
+      .set({ is_deleted: false, deleted_at: null as any })
+      .where(eq(users.id, userId))
+      .returning()
+
+    return updated
+  }
+
   async getUserById(userId: string): Promise<typeof users.$inferSelect | null> {
     const [user] = await this.db
       .select()
@@ -400,5 +444,46 @@ export class UserService {
       .limit(1)
 
     return user || null
+  }
+
+  /**
+   * Lists users with pagination
+   */
+  async listUsers(params: { page: number, limit: number }): Promise<{ users: Array<typeof users.$inferSelect>, pagination: { page: number, limit: number, total: number, totalPages: number, hasNext: boolean, hasPrev: boolean } }> {
+    const { page, limit } = params
+    const offset = (page - 1) * limit
+
+    const [{ count: total }, usersData] = await Promise.all([
+      this.db.select({ count: count() })
+        .from(users)
+        .then(r => r[0] || { count: 0 }),
+      this.db.select()
+        .from(users)
+        .limit(limit)
+        .offset(offset)
+        .orderBy(users.created_at),
+    ])
+
+    const totalPages = Math.ceil((total || 0) / limit) || 1
+
+    return {
+      users: usersData,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    }
+  }
+
+  /**
+   * Retrieves all users
+   */
+  async getAllUsers(): Promise<Array<typeof users.$inferSelect>> {
+    const allUsers = await this.db.select().from(users)
+    return allUsers
   }
 }
