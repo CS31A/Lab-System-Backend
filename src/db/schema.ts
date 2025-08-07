@@ -2,6 +2,7 @@ import { z } from '@hono/zod-openapi'
 import { boolean, pgTable, timestamp, varchar } from 'drizzle-orm/pg-core'
 import { createSchemaFactory } from 'drizzle-zod'
 import { nanoid } from 'nanoid'
+import { relations } from 'drizzle-orm'
 
 // const customId = (length = 12): string => {
 //   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
@@ -26,6 +27,26 @@ export const users = pgTable('users', {
     .defaultNow()
     .$onUpdate(() => new Date()),
 })
+
+export const sessions = pgTable('sessions', {
+  id: varchar({ length: 12 }).primaryKey().$defaultFn(() => nanoid(12)),
+  userId: varchar('user_id', { length: 12 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
+  refreshToken: varchar('refresh_token', { length: 255 }).notNull().unique(),
+  expiresAt: timestamp('expires_at').notNull(),
+})
+
+// Define relations for users and sessions
+export const usersRelations = relations(users, ({ many }) => ({
+  sessions: many(sessions),
+}))
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+  user: one(users, {
+    fields: [sessions.userId],
+    references: [users.id],
+  }),
+}))
+
 
 const { createSelectSchema, createInsertSchema } = createSchemaFactory({
   zodInstance: z,
@@ -121,7 +142,7 @@ export const patchUserSchema = z.object({
 })
   .refine(
     (data) => {
-    // Only check password confirmation if both password and confirmPassword are provided
+      // Only check password confirmation if both password and confirmPassword are provided
       if (data.password && data.confirm_password) {
         return data.password === data.confirm_password
       }

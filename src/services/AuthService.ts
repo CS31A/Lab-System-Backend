@@ -2,40 +2,88 @@ import type { Context } from "hono"
 import bcrypt from 'bcryptjs'
 import { eq } from 'drizzle-orm'
 import { createDb } from '@/db'
-import { users } from '@/db/schema'
+import { users, sessions } from '@/db/schema'
 import { sign } from 'hono/jwt'
+import { nanoid } from "nanoid"
+import { AppBindings } from "@/lib/types/app-types"
 
 export class AuthService {
     private db: ReturnType<typeof createDb>
-    private c: Context
+    private c: Context<AppBindings>
 
-    constructor(c: Context){
+    constructor(c: Context<AppBindings>) {
         this.db = createDb(c)
         this.c = c
     }
-    async login(username: string, password_from_user: string): Promise<string>{
-    const user = await this.db.query.users.findFirst({
-        where: eq(users.username, username),
-    })
-    if(!user){
-        throw new Error('User not found')
-    }
+    async login(username: string, password_from_user: string) {
+        const user = await this.db.query.users.findFirst({
+            where: eq(users.username, username)
+        })
 
-    const isPasswordValid = await bcrypt.compare(password_from_user, user.password)
-    if(!isPasswordValid){
-        throw new Error('Invalid Password')
-    }
+        if (!user) {
+            throw new Error('User not found')
+        }
 
-    const payload = {
-        sub: user.id,
-        role: user.user_type,
-        exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24)
+        const isPasswordValid = await bcrypt.compare(password_from_user, user.password)
+
+        if (!isPasswordValid) {
+            throw new Error('Invalid password')
+        }
+
+        const accessToken = await sign({
+            sub: user.id,
+            role: user.user_type,
+            exp: Math.floor(Date.now() / 1000) + (15 * 60), // 1 hour
+        }, this.c.env.JWT_SECRET)
+
+        const refreshToken = nanoid(48)
+        const refreshTokenExpiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)) // 7 days)
+
+        await this.db.insert(sessions).values({
+            userId: user.id,
+            refreshToken: refreshToken,
+            expiresAt: refreshTokenExpiresAt
+        })
+
+        return {
+            accessToken,
+            refreshToken,
+            user: {
+                id: user.id,
+                username: user.username,
+                role: user.user_type,
+            }
+        }
+
     }
-    if(!this.c.env.JWT_SECRET){
-        throw new Error('JWT_SECRET environment variable is not set!')
+    async refresh(refreshToken: string) {
+        const session = await this.db.query.sessions.findFirst({
+            where: eq(sessions.refreshToken, refreshToken),
+            with: {
+                user: true,
+            },
+        })
+        if (!session) {
+            throw new Error('Invalid refresh token')
+        }
+        const now = new Date()
+        if (now > session.expiresAt) {
+            await this.db.delete(sessions).where(eq(sessions.id, session.id))
+            throw new Error('Refresh token expired')
+        }
+        const user = session.user
+        if (!user) {
+            await this.db.delete(sessions).where(eq(sessions.id, session.id))
+            throw new Error('User for this session not found')
+        }
+
+        const newAccessToken = await sign({
+            sub: user.id,
+            role: user.user_type,
+            exp: Math.floor(Date.now() / 1000) + (15 * 60),
+
+        }, this.c.env.JWT_SECRET)
+        return newAccessToken
     }
-    const token = await sign(payload, this.c.env.JWT_SECRET)
-    return token
-}
 }
 

@@ -3,6 +3,8 @@
 import { createRoute, z } from '@hono/zod-openapi'
 import jsonContent, { jsonContentRequired } from '@/middleware/utils/json-content'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
+import { access } from 'fs'
+import { ref } from 'process'
 
 const LoginBodySchema = z.object({
   username: z.string().min(1, { message: 'Username is required' }),
@@ -25,8 +27,8 @@ export const loginRoute = createRoute({
       'Invalid request body provided',
     ),
     [httpStatusCodes.OK]: jsonContent(
-      z.object({ token: z.string() }),
-      'Login successful, JWT returned',
+      z.object({ id: z.string(), username: z.string(), role: z.string() }),
+      'Login successful, user data returned and tokens set as httpOnly cookies',
     ),
     [httpStatusCodes.UNAUTHORIZED]: jsonContent(
       z.object({ message: z.string() }),
@@ -52,14 +54,6 @@ export const getMeRoute = createRoute({
   tags: ['Auth'],
   method: 'get',
   path: '/me',
-  request: {
-    headers: z.object({
-      authorization: z.string().openapi({
-        description: 'Bearer token for authentication.',
-        example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-      }),
-    }),
-  },
   responses: {
     [httpStatusCodes.OK]: jsonContent(
       MeResponseSchema,
@@ -107,4 +101,25 @@ export const logoutRoute = createRoute({
       'Unauthorized. Invalid or missing token',
     )
   }
+})
+
+export const refreshRoute = createRoute({
+  tags: ['Auth'],
+  method: 'post',
+  path: '/refresh',
+  description: 'Refreshes the access token using the refresh token',
+  responses: {
+    [httpStatusCodes.OK]: jsonContent(
+      z.object({
+        status: z.string().openapi({ example: 'ok' }),
+      }),
+      'Access token refreshed successfully. New token set in httpOnly cookie.',
+    ),
+    [httpStatusCodes.UNAUTHORIZED]: jsonContent(
+      z.object({
+        message: z.string().openapi({ example: 'Invalid or expired refresh token.' }),
+      }),
+      'Unauthorized. The refresh token is missing, invalid, or expired.',
+    ),
+  },
 })
