@@ -18,17 +18,16 @@ const db = drizzle(client, { schema })
 async function main() {
   console.log('Seeding database...')
 
-  // The password we want for our test user
+  // The password for our test user
   const plainTextPassword = 'password123'
 
   // Hashing the password with bcrypt
   const hashedPassword = await bcrypt.hash(plainTextPassword, 10)
-  console.log(`Password "${plainTextPassword}" has been hashed.`)
-
+  console.log('Password has been hashed.')
   // Deleting any existing user with this username to avoid errors when re runiing the seed
   console.log('Checking for existing user with username "testuser"...')
 
-  await db.delete(schema.users).where(eq(schema.users.username, 'testuser'))
+  await db.delete(schema.users).where(eq(schema.users.username, 'testUser'))
   console.log('Deleted any existing user.')
 
   // Creating our new test user with the HASHED password
@@ -39,9 +38,9 @@ async function main() {
     password: hashedPassword, // Storing the hashed password
   })
 
-  console.log('Successfully created user "testuser".')
+  console.log('Successfully created user "testUser".')
   console.log('You can now log in with:')
-  console.log('  Username: testuser')
+  console.log('  Username: testUser')
   console.log('  Password: password123')
   console.log('Seeding complete.')
 }

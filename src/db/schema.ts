@@ -30,7 +30,7 @@ export const users = pgTable('users', {
 
 export const sessions = pgTable('sessions', {
   id: varchar({ length: 12 }).primaryKey().$defaultFn(() => nanoid(12)),
-  userId: varchar('user_id', { length: 12 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
+  user_id: varchar('user_id', { length: 12 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
   refreshToken: varchar('refresh_token', { length: 255 }).notNull().unique(),
   expiresAt: timestamp('expires_at').notNull(),
 })
@@ -42,11 +42,10 @@ export const usersRelations = relations(users, ({ many }) => ({
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
   user: one(users, {
-    fields: [sessions.userId],
+    fields: [sessions.user_id],
     references: [users.id],
   }),
 }))
-
 
 const { createSelectSchema, createInsertSchema } = createSchemaFactory({
   zodInstance: z,

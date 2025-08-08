@@ -21,15 +21,14 @@ export class AuthService {
         })
 
         if (!user) {
-            throw new Error('User not found')
+            throw new Error('Invalid credentials')
         }
 
         const isPasswordValid = await bcrypt.compare(password_from_user, user.password)
 
         if (!isPasswordValid) {
-            throw new Error('Invalid password')
+            throw new Error('Invalid credentials')
         }
-
         const accessToken = await sign({
             sub: user.id,
             role: user.user_type,
@@ -40,7 +39,7 @@ export class AuthService {
         const refreshTokenExpiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)) // 7 days)
 
         await this.db.insert(sessions).values({
-            userId: user.id,
+            user_id: user.id,
             refreshToken: refreshToken,
             expiresAt: refreshTokenExpiresAt
         })
@@ -56,7 +55,7 @@ export class AuthService {
         }
 
     }
-    async refresh(refreshToken: string) {
+    async refresh(refreshToken: string): Promise<string> {
         const session = await this.db.query.sessions.findFirst({
             where: eq(sessions.refreshToken, refreshToken),
             with: {
@@ -85,5 +84,15 @@ export class AuthService {
         }, this.c.env.JWT_SECRET)
         return newAccessToken
     }
+
+    async logout(refreshToken: string) {
+        // The only logic is to find the session by its refresh token
+        // and delete it from the database.
+        await this.db.delete(sessions).where(eq(sessions.refreshToken, refreshToken));
+
+        // We don't need to return anything. If it doesn't throw an error, it worked.
+        return;
+    }
 }
+
 
