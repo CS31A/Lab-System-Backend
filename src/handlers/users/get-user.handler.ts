@@ -21,7 +21,7 @@ export const GetUserHandler: AppRouteHandler<GetUserRoute> = async (c) => {
     }
 
     // Destructure to omit password and include role-specific data
-    const { password, ...userAndRoleWithoutPassword } = userData
+    const { password: _password, ...userAndRoleWithoutPassword } = userData
 
     return c.json({
       message: `User of Id ${userId} is successfully retrieved`,

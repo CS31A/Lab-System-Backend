@@ -38,7 +38,7 @@ export interface UpdateUserResult {
   roleRecord: RoleRecord | null
 }
 
-export type RoleRecord = typeof teachers.$inferInsert | typeof technical_staff.$inferInsert | typeof admins.$inferInsert
+export type RoleRecord = typeof teachers.$inferSelect | typeof technical_staff.$inferSelect | typeof admins.$inferSelect
 
 // Define a type for the combined user and role data
 export type UserWithRole = typeof users.$inferSelect & {
@@ -447,9 +447,8 @@ export class UserService {
     const [user] = await this.db
       .select()
       .from(users)
-      .where(eq(users.id, userId))
+      .where(eq(users.id, userId) && eq(users.is_deleted, false))
       .limit(1)
-
     if (!user) {
       return null
     }
