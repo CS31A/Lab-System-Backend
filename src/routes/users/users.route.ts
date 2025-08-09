@@ -3,7 +3,7 @@
  */
 
 import { createRoute, z } from '@hono/zod-openapi'
-import { patchUserSchema, userInsertSchema, userSelectSchema } from '@/db/schema'
+import { adminSelectSchema, patchUserSchema, teacherSelectSchema, technicalStaffSelectSchema, userInsertSchema, userSelectSchema } from '@/db/schema'
 import { pagination, paginationQuery } from '@/lib/zod-schemas'
 import IdParamsSchema from '@/middleware/utils/id-params-validator'
 import jsonContent, { jsonContentRequired } from '@/middleware/utils/json-content'
@@ -60,7 +60,11 @@ export const getUserRoute = createRoute({
     [httpStatusCodes.OK]: jsonContent(
       z.object({
         message: z.string(),
-        data: userSelectSchema.omit({ password: true }),
+        data: userSelectSchema.omit({ password: true }).extend({
+          teacher: teacherSelectSchema.nullable().optional(),
+          technical_staff: technicalStaffSelectSchema.nullable().optional(),
+          admin: adminSelectSchema.nullable().optional(),
+        }),
       }),
       'User successfully retrieved',
     ),

@@ -20,7 +20,7 @@ export interface CreateUserData {
 
 export interface CreateUserResult {
   user: typeof users.$inferSelect
-  roleRecord: RoleRecord | null // or pwede pud any | null nya remove the type def below
+  roleRecord: RoleRecord | null
 }
 
 export interface UpdateUserData {
@@ -38,7 +38,14 @@ export interface UpdateUserResult {
   roleRecord: RoleRecord | null
 }
 
-export type RoleRecord = | typeof teachers.$inferInsert | typeof technical_staff.$inferInsert | typeof admins.$inferInsert
+export type RoleRecord = typeof teachers.$inferInsert | typeof technical_staff.$inferInsert | typeof admins.$inferInsert
+
+// Define a type for the combined user and role data
+export type UserWithRole = typeof users.$inferSelect & {
+  teacher?: typeof teachers.$inferSelect | null
+  technical_staff?: typeof technical_staff.$inferSelect | null
+  admin?: typeof admins.$inferSelect | null
+}
 
 export class UserService {
   private db: ReturnType<typeof createDb>
@@ -436,14 +443,32 @@ export class UserService {
     return updated
   }
 
-  async getUserById(userId: string): Promise<typeof users.$inferSelect | null> {
+  async getUserById(userId: string): Promise<UserWithRole | null> {
     const [user] = await this.db
       .select()
       .from(users)
       .where(eq(users.id, userId))
       .limit(1)
 
-    return user || null
+    if (!user) {
+      return null
+    }
+
+    let roleData: any = null
+
+    switch (user.user_type) {
+      case 'teacher':
+        [roleData] = await this.db.select().from(teachers).where(eq(teachers.user_id, userId)).limit(1)
+        return { ...user, teacher: roleData || null }
+      case 'technical_staff':
+        [roleData] = await this.db.select().from(technical_staff).where(eq(technical_staff.user_id, userId)).limit(1)
+        return { ...user, technical_staff: roleData || null }
+      case 'admin':
+        [roleData] = await this.db.select().from(admins).where(eq(admins.user_id, userId)).limit(1)
+        return { ...user, admin: roleData || null }
+      default:
+        return user
+    }
   }
 
   /**
