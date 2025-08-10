@@ -28,3 +28,58 @@ export const pagination = z.object({
   hasNext: z.boolean(),
   hasPrev: z.boolean(),
 })
+
+// Teacher dashboard schemas
+export const scheduleWithDetailsSchema = z.object({
+  scheduleId: z.string(),
+  labId: z.string(),
+  subjectCode: z.string(),
+  subjectName: z.string(),
+  section: z.string(),
+  labName: z.string(),
+  startTime: z.iso.datetime(),
+  endTime: z.iso.datetime(),
+  status: z.string().nullable(),
+})
+
+export const activeActivitySchema = z.object({
+  activityId: z.string(),
+  scheduleId: z.string().nullable(),
+  labId: z.string(),
+  labName: z.string(),
+  status: z.string(),
+  timeIn: z.iso.datetime().nullable(),
+  timeOut: z.iso.datetime().nullable(),
+})
+
+export const teacherDashboardQuerySchema = z.object({
+  teacherId: z.string().openapi({
+    param: {
+      name: 'teacherId',
+      in: 'query',
+    },
+    example: 'teacher123',
+    description: 'Teacher ID to retrieve dashboard data for',
+  }),
+  start: z.iso.datetime().optional().openapi({
+    param: {
+      name: 'start',
+      in: 'query',
+    },
+    example: '2025-01-01T00:00:00Z',
+    description: 'Start date for schedule filtering (ISO 8601 format, optional)',
+  }),
+  end: z.iso.datetime().optional().openapi({
+    param: {
+      name: 'end',
+      in: 'query',
+    },
+    example: '2025-12-31T23:59:59Z',
+    description: 'End date for schedule filtering (ISO 8601 format, optional)',
+  }),
+})
+
+export const teacherDashboardResponseSchema = z.object({
+  schedules: z.array(scheduleWithDetailsSchema),
+  activeActivity: activeActivitySchema.nullable(),
+})
