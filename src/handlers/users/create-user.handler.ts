@@ -13,7 +13,7 @@ import { UserService } from '@/services/UserService'
  */
 export const CreateUserHandler: AppRouteHandler<CreateUserRoute> = async (c) => {
   // The validated request body is destructured since the confirmPassword is now useless after validation in the middleware
-  const { confirmPassword, firstname, lastname, ...validatedBody } = c.req.valid('json')
+  const { firstname, lastname, ...validatedBody } = c.req.valid('json')
 
   try {
     const userService = new UserService(c)
