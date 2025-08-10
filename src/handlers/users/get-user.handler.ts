@@ -20,11 +20,12 @@ export const GetUserHandler: AppRouteHandler<GetUserRoute> = async (c) => {
       )
     }
 
-    const { password, ...userWithoutPassword } = userData
+    // Destructure to omit password and include role-specific data
+    const { password: _password, ...userAndRoleWithoutPassword } = userData
 
     return c.json({
       message: `User of Id ${userId} is successfully retrieved`,
-      data: userWithoutPassword,
+      data: userAndRoleWithoutPassword,
     }, httpStatusCodes.OK)
   }
   catch (err) {
@@ -32,7 +33,7 @@ export const GetUserHandler: AppRouteHandler<GetUserRoute> = async (c) => {
 
     // Handle specific error cases
     if (errorMessage === 'User not found') {
-      c.var.logger.warn('User update failed - user not found', {
+      c.var.logger.warn('User retrieval failed - user not found', {
         user_id: userId,
         timestamp: new Date().toISOString(),
       })
@@ -45,7 +46,7 @@ export const GetUserHandler: AppRouteHandler<GetUserRoute> = async (c) => {
       )
     }
     // Log error with context for debugging
-    c.var.logger.error('User update failed', {
+    c.var.logger.error('User retrieval failed', {
       error: errorMessage,
       user_id: userId,
       timestamp: new Date().toISOString(),

@@ -3,6 +3,7 @@
  */
 
 import * as createHandlers from '@/handlers/users/create-user.handler'
+import { GetAllUsersHandler } from '@/handlers/users/get-all-users.handler'
 import { GetUserHandler } from '@/handlers/users/get-user.handler'
 import { ListUsersHandler } from '@/handlers/users/list-users.handler'
 import { RestoreUserHandler } from '@/handlers/users/restore-user.handler'
@@ -19,6 +20,7 @@ const router = createRouter()
   .openapi(routes.createUserRoute, createHandlers.CreateUserHandler)
   .openapi(routes.updateUserRoute, updateHandlers.UpdateUserHandler)
   .openapi(routes.getUserRoute, GetUserHandler)
+  .openapi(routes.getAllUsersRoute, GetAllUsersHandler)
   .openapi(routes.listUsersRoute, ListUsersHandler)
   .openapi(routes.softDeleteUserRoute, SoftDeleteUserHandler)
   .openapi(routes.restoreUserRoute, RestoreUserHandler)
