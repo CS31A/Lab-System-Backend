@@ -1,26 +1,22 @@
-import type { Context } from 'hono'
+/**
+ * @fileoverview Login handler - validates credentials and issues tokens
+ * Response shape follows { message, data } convention used across the project.
+ */
+
+import type { AppRouteHandler } from '@/lib/types/app-types'
 import { loginRoute } from '@/routes/auth/auth.routes'
 import { AuthService } from '@/services/AuthService'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
-import { AppBindings } from '@/lib/types/app-types'
 import { setCookie } from 'hono/cookie'
 
-const loginSchema = loginRoute.request.body.content['application/json']['schema']
-
-export const LoginHandler = async (c: Context<AppBindings>) => {
-  const body = await c.req.json()
-  const parsed = loginSchema.safeParse(body)
-
-  if (!parsed.success) {
-    return c.json({ message: 'Invalid request body' }, httpStatusCodes.BAD_REQUEST)
-  }
-
-  const { username, password } = parsed.data
+export const LoginHandler: AppRouteHandler<typeof loginRoute> = async (c) => {
+  const { username, password } = c.req.valid('json')
 
   try {
     const authService = new AuthService(c)
-    const { accessToken, refreshToken, user } = await authService.login(username, password)
+    const { accessToken, refreshToken, user } = await authService.authenticateUser(username, password)
 
+    // Set access token (15 minutes)
     setCookie(c, 'accessToken', accessToken, {
       httpOnly: true,
       secure: c.env.NODE_ENV === 'production',
@@ -29,6 +25,7 @@ export const LoginHandler = async (c: Context<AppBindings>) => {
       path: '/',
     })
 
+    // Set refresh token (7 days)
     setCookie(c, 'refreshToken', refreshToken, {
       httpOnly: true,
       secure: c.env.NODE_ENV === 'production',
@@ -37,9 +34,14 @@ export const LoginHandler = async (c: Context<AppBindings>) => {
       path: '/auth/refresh',
     })
 
-    return c.json(user, httpStatusCodes.OK)
-
-  } catch (error) {
-    return c.json({ message: 'Invalid Credentials' }, httpStatusCodes.UNAUTHORIZED)
+    return c.json({ message: 'Login successful', data: user }, httpStatusCodes.OK)
+  }
+  catch (error) {
+    const errMsg = (error as Error).message
+    c.var.logger.error('Login failed', { error: errMsg, username, timestamp: new Date().toISOString() })
+    if (errMsg.toLowerCase().includes('invalid')) {
+      return c.json({ message: 'Invalid credentials' }, httpStatusCodes.UNAUTHORIZED)
+    }
+    return c.json({ message: 'Internal Server Error', errors: errMsg }, httpStatusCodes.INTERNAL_SERVER_ERROR)
   }
 }

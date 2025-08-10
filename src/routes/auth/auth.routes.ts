@@ -1,14 +1,21 @@
-
+/**
+ * @fileoverview Auth route definitions (login, refresh, logout, me)
+ * Aligned with project-wide conventions for response shape and documentation.
+ */
 
 import { createRoute, z } from '@hono/zod-openapi'
 import jsonContent, { jsonContentRequired } from '@/middleware/utils/json-content'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
-import { access } from 'fs'
-import { ref } from 'process'
 
 const LoginBodySchema = z.object({
-  username: z.string().min(1, { message: 'Username is required' }),
-  password: z.string().min(1, { message: 'Password is required' }),
+  username: z.string().min(1, { message: 'Username is required' }).openapi({
+    example: 'testuser',
+    description: 'The account username',
+  }),
+  password: z.string().min(1, { message: 'Password is required' }).openapi({
+    example: 'password123',
+    description: 'The account password',
+  }),
 })
 
 export const loginRoute = createRoute({
@@ -27,37 +34,48 @@ export const loginRoute = createRoute({
       'Invalid request body provided',
     ),
     [httpStatusCodes.OK]: jsonContent(
-      z.object({ id: z.string(), username: z.string(), role: z.string() }),
-      'Login successful, user data returned and tokens set as httpOnly cookies',
+      z.object({
+        message: z.string().openapi({ example: 'Login successful' }),
+        data: z.object({ id: z.string(), username: z.string(), role: z.string() }),
+      }),
+      'Login successful. Tokens are set as httpOnly cookies.',
     ),
     [httpStatusCodes.UNAUTHORIZED]: jsonContent(
-      z.object({ message: z.string() }),
+      z.object({ message: z.string().openapi({ example: 'Invalid credentials' }) }),
       'Invalid Credentials',
+    ),
+    [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({
+        message: z.string(),
+        errors: z.any(),
+      }),
+      'Internal Server Error',
     ),
   },
 })
 
-const MeResponseSchema = z.object({
+const MeDataSchema = z.object({
   sub: z.string().openapi({
     description: 'The user\'s unique ID',
     example: 'user_asdasd2d',
-
   }),
   role: z.string().openapi({
     description: 'The user\'s role.',
     example: 'admin',
   }),
-
 })
 
-export const getMeRoute = createRoute({
+export const getCurrentUserRoute = createRoute({
   tags: ['Auth'],
   method: 'get',
   path: '/me',
   responses: {
     [httpStatusCodes.OK]: jsonContent(
-      MeResponseSchema,
-      'Successfully retrieved user information from toke',
+      z.object({
+        message: z.string().openapi({ example: 'User info retrieved' }),
+        data: MeDataSchema,
+      }),
+      'Successfully retrieved user information from token',
 
     ),
     [httpStatusCodes.UNAUTHORIZED]: jsonContent(
@@ -65,7 +83,14 @@ export const getMeRoute = createRoute({
         message: z.string()
       }),
       'Unauthorized. Invalid or missing token'
-    )
+    ),
+    [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({
+        message: z.string(),
+        errors: z.any(),
+      }),
+      'Internal Server Error',
+    ),
   }
 })
 
@@ -73,20 +98,13 @@ export const logoutRoute = createRoute({
   tags: ['Auth'],
   method: 'post',
   path: '/logout',
-  request: {
-    headers: z.object({
-      authorization: z.string().openapi({
-        description: 'Bearer token for authentication.',
-        example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-      }),
-    }),
-  },
+  // Auth is enforced by router middleware; no explicit header required here
   responses: {
     [httpStatusCodes.OK]: jsonContent(
       z.object({
         message: z.string().openapi({
           description: 'Logout successful message',
-          example: 'Logout successful',
+          example: 'Logged out successfully',
         })
       }),
       'Logout successful, user logged out',
@@ -99,7 +117,14 @@ export const logoutRoute = createRoute({
         }),
       }),
       'Unauthorized. Invalid or missing token',
-    )
+    ),
+    [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({
+        message: z.string(),
+        errors: z.any(),
+      }),
+      'Internal Server Error',
+    ),
   }
 })
 
@@ -111,15 +136,22 @@ export const refreshRoute = createRoute({
   responses: {
     [httpStatusCodes.OK]: jsonContent(
       z.object({
-        status: z.string().openapi({ example: 'ok' }),
+        message: z.string().openapi({ example: 'Access token refreshed' }),
       }),
-      'Access token refreshed successfully. New token set in httpOnly cookie.',
+      'Access token refreshed successfully. New token is set in an httpOnly cookie.',
     ),
     [httpStatusCodes.UNAUTHORIZED]: jsonContent(
       z.object({
         message: z.string().openapi({ example: 'Invalid or expired refresh token.' }),
       }),
       'Unauthorized. The refresh token is missing, invalid, or expired.',
+    ),
+    [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({
+        message: z.string(),
+        errors: z.any(),
+      }),
+      'Internal Server Error',
     ),
   },
 })

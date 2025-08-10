@@ -1,12 +1,14 @@
+/**
+ * @fileoverview Refresh handler - issues a new short-lived access token using a valid refresh token cookie
+ */
 
-import type { Context } from 'hono'
 import { getCookie, setCookie } from 'hono/cookie'
-import type { AppBindings } from '@/lib/types/app-types'
 import { AuthService } from '@/services/AuthService'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 import { HTTPException } from 'hono/http-exception'
+import type { AppRouteHandler } from '@/lib/types/app-types'
 
-export const RefreshHandler = async (c: Context<AppBindings>) => {
+export const RefreshHandler: AppRouteHandler<typeof import('@/routes/auth/auth.routes').refreshRoute> = async (c) => {
   const refreshToken = getCookie(c, 'refreshToken')
 
   if (!refreshToken) {
@@ -15,20 +17,23 @@ export const RefreshHandler = async (c: Context<AppBindings>) => {
 
   try {
     const authService = new AuthService(c)
-    const newAccessToken = await authService.refresh(refreshToken)
+    const newAccessToken = await authService.issueNewAccessToken(refreshToken)
 
-    // 4. Set the new access token in its httpOnly cookie.
     setCookie(c, 'accessToken', newAccessToken, {
       httpOnly: true,
-      secure: true, //user_id: varchar('user_id', { length: 12 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
+      secure: c.env.NODE_ENV === 'production',
       sameSite: 'Strict',
       maxAge: 15 * 60, // 15 minutes
       path: '/',
     })
 
-    return c.json({ status: 'ok' }, httpStatusCodes.OK)
-
-  } catch (error: any) {
-    throw new HTTPException(401, { message: 'Invalid or expired refresh token.' })
+    return c.json({ message: 'Access token refreshed' }, httpStatusCodes.OK)
+  }
+  catch (error: any) {
+    const errMsg = (error as Error).message
+    if (errMsg.toLowerCase().includes('invalid') || errMsg.toLowerCase().includes('expired')) {
+      throw new HTTPException(401, { message: 'Invalid or expired refresh token.' })
+    }
+    return c.json({ message: 'Internal Server Error', errors: errMsg }, httpStatusCodes.INTERNAL_SERVER_ERROR)
   }
 }
