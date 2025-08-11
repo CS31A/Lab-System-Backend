@@ -8,7 +8,7 @@ import type { LoginRoute } from '@/routes/auth/auth.routes'
 import { AuthService } from '@/services/AuthService'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 import { setCookie } from 'hono/cookie'
-import { timestamp } from 'drizzle-orm/gel-core'
+
 
 export const LoginHandler: AppRouteHandler<LoginRoute> = async (c) => {
   const { username, password } = c.req.valid('json')
@@ -42,15 +42,23 @@ export const LoginHandler: AppRouteHandler<LoginRoute> = async (c) => {
       }, httpStatusCodes.OK)
   }
   catch (err) {
-    c.var.logger.error('Failed to retrieve user', {
-      error: (err as Error).message,
-      timestamp: new Date().toISOString(),
-    })
+    // Typed error check for authentication failures
+    if (err instanceof Error && err.message === 'Invalid credentials') {
+      c.var.logger.warn('Authentication failed', err)
+      return c.json(
+        {
+          message: 'Invalid credentials',
+        },
+        httpStatusCodes.UNAUTHORIZED
+      )
+    }
+    c.var.logger.error('Login handler error', err)
     return c.json(
       {
         message: 'Internal Server Error',
-        errors: (err as Error).message,
+        errors: null,
       },
-      httpStatusCodes.INTERNAL_SERVER_ERROR)
+      httpStatusCodes.INTERNAL_SERVER_ERROR
+    )
   }
 }

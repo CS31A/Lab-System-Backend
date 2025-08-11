@@ -36,16 +36,18 @@ export const RefreshHandler: AppRouteHandler<RefreshRoute> = async (c) => {
     return c.json({ message: 'Access token refreshed' }, httpStatusCodes.OK)
   }
   catch (err) {
-    c.var.logger.error('Failed to retrieve token', {
-      error: (err as Error).message,
-      timestamp: new Date().toISOString(),
-    })
+    // Typed error check for invalid/expired refresh token
+    if (err instanceof Error && (err.message === 'Invalid refresh token' || err.message === 'Refresh token expired')) {
+      c.var.logger.warn('Refresh token invalid or expired', err)
+      return c.json(
+        { message: 'Unauthorized', error: 'Invalid or expired refresh token' },
+        httpStatusCodes.UNAUTHORIZED,
+      )
+    }
+    c.var.logger.error('Failed to refresh access token', err)
     return c.json(
-      {
-        message: 'Internal Server Error',
-        errors: (err as Error).message,
-
-      },
-      httpStatusCodes.INTERNAL_SERVER_ERROR)
+      { message: 'Internal Server Error', errors: null },
+      httpStatusCodes.INTERNAL_SERVER_ERROR,
+    )
   }
 }
