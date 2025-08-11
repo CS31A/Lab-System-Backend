@@ -5,7 +5,6 @@
 import { getCookie, setCookie } from 'hono/cookie'
 import { AuthService } from '@/services/AuthService'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
-import { HTTPException } from 'hono/http-exception'
 import type { AppRouteHandler } from '@/lib/types/app-types'
 import type { RefreshRoute } from '@/routes/auth/auth.routes'
 
