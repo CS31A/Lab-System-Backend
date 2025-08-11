@@ -53,31 +53,50 @@ export const activeActivitySchema = z.object({
 })
 
 export const teacherDashboardQuerySchema = z.object({
-  teacherId: z.string().openapi({
-    param: {
-      name: 'teacherId',
-      in: 'query',
-    },
-    example: 'teacher123',
-    description: 'Teacher ID to retrieve dashboard data for',
-  }),
-  start: z.iso.datetime().optional().openapi({
-    param: {
-      name: 'start',
-      in: 'query',
-    },
-    example: '2025-01-01T00:00:00Z',
-    description: 'Start date for schedule filtering (ISO 8601 format, optional)',
-  }),
-  end: z.iso.datetime().optional().openapi({
-    param: {
-      name: 'end',
-      in: 'query',
-    },
-    example: '2025-12-31T23:59:59Z',
-    description: 'End date for schedule filtering (ISO 8601 format, optional)',
-  }),
+  teacherId: z.string()
+    .min(1, 'Teacher ID cannot be empty')
+    .trim()
+    .openapi({
+      param: {
+        name: 'teacherId',
+        in: 'query',
+      },
+      example: 'teacher123',
+      description: 'Teacher ID to retrieve dashboard data for (required)',
+    }),
+  start: z.iso.datetime()
+    .optional()
+    .openapi({
+      param: {
+        name: 'start',
+        in: 'query',
+      },
+      example: '2025-01-01T00:00:00Z',
+      description: 'Start date for schedule filtering (ISO 8601 format, optional)',
+    }),
+  end: z.iso.datetime()
+    .optional()
+    .openapi({
+      param: {
+        name: 'end',
+        in: 'query',
+      },
+      example: '2025-12-31T23:59:59Z',
+      description: 'End date for schedule filtering (ISO 8601 format, optional)',
+    }),
 })
+  .refine(
+    (data) => {
+      if (data.start && data.end) {
+        return new Date(data.start) <= new Date(data.end)
+      }
+      return true
+    },
+    {
+      message: 'Start date must be before or equal to end date',
+      path: ['start'],
+    },
+  )
 
 export const teacherDashboardResponseSchema = z.object({
   schedules: z.array(scheduleWithDetailsSchema),

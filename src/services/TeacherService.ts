@@ -175,7 +175,13 @@ export class TeacherService {
         ...dateConditions,
       ]
 
-      // Query schedules with joined details
+      // Prepare all queries for parallel execution
+      const teacherValidationQuery = this.db
+        .select({ id: teachers.id })
+        .from(teachers)
+        .where(eq(teachers.id, teacherId))
+        .limit(1)
+
       const schedulesQuery = this.db
         .select({
           scheduleId: schedule.id,
@@ -194,7 +200,6 @@ export class TeacherService {
         .where(and(...whereConditions))
         .orderBy(schedule.start_time)
 
-      // Query active lab activity (where time_out is null)
       const activeActivityQuery = this.db
         .select({
           activityId: lab_activity_log.id,
@@ -216,11 +221,17 @@ export class TeacherService {
         )
         .limit(1)
 
-      // Execute both queries in parallel
-      const [schedulesResult, activeActivityResult] = await Promise.all([
+      // Execute all queries in parallel for better performance
+      const [teacherExists, schedulesResult, activeActivityResult] = await Promise.all([
+        teacherValidationQuery,
         schedulesQuery,
         activeActivityQuery,
       ])
+
+      // Validate teacher exists after parallel execution
+      if (!teacherExists.length) {
+        throw new Error(`Teacher with ID ${teacherId} not found`)
+      }
 
       const result: TeacherDashboardResult = {
         schedules: schedulesResult,

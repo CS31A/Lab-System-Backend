@@ -13,7 +13,7 @@ import { TeacherService } from '@/services/TeacherService'
  */
 export const GetTeacherDashboardHandler: AppRouteHandler<GetTeacherDashboard> = async (c) => {
   try {
-    // Parse and validate query parameters
+    // Parse and validate query parameters (Zod handles validation)
     const { teacherId, start, end } = c.req.valid('query')
 
     const teacherService = new TeacherService(c)
