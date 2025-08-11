@@ -13,9 +13,14 @@ export const RefreshHandler: AppRouteHandler<RefreshRoute> = async (c) => {
   const refreshToken = getCookie(c, 'refreshToken')
 
   if (!refreshToken) {
-    throw new HTTPException(401, { message: 'Refresh token not found.' })
+    return c.json(
+      {
+        message: 'Unauthorized',
+        error: 'Refresh token is missing',
+      },
+      httpStatusCodes.UNAUTHORIZED
+    );
   }
-
   try {
     const authService = new AuthService(c)
     const newAccessToken = await authService.issueNewAccessToken(refreshToken)
@@ -30,11 +35,17 @@ export const RefreshHandler: AppRouteHandler<RefreshRoute> = async (c) => {
 
     return c.json({ message: 'Access token refreshed' }, httpStatusCodes.OK)
   }
-  catch (error: any) {
-    const errMsg = (error as Error).message
-    if (errMsg.toLowerCase().includes('invalid') || errMsg.toLowerCase().includes('expired')) {
-      throw new HTTPException(401, { message: 'Invalid or expired refresh token.' })
-    }
-    return c.json({ message: 'Internal Server Error', errors: errMsg }, httpStatusCodes.INTERNAL_SERVER_ERROR)
+  catch (err) {
+    c.var.logger.error('Failed to retrieve token', {
+      error: (err as Error).message,
+      timestamp: new Date().toISOString(),
+    })
+    return c.json(
+      {
+        message: 'Internal Server Error',
+        errors: (err as Error).message,
+
+      },
+      httpStatusCodes.INTERNAL_SERVER_ERROR)
   }
 }

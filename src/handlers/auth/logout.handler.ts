@@ -32,5 +32,5 @@ export const LogoutHandler: AppRouteHandler<LogoutRoute> = async (c) => {
   deleteCookie(c, 'accessToken', { path: '/' })
   deleteCookie(c, 'refreshToken', { path: '/auth/refresh' })
 
-  return c.json({ message: 'Logged out successfully' }, httpStatusCodes.OK)
+  return c.json({ message: 'Logout successful' }, httpStatusCodes.OK)
 }

@@ -12,10 +12,20 @@ export const GetCurrentUserHandler: AppRouteHandler<GetCurrentUserRoute> = async
     const payload = c.get('jwtPayload')
     const { sub, role } = payload
 
-    return c.json({ message: 'User info retrieved', data: { sub, role } }, httpStatusCodes.OK)
+    return c.json(
+      { 
+        message: 'Successfully retrieved user information from token', 
+        data: { sub, role } 
+      }, 
+      httpStatusCodes.OK)
   }
   catch (error) {
     const errMsg = (error as Error).message
-    return c.json({ message: 'Internal Server Error', errors: errMsg }, httpStatusCodes.INTERNAL_SERVER_ERROR)
+    return c.json(
+      { 
+        message: 'Internal Server Error', 
+        errors: errMsg 
+      }, 
+      httpStatusCodes.INTERNAL_SERVER_ERROR)
   }
 }
