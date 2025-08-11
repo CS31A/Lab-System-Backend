@@ -6,8 +6,9 @@ import { getCookie, deleteCookie } from 'hono/cookie'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 import { AuthService } from '@/services/AuthService'
 import type { AppRouteHandler } from '@/lib/types/app-types'
+import type { LogoutRoute } from '@/routes/auth/auth.routes'
 
-export const LogoutHandler: AppRouteHandler<typeof import('@/routes/auth/auth.routes').logoutRoute> = async (c) => {
+export const LogoutHandler: AppRouteHandler<LogoutRoute> = async (c) => {
   const refreshToken = getCookie(c, 'refreshToken')
 
   if (refreshToken) {

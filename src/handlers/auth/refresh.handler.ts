@@ -7,8 +7,9 @@ import { AuthService } from '@/services/AuthService'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 import { HTTPException } from 'hono/http-exception'
 import type { AppRouteHandler } from '@/lib/types/app-types'
+import type { RefreshRoute } from '@/routes/auth/auth.routes'
 
-export const RefreshHandler: AppRouteHandler<typeof import('@/routes/auth/auth.routes').refreshRoute> = async (c) => {
+export const RefreshHandler: AppRouteHandler<RefreshRoute> = async (c) => {
   const refreshToken = getCookie(c, 'refreshToken')
 
   if (!refreshToken) {

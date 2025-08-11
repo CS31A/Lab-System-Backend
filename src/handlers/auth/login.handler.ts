@@ -4,12 +4,12 @@
  */
 
 import type { AppRouteHandler } from '@/lib/types/app-types'
-import { loginRoute } from '@/routes/auth/auth.routes'
+import type { LoginRoute } from '@/routes/auth/auth.routes'
 import { AuthService } from '@/services/AuthService'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 import { setCookie } from 'hono/cookie'
 
-export const LoginHandler: AppRouteHandler<typeof loginRoute> = async (c) => {
+export const LoginHandler: AppRouteHandler<LoginRoute> = async (c) => {
   const { username, password } = c.req.valid('json')
 
   try {

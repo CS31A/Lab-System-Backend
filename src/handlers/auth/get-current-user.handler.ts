@@ -5,8 +5,9 @@
 
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 import type { AppRouteHandler } from '@/lib/types/app-types'
+import type { GetCurrentUserRoute } from '@/routes/auth/auth.routes'
 
-export const GetCurrentUserHandler: AppRouteHandler<typeof import('@/routes/auth/auth.routes').getCurrentUserRoute> = async (c) => {
+export const GetCurrentUserHandler: AppRouteHandler<GetCurrentUserRoute> = async (c) => {
   try {
     const payload = c.get('jwtPayload')
     const { sub, role } = payload

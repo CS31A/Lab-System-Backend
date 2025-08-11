@@ -6,6 +6,7 @@
 import { createRoute, z } from '@hono/zod-openapi'
 import jsonContent, { jsonContentRequired } from '@/middleware/utils/json-content'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
+import { get } from 'http'
 
 const LoginBodySchema = z.object({
   username: z.string().min(1, { message: 'Username is required' }).openapi({
@@ -155,3 +156,12 @@ export const refreshRoute = createRoute({
     ),
   },
 })
+
+
+export type GetCurrentUserRoute = typeof getCurrentUserRoute
+
+export type LoginRoute = typeof loginRoute
+
+export type LogoutRoute = typeof logoutRoute
+
+export type RefreshRoute = typeof refreshRoute
