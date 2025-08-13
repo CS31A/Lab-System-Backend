@@ -2,7 +2,7 @@ import type { Context } from 'hono'
 import bcrypt from 'bcryptjs'
 import { eq } from 'drizzle-orm'
 import { createDb } from '@/db'
-import { users, sessions } from '@/db/schema'
+import { users, refreshTokens } from '@/db/schema'
 import { sign } from 'hono/jwt'
 import { nanoid } from 'nanoid'
 import type { AppBindings } from '@/lib/types/app-types'
@@ -48,10 +48,10 @@ export class AuthService {
     const refreshToken = nanoid(48)
     const refreshTokenExpiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)) // 7 days
 
-    await this.db.insert(sessions).values({
+    await this.db.insert(refreshTokens).values({
       user_id: user.id,
-      refreshToken,
-      expiresAt: refreshTokenExpiresAt,
+      token_hash: refreshToken,
+      expires_at: refreshTokenExpiresAt,
     })
 
     return {
@@ -69,21 +69,21 @@ export class AuthService {
    * Validates a refresh token session and returns a new short-lived access token
    */
   async issueNewAccessToken(refreshToken: string): Promise<string> {
-    const session = await this.db.query.sessions.findFirst({
-      where: eq(sessions.refreshToken, refreshToken),
+    const session = await this.db.query.refreshTokens.findFirst({
+      where: eq(refreshTokens.token_hash, refreshToken),
       with: { user: true },
     })
     if (!session) {
       throw new Error('Invalid refresh token')
     }
     const now = new Date()
-    if (now > session.expiresAt) {
-      await this.db.delete(sessions).where(eq(sessions.id, session.id))
+    if (now > session.expires_at) {
+      await this.db.delete(refreshTokens).where(eq(refreshTokens.id, session.id))
       throw new Error('Refresh token expired')
     }
     const user = session.user
     if (!user) {
-      await this.db.delete(sessions).where(eq(sessions.id, session.id))
+      await this.db.delete(refreshTokens).where(eq(refreshTokens.id, session.id))
       throw new Error('User for this session not found')
     }
 
@@ -99,7 +99,7 @@ export class AuthService {
    * Deletes the refresh session for the provided token (logout)
    */
   async invalidateRefreshSession(refreshToken: string) {
-    await this.db.delete(sessions).where(eq(sessions.refreshToken, refreshToken))
+    await this.db.delete(refreshTokens).where(eq(refreshTokens.token_hash, refreshToken))
   }
 }
 

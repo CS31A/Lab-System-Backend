@@ -28,25 +28,6 @@ export const users = pgTable('users', {
     .$onUpdate(() => new Date()),
 })
 
-export const sessions = pgTable('sessions', {
-  id: varchar({ length: 12 }).primaryKey().$defaultFn(() => nanoid(12)),
-  user_id: varchar('user_id', { length: 12 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
-  refreshToken: varchar('refresh_token', { length: 255 }).notNull().unique(),
-  expiresAt: timestamp('expires_at').notNull(),
-})
-
-// Define relations for users and sessions
-export const usersRelations = relations(users, ({ many }) => ({
-  sessions: many(sessions),
-}))
-
-export const sessionsRelations = relations(sessions, ({ one }) => ({
-  user: one(users, {
-    fields: [sessions.user_id],
-    references: [users.id],
-  }),
-}))
-
 const { createSelectSchema, createInsertSchema } = createSchemaFactory({
   zodInstance: z,
 })
@@ -521,3 +502,15 @@ export const refreshTokens = pgTable('refresh_tokens', {
 export const refreshTokenSelectSchema = createSelectSchema(refreshTokens)
 export const refreshTokenInsertSchema = createInsertSchema(refreshTokens)
   .omit({ id: true, createdAt: true, updatedAt: true })
+
+// Define relations for users and refresh tokens
+export const usersRelations = relations(users, ({ many }) => ({
+  refreshTokens: many(refreshTokens),
+}))
+
+export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [refreshTokens.user_id],
+    references: [users.id],
+  }),
+}))
