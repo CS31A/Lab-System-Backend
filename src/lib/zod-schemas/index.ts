@@ -42,14 +42,14 @@ export const scheduleWithDetailsSchema = z.object({
   status: z.string().nullable(),
 })
 
-export const activeActivitySchema = z.object({
-  activityId: z.string(),
+export const currentLabSessionSchema = z.object({
+  labSessionId: z.string(),
   scheduleId: z.string().nullable(),
   labId: z.string(),
   labName: z.string(),
   status: z.string(),
-  timeIn: z.iso.datetime().nullable(),
-  timeOut: z.iso.datetime().nullable(),
+  sessionStartTime: z.iso.datetime().nullable(),
+  sessionEndTime: z.iso.datetime().nullable(),
 })
 
 export const teacherDashboardQuerySchema = z.object({
@@ -97,8 +97,21 @@ export const teacherDashboardQuerySchema = z.object({
       path: ['start'],
     },
   )
+  .refine(
+    (data) => {
+      if (data.start && data.end) {
+        const daysDiff = (new Date(data.end).getTime() - new Date(data.start).getTime()) / (1000 * 60 * 60 * 24)
+        return daysDiff <= 365 // Max 1 year range
+      }
+      return true
+    },
+    {
+      message: 'Date range cannot exceed 365 days',
+      path: ['end'],
+    },
+  )
 
 export const teacherDashboardResponseSchema = z.object({
   schedules: z.array(scheduleWithDetailsSchema),
-  activeActivity: activeActivitySchema.nullable(),
+  currentLabSession: currentLabSessionSchema.nullable(),
 })

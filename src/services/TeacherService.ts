@@ -44,18 +44,18 @@ export interface ScheduleWithDetails {
 }
 
 export interface ActiveActivity {
-  activityId: string
+  labSessionId: string
   scheduleId: string | null
   labId: string
   labName: string
   status: string
-  timeIn: Date | null
-  timeOut: Date | null
+  sessionStartTime: Date | null
+  sessionEndTime: Date | null
 }
 
 export interface TeacherDashboardResult {
   schedules: ScheduleWithDetails[]
-  activeActivity: ActiveActivity | null
+  currentLabSession: ActiveActivity | null
 }
 
 export class TeacherService {
@@ -202,13 +202,13 @@ export class TeacherService {
 
       const activeActivityQuery = this.db
         .select({
-          activityId: lab_activity_log.id,
+          labSessionId: lab_activity_log.id,
           scheduleId: lab_activity_log.schedule_id,
           labId: lab_activity_log.laboratory_id,
           labName: laboratory.name,
           status: lab_activity_log.status,
-          timeIn: lab_activity_log.time_in,
-          timeOut: lab_activity_log.time_out,
+          sessionStartTime: lab_activity_log.time_in,
+          sessionEndTime: lab_activity_log.time_out,
         })
         .from(lab_activity_log)
         .innerJoin(laboratory, eq(lab_activity_log.laboratory_id, laboratory.id))
@@ -222,7 +222,7 @@ export class TeacherService {
         .limit(1)
 
       // Execute all queries in parallel for better performance
-      const [teacherExists, schedulesResult, activeActivityResult] = await Promise.all([
+      const [teacherExists, schedulesResult, currentLabSessionResult] = await Promise.all([
         teacherValidationQuery,
         schedulesQuery,
         activeActivityQuery,
@@ -235,7 +235,7 @@ export class TeacherService {
 
       const result: TeacherDashboardResult = {
         schedules: schedulesResult,
-        activeActivity: activeActivityResult[0] || null,
+        currentLabSession: currentLabSessionResult[0] || null,
       }
 
       this.logger.info('Teacher dashboard data retrieved successfully', {
@@ -243,7 +243,7 @@ export class TeacherService {
         startDate: startDate?.toISOString(),
         endDate: endDate?.toISOString(),
         schedulesCount: schedulesResult.length,
-        hasActiveActivity: !!result.activeActivity,
+        hasCurrentLabSession: !!result.currentLabSession,
         timestamp: new Date().toISOString(),
       })
 
