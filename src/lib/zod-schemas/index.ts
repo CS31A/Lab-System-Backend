@@ -55,7 +55,9 @@ export const currentLabSessionSchema = z.object({
 export const teacherDashboardQuerySchema = z.object({
   teacherId: z.string()
     .min(1, 'Teacher ID cannot be empty')
+    .max(50, 'Teacher ID too long')
     .trim()
+    .regex(/^\w+$/, 'Teacher ID can only contain letters, numbers, and underscores')
     .openapi({
       param: {
         name: 'teacherId',
@@ -85,23 +87,43 @@ export const teacherDashboardQuerySchema = z.object({
       description: 'End date for schedule filtering (ISO 8601 format, optional)',
     }),
 })
+// Prevent extreme future/past dates
   .refine(
     (data) => {
       if (data.start && data.end) {
-        return new Date(data.start) <= new Date(data.end)
+        const startDate = new Date(data.start)
+        const endDate = new Date(data.end)
+
+        // Validate dates are valid
+        if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+          return false
+        }
+
+        return startDate <= endDate
       }
       return true
     },
     {
-      message: 'Start date must be before or equal to end date',
+      message: 'Start date must be before or equal to end date and both dates must be valid',
       path: ['start'],
     },
   )
+  // Date range cannot exceed 365 days
   .refine(
     (data) => {
       if (data.start && data.end) {
-        const daysDiff = (new Date(data.end).getTime() - new Date(data.start).getTime()) / (1000 * 60 * 60 * 24)
-        return daysDiff <= 365 // Max 1 year range
+        const startDate = new Date(data.start)
+        const endDate = new Date(data.end)
+        // Validate dates are valid first
+        if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+          return false
+        }
+        // Use UTC calendar days to avoid floating-point issues
+        const startUTC = Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate())
+        const endUTC = Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate())
+
+        const daysDiff = Math.floor((endUTC - startUTC) / (1000 * 60 * 60 * 24))
+        return daysDiff <= 365
       }
       return true
     },
