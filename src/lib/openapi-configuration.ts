@@ -16,7 +16,7 @@ export default function configureOpenAPI(app: AppOpenAPI) {
     pageTitle: 'Hono API Documentation',
     layout: 'classic', // classic or modern
     defaultHttpClient: {
-      targetKey: 'javascript',
+      targetKey: 'js',
       clientKey: 'fetch',
     },
     theme: 'kepler', // alternate, kepler, dark, purple, moon, solarized, bluePlanet, saturn, deepSpace, mars, none
