@@ -5,10 +5,9 @@
 
 import type { AppRouteHandler } from '@/lib/types/app-types'
 import type { LoginRoute } from '@/routes/auth/auth.routes'
-import { AuthService } from '@/services/AuthService'
-import * as httpStatusCodes from '@/openapi/http-status-codes'
 import { setCookie } from 'hono/cookie'
-
+import * as httpStatusCodes from '@/openapi/http-status-codes'
+import { AuthService } from '@/services/AuthService'
 
 export const LoginHandler: AppRouteHandler<LoginRoute> = async (c) => {
   const { username, password } = c.req.valid('json')
@@ -38,8 +37,10 @@ export const LoginHandler: AppRouteHandler<LoginRoute> = async (c) => {
     return c.json(
       {
         message: 'Login successful',
-        data: user
-      }, httpStatusCodes.OK)
+        data: user,
+      },
+      httpStatusCodes.OK,
+    )
   }
   catch (err) {
     // Typed error check for authentication failures
@@ -49,7 +50,7 @@ export const LoginHandler: AppRouteHandler<LoginRoute> = async (c) => {
         {
           message: 'Invalid credentials',
         },
-        httpStatusCodes.UNAUTHORIZED
+        httpStatusCodes.UNAUTHORIZED,
       )
     }
     c.var.logger.error('Login handler error', err)
@@ -58,7 +59,7 @@ export const LoginHandler: AppRouteHandler<LoginRoute> = async (c) => {
         message: 'Internal Server Error',
         errors: null,
       },
-      httpStatusCodes.INTERNAL_SERVER_ERROR
+      httpStatusCodes.INTERNAL_SERVER_ERROR,
     )
   }
 }

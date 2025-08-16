@@ -11,4 +11,3 @@ Conventions:
 
 - Request/response schemas use `@hono/zod-openapi`.
 - Response shape standardized to improve client integration.
-
