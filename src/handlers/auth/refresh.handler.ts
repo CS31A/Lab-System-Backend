@@ -2,11 +2,11 @@
  * @fileoverview Refresh handler - issues a new short-lived access token using a valid refresh token cookie
  */
 
-import { getCookie, setCookie } from 'hono/cookie'
-import { AuthService } from '@/services/AuthService'
-import * as httpStatusCodes from '@/openapi/http-status-codes'
 import type { AppRouteHandler } from '@/lib/types/app-types'
 import type { RefreshRoute } from '@/routes/auth/auth.routes'
+import { getCookie, setCookie } from 'hono/cookie'
+import * as httpStatusCodes from '@/openapi/http-status-codes'
+import { AuthService } from '@/services/AuthService'
 
 export const RefreshHandler: AppRouteHandler<RefreshRoute> = async (c) => {
   const refreshToken = getCookie(c, 'refreshToken')
@@ -17,8 +17,8 @@ export const RefreshHandler: AppRouteHandler<RefreshRoute> = async (c) => {
         message: 'Unauthorized',
         error: 'Refresh token is missing',
       },
-      httpStatusCodes.UNAUTHORIZED
-    );
+      httpStatusCodes.UNAUTHORIZED,
+    )
   }
   try {
     const authService = new AuthService(c)

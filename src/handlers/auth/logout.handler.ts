@@ -2,11 +2,11 @@
  * @fileoverview Logout handler - invalidates the current refresh session and clears auth cookies
  */
 
-import { getCookie, deleteCookie } from 'hono/cookie'
-import * as httpStatusCodes from '@/openapi/http-status-codes'
-import { AuthService } from '@/services/AuthService'
 import type { AppRouteHandler } from '@/lib/types/app-types'
 import type { LogoutRoute } from '@/routes/auth/auth.routes'
+import { deleteCookie, getCookie } from 'hono/cookie'
+import * as httpStatusCodes from '@/openapi/http-status-codes'
+import { AuthService } from '@/services/AuthService'
 
 export const LogoutHandler: AppRouteHandler<LogoutRoute> = async (c) => {
   const refreshToken = getCookie(c, 'refreshToken')
@@ -23,7 +23,7 @@ export const LogoutHandler: AppRouteHandler<LogoutRoute> = async (c) => {
       const msg = (error as Error)?.message ?? String(error)
       c.var.logger.error('Failed to invalidate refresh token but proceeding with client-side logout', {
         error: msg,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       })
     }
   }
@@ -31,6 +31,10 @@ export const LogoutHandler: AppRouteHandler<LogoutRoute> = async (c) => {
   // Always clear client-side cookies to complete the logout process for the user.
   deleteCookie(c, 'accessToken', { path: '/' })
   deleteCookie(c, 'refreshToken', { path: '/auth/refresh' })
+
+  c.var.logger.info('User logged out successfully', {
+    timestamp: new Date().toISOString(),
+  })
 
   return c.json({ message: 'Logout successful' }, httpStatusCodes.OK)
 }

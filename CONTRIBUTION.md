@@ -117,26 +117,26 @@ The server will start on `http://localhost:8787` (default Wrangler port).
 
 ### Core Scripts
 
-| Script | Command | Description |
-|--------|---------|-------------|
-| **Development** | `bun run dev` | Start development server with hot reload |
-| **Build & Deploy** | `bun run deploy` | Deploy to Cloudflare Workers (production) |
+| Script              | Command              | Description                                       |
+| ------------------- | -------------------- | ------------------------------------------------- |
+| **Development**     | `bun run dev`        | Start development server with hot reload          |
+| **Build & Deploy**  | `bun run deploy`     | Deploy to Cloudflare Workers (production)         |
 | **Type Generation** | `bun run cf-typegen` | Generate TypeScript types for Cloudflare bindings |
 
 ### Code Quality Scripts
 
-| Script | Command | Description |
-|--------|---------|-------------|
-| **Lint** | `bun run lint` | Run ESLint to check code quality |
+| Script       | Command            | Description                      |
+| ------------ | ------------------ | -------------------------------- |
+| **Lint**     | `bun run lint`     | Run ESLint to check code quality |
 | **Lint Fix** | `bun run lint:fix` | Automatically fix linting issues |
 
 ### Database Scripts
 
-| Script | Command | Description |
-|--------|---------|-------------|
-| **Generate Migration** | `bunx drizzle-kit generate` | Generate new migration files |
-| **Push Schema** | `bunx drizzle-kit push` | Push schema changes to database |
-| **Studio** | `bunx drizzle-kit studio` | Open Drizzle Studio (database GUI) |
+| Script                 | Command                     | Description                        |
+| ---------------------- | --------------------------- | ---------------------------------- |
+| **Generate Migration** | `bunx drizzle-kit generate` | Generate new migration files       |
+| **Push Schema**        | `bunx drizzle-kit push`     | Push schema changes to database    |
+| **Studio**             | `bunx drizzle-kit studio`   | Open Drizzle Studio (database GUI) |
 
 ## 🏗️ Project Architecture
 
@@ -210,14 +210,15 @@ import type { CreateFeatureRoute } from '@/routes/feature/feature.route'
 
 export const CreateFeatureHandler: AppRouteHandler<CreateFeatureRoute> = async (c) => {
   const validatedBody = c.req.valid('json')
-  
+
   try {
     // Business logic here
     const db = createDb(c)
     // Database operations...
-    
+
     return c.json({ message: 'Success', data: result }, 201)
-  } catch (err) {
+  }
+  catch (err) {
     c.var.logger.error('Feature creation failed', { error: err.message })
     return c.json({ message: 'Internal Server Error' }, 500)
   }
@@ -272,11 +273,13 @@ This project uses **Vitest** for unit testing, which provides excellent TypeScri
 #### Setting Up Tests
 
 1. **Install Vitest** (if not already installed):
+
    ```bash
    bun add -d vitest @vitest/ui
    ```
 
 2. **Add Test Scripts** to `package.json`:
+
    ```json
    {
      "scripts": {
@@ -289,9 +292,10 @@ This project uses **Vitest** for unit testing, which provides excellent TypeScri
    ```
 
 3. **Create Vitest Config** (`vitest.config.ts`):
+
    ```typescript
+   import path from 'node:path'
    import { defineConfig } from 'vitest/config'
-   import path from 'path'
 
    export default defineConfig({
      test: {
@@ -312,7 +316,7 @@ Create test files alongside your source files with `.test.ts` or `.spec.ts` exte
 
 ```typescript
 // src/handlers/users/create-user.handler.test.ts
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createTestApp } from '@/lib/create-app'
 import { CreateUserHandler } from './create-user.handler'
 
@@ -371,21 +375,24 @@ describe('CreateUserHandler', () => {
 For testing database operations, consider using:
 
 1. **In-Memory Database**:
+
    ```typescript
-   import { drizzle } from 'drizzle-orm/better-sqlite3'
    import Database from 'better-sqlite3'
+   import { drizzle } from 'drizzle-orm/better-sqlite3'
 
    const sqlite = new Database(':memory:')
    const testDb = drizzle(sqlite)
    ```
 
 2. **Test Database**:
+
    ```typescript
    // Use a separate test database
    const TEST_DATABASE_URL = 'postgresql://user:pass@localhost:5432/lab_system_test'
    ```
 
 3. **Mocked Database**:
+
    ```typescript
    import { vi } from 'vitest'
 
@@ -442,7 +449,7 @@ For testing complete API flows:
 
 ```typescript
 // src/__tests__/integration/users.test.ts
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import app from '@/index'
 
 describe('Users API Integration', () => {
@@ -469,7 +476,7 @@ describe('Users API Integration', () => {
     })
 
     expect(response.status).toBe(201)
-    
+
     // Verify user was created in database
     // Test related endpoints
   })
@@ -541,6 +548,7 @@ jobs:
 ### Common Issues
 
 #### Database Connection Issues
+
 ```bash
 # Check if PostgreSQL is running
 pg_isready
@@ -550,6 +558,7 @@ DATABASE_URL=postgresql://username:password@host:port/database
 ```
 
 #### Environment Variables Not Loading
+
 ```bash
 # Ensure files exist
 ls -la .env .dev.vars
@@ -559,6 +568,7 @@ chmod 644 .env .dev.vars
 ```
 
 #### Bun Installation Issues
+
 ```bash
 # Reinstall Bun
 curl -fsSL https://bun.sh/install | bash
@@ -571,6 +581,7 @@ bun install
 ### Development Server Issues
 
 #### Port Already in Use
+
 ```bash
 # Kill process on port 8787
 lsof -ti:8787 | xargs kill -9
@@ -580,6 +591,7 @@ bun run dev --port 3000
 ```
 
 #### Hot Reload Not Working
+
 ```bash
 # Restart development server
 bun run dev

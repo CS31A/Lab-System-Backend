@@ -7,9 +7,6 @@ export function createDb(c: Context) {
   if (!c.env.DATABASE_URL)
     throw new Error('Database URL is required')
 
-  // const db = drizzle({ client: neon(c.env.DATABASE_URL as string) })
-  const client = neon(c.env.DATABASE_URL as string)
-
-  const db = drizzle(client, {schema})
+  const db = drizzle(neon(c.env.DATABASE_URL as string), { schema })
   return db
 }

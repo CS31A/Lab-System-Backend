@@ -17,4 +17,3 @@ Security notes:
 
 - Tokens are stored in httpOnly cookies to mitigate XSS. The `secure` flag is enabled in production.
 - Access token TTL: 15 minutes. Refresh token TTL: 7 days.
-

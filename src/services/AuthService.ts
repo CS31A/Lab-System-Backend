@@ -1,11 +1,11 @@
 import type { Context } from 'hono'
+import type { AppBindings } from '@/lib/types/app-types'
 import bcrypt from 'bcryptjs'
 import { eq } from 'drizzle-orm'
-import { createDb } from '@/db'
-import { users, refreshTokens } from '@/db/schema'
 import { sign } from 'hono/jwt'
 import { nanoid } from 'nanoid'
-import type { AppBindings } from '@/lib/types/app-types'
+import { createDb } from '@/db'
+import { refreshTokens, users } from '@/db/schema'
 
 /**
  * AuthService
@@ -102,5 +102,3 @@ export class AuthService {
     await this.db.delete(refreshTokens).where(eq(refreshTokens.token_hash, refreshToken))
   }
 }
-
-
