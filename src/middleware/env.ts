@@ -4,6 +4,7 @@ const EnvSchema = z.object({
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   NODE_ENV: z.string(),
   DATABASE_URL: z.string(),
+  JWT_SECRET: z.string(),
 })
 
 export type Environment = z.infer<typeof EnvSchema>

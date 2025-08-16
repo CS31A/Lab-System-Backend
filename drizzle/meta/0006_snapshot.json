@@ -1,941 +1,941 @@
 {
-  "id": "60bc776c-05b9-4fd4-9618-57e16a007ede",
-  "prevId": "c81da21e-f5f5-4c73-a81a-19f3585939ff",
-  "version": "7",
-  "dialect": "postgresql",
-  "tables": {
-    "public.admins": {
-      "name": "admins",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(12)",
-          "primaryKey": true,
-          "notNull": true
+    "id": "60bc776c-05b9-4fd4-9618-57e16a007ede",
+    "prevId": "c81da21e-f5f5-4c73-a81a-19f3585939ff",
+    "version": "7",
+    "dialect": "postgresql",
+    "tables": {
+        "public.admins": {
+            "name": "admins",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "varchar(12)",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "user_id": {
+                    "name": "user_id",
+                    "type": "varchar(12)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "firstname": {
+                    "name": "firstname",
+                    "type": "varchar(100)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "lastname": {
+                    "name": "lastname",
+                    "type": "varchar(100)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "admins_user_id_users_id_fk": {
+                    "name": "admins_user_id_users_id_fk",
+                    "tableFrom": "admins",
+                    "tableTo": "users",
+                    "columnsFrom": [
+                        "user_id"
+                    ],
+                    "columnsTo": [
+                        "id"
+                    ],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
         },
-        "user_id": {
-          "name": "user_id",
-          "type": "varchar(12)",
-          "primaryKey": false,
-          "notNull": true
+        "public.lab_activity_log": {
+            "name": "lab_activity_log",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "varchar(12)",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "laboratory_id": {
+                    "name": "laboratory_id",
+                    "type": "varchar(12)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "schedule_id": {
+                    "name": "schedule_id",
+                    "type": "varchar(12)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "seating_id": {
+                    "name": "seating_id",
+                    "type": "varchar(12)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "status": {
+                    "name": "status",
+                    "type": "varchar(50)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "time_in": {
+                    "name": "time_in",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "time_out": {
+                    "name": "time_out",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "lab_activity_log_laboratory_id_laboratory_id_fk": {
+                    "name": "lab_activity_log_laboratory_id_laboratory_id_fk",
+                    "tableFrom": "lab_activity_log",
+                    "tableTo": "laboratory",
+                    "columnsFrom": [
+                        "laboratory_id"
+                    ],
+                    "columnsTo": [
+                        "id"
+                    ],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "lab_activity_log_schedule_id_schedule_id_fk": {
+                    "name": "lab_activity_log_schedule_id_schedule_id_fk",
+                    "tableFrom": "lab_activity_log",
+                    "tableTo": "schedule",
+                    "columnsFrom": [
+                        "schedule_id"
+                    ],
+                    "columnsTo": [
+                        "id"
+                    ],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "lab_activity_log_seating_id_seating_history_id_fk": {
+                    "name": "lab_activity_log_seating_id_seating_history_id_fk",
+                    "tableFrom": "lab_activity_log",
+                    "tableTo": "seating_history",
+                    "columnsFrom": [
+                        "seating_id"
+                    ],
+                    "columnsTo": [
+                        "id"
+                    ],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
         },
-        "firstname": {
-          "name": "firstname",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false
+        "public.laboratory": {
+            "name": "laboratory",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "varchar(12)",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "name": {
+                    "name": "name",
+                    "type": "varchar(128)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "status": {
+                    "name": "status",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": true
+                },
+                "time_in": {
+                    "name": "time_in",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "time_out": {
+                    "name": "time_out",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
         },
-        "lastname": {
-          "name": "lastname",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false
+        "public.schedule": {
+            "name": "schedule",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "varchar(12)",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "laboratory_id": {
+                    "name": "laboratory_id",
+                    "type": "varchar(12)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "teacher_id": {
+                    "name": "teacher_id",
+                    "type": "varchar(12)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "subject_id": {
+                    "name": "subject_id",
+                    "type": "varchar(12)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "section": {
+                    "name": "section",
+                    "type": "varchar(30)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "start_time": {
+                    "name": "start_time",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "end_time": {
+                    "name": "end_time",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "status": {
+                    "name": "status",
+                    "type": "varchar(20)",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "'scheduled'"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "schedule_laboratory_id_laboratory_id_fk": {
+                    "name": "schedule_laboratory_id_laboratory_id_fk",
+                    "tableFrom": "schedule",
+                    "tableTo": "laboratory",
+                    "columnsFrom": [
+                        "laboratory_id"
+                    ],
+                    "columnsTo": [
+                        "id"
+                    ],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "schedule_teacher_id_teachers_id_fk": {
+                    "name": "schedule_teacher_id_teachers_id_fk",
+                    "tableFrom": "schedule",
+                    "tableTo": "teachers",
+                    "columnsFrom": [
+                        "teacher_id"
+                    ],
+                    "columnsTo": [
+                        "id"
+                    ],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "schedule_subject_id_subjects_id_fk": {
+                    "name": "schedule_subject_id_subjects_id_fk",
+                    "tableFrom": "schedule",
+                    "tableTo": "subjects",
+                    "columnsFrom": [
+                        "subject_id"
+                    ],
+                    "columnsTo": [
+                        "id"
+                    ],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
+        "public.seating_history": {
+            "name": "seating_history",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "varchar(12)",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "laboratory_id": {
+                    "name": "laboratory_id",
+                    "type": "varchar(12)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "student_id": {
+                    "name": "student_id",
+                    "type": "varchar(12)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "seating_id": {
+                    "name": "seating_id",
+                    "type": "varchar(12)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "monitor": {
+                    "name": "monitor",
+                    "type": "varchar(255)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "mouse": {
+                    "name": "mouse",
+                    "type": "varchar(255)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "keyboard": {
+                    "name": "keyboard",
+                    "type": "varchar(255)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "cables": {
+                    "name": "cables",
+                    "type": "varchar(255)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "seating_history_laboratory_id_laboratory_id_fk": {
+                    "name": "seating_history_laboratory_id_laboratory_id_fk",
+                    "tableFrom": "seating_history",
+                    "tableTo": "laboratory",
+                    "columnsFrom": [
+                        "laboratory_id"
+                    ],
+                    "columnsTo": [
+                        "id"
+                    ],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "seating_history_student_id_students_id_fk": {
+                    "name": "seating_history_student_id_students_id_fk",
+                    "tableFrom": "seating_history",
+                    "tableTo": "students",
+                    "columnsFrom": [
+                        "student_id"
+                    ],
+                    "columnsTo": [
+                        "id"
+                    ],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "seating_history_seating_id_seating_plan_id_fk": {
+                    "name": "seating_history_seating_id_seating_plan_id_fk",
+                    "tableFrom": "seating_history",
+                    "tableTo": "seating_plan",
+                    "columnsFrom": [
+                        "seating_id"
+                    ],
+                    "columnsTo": [
+                        "id"
+                    ],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
         },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
+        "public.seating_plan": {
+            "name": "seating_plan",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "varchar(12)",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "laboratory_id": {
+                    "name": "laboratory_id",
+                    "type": "varchar(12)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "schedule_id": {
+                    "name": "schedule_id",
+                    "type": "varchar(12)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "student_id": {
+                    "name": "student_id",
+                    "type": "varchar(12)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "seat_number": {
+                    "name": "seat_number",
+                    "type": "varchar(10)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "monitor_status": {
+                    "name": "monitor_status",
+                    "type": "varchar(255)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "mouse_status": {
+                    "name": "mouse_status",
+                    "type": "varchar(255)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "keyboard_status": {
+                    "name": "keyboard_status",
+                    "type": "varchar(255)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "cables_status": {
+                    "name": "cables_status",
+                    "type": "varchar(255)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "seating_plan_laboratory_id_laboratory_id_fk": {
+                    "name": "seating_plan_laboratory_id_laboratory_id_fk",
+                    "tableFrom": "seating_plan",
+                    "tableTo": "laboratory",
+                    "columnsFrom": [
+                        "laboratory_id"
+                    ],
+                    "columnsTo": [
+                        "id"
+                    ],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "seating_plan_schedule_id_schedule_id_fk": {
+                    "name": "seating_plan_schedule_id_schedule_id_fk",
+                    "tableFrom": "seating_plan",
+                    "tableTo": "schedule",
+                    "columnsFrom": [
+                        "schedule_id"
+                    ],
+                    "columnsTo": [
+                        "id"
+                    ],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                },
+                "seating_plan_student_id_students_id_fk": {
+                    "name": "seating_plan_student_id_students_id_fk",
+                    "tableFrom": "seating_plan",
+                    "tableTo": "students",
+                    "columnsFrom": [
+                        "student_id"
+                    ],
+                    "columnsTo": [
+                        "id"
+                    ],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.students": {
+            "name": "students",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "varchar(12)",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "firstname": {
+                    "name": "firstname",
+                    "type": "varchar(100)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "lastname": {
+                    "name": "lastname",
+                    "type": "varchar(100)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "student_id": {
+                    "name": "student_id",
+                    "type": "varchar(50)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "section": {
+                    "name": "section",
+                    "type": "varchar(30)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "course": {
+                    "name": "course",
+                    "type": "varchar(50)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "students_student_id_unique": {
+                    "name": "students_student_id_unique",
+                    "nullsNotDistinct": false,
+                    "columns": [
+                        "student_id"
+                    ]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.subjects": {
+            "name": "subjects",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "varchar(12)",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "subject_name": {
+                    "name": "subject_name",
+                    "type": "varchar(255)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "subject_code": {
+                    "name": "subject_code",
+                    "type": "varchar(50)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.teachers": {
+            "name": "teachers",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "varchar(12)",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "user_id": {
+                    "name": "user_id",
+                    "type": "varchar(12)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "firstname": {
+                    "name": "firstname",
+                    "type": "varchar(100)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "lastname": {
+                    "name": "lastname",
+                    "type": "varchar(100)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "attendance": {
+                    "name": "attendance",
+                    "type": "varchar(20)",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'present'"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "teachers_user_id_users_id_fk": {
+                    "name": "teachers_user_id_users_id_fk",
+                    "tableFrom": "teachers",
+                    "tableTo": "users",
+                    "columnsFrom": [
+                        "user_id"
+                    ],
+                    "columnsTo": [
+                        "id"
+                    ],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.technical_staff": {
+            "name": "technical_staff",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "varchar(12)",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "user_id": {
+                    "name": "user_id",
+                    "type": "varchar(12)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "firstname": {
+                    "name": "firstname",
+                    "type": "varchar(100)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "lastname": {
+                    "name": "lastname",
+                    "type": "varchar(100)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "technical_staff_user_id_users_id_fk": {
+                    "name": "technical_staff_user_id_users_id_fk",
+                    "tableFrom": "technical_staff",
+                    "tableTo": "users",
+                    "columnsFrom": [
+                        "user_id"
+                    ],
+                    "columnsTo": [
+                        "id"
+                    ],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.users": {
+            "name": "users",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "varchar(12)",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "email": {
+                    "name": "email",
+                    "type": "varchar(255)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "password": {
+                    "name": "password",
+                    "type": "varchar(255)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "username": {
+                    "name": "username",
+                    "type": "varchar(255)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "user_type": {
+                    "name": "user_type",
+                    "type": "varchar(20)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "is_deleted": {
+                    "name": "is_deleted",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": false
+                },
+                "deleted_at": {
+                    "name": "deleted_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "users_email_unique": {
+                    "name": "users_email_unique",
+                    "nullsNotDistinct": false,
+                    "columns": [
+                        "email"
+                    ]
+                },
+                "users_username_unique": {
+                    "name": "users_username_unique",
+                    "nullsNotDistinct": false,
+                    "columns": [
+                        "username"
+                    ]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
         }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "admins_user_id_users_id_fk": {
-          "name": "admins_user_id_users_id_fk",
-          "tableFrom": "admins",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
     },
-    "public.lab_activity_log": {
-      "name": "lab_activity_log",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(12)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "laboratory_id": {
-          "name": "laboratory_id",
-          "type": "varchar(12)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "schedule_id": {
-          "name": "schedule_id",
-          "type": "varchar(12)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "seating_id": {
-          "name": "seating_id",
-          "type": "varchar(12)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "time_in": {
-          "name": "time_in",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "time_out": {
-          "name": "time_out",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "lab_activity_log_laboratory_id_laboratory_id_fk": {
-          "name": "lab_activity_log_laboratory_id_laboratory_id_fk",
-          "tableFrom": "lab_activity_log",
-          "tableTo": "laboratory",
-          "columnsFrom": [
-            "laboratory_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "lab_activity_log_schedule_id_schedule_id_fk": {
-          "name": "lab_activity_log_schedule_id_schedule_id_fk",
-          "tableFrom": "lab_activity_log",
-          "tableTo": "schedule",
-          "columnsFrom": [
-            "schedule_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "lab_activity_log_seating_id_seating_history_id_fk": {
-          "name": "lab_activity_log_seating_id_seating_history_id_fk",
-          "tableFrom": "lab_activity_log",
-          "tableTo": "seating_history",
-          "columnsFrom": [
-            "seating_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.laboratory": {
-      "name": "laboratory",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(12)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": true
-        },
-        "time_in": {
-          "name": "time_in",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "time_out": {
-          "name": "time_out",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.schedule": {
-      "name": "schedule",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(12)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "laboratory_id": {
-          "name": "laboratory_id",
-          "type": "varchar(12)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "teacher_id": {
-          "name": "teacher_id",
-          "type": "varchar(12)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "subject_id": {
-          "name": "subject_id",
-          "type": "varchar(12)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "section": {
-          "name": "section",
-          "type": "varchar(30)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "start_time": {
-          "name": "start_time",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "end_time": {
-          "name": "end_time",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'scheduled'"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "schedule_laboratory_id_laboratory_id_fk": {
-          "name": "schedule_laboratory_id_laboratory_id_fk",
-          "tableFrom": "schedule",
-          "tableTo": "laboratory",
-          "columnsFrom": [
-            "laboratory_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "schedule_teacher_id_teachers_id_fk": {
-          "name": "schedule_teacher_id_teachers_id_fk",
-          "tableFrom": "schedule",
-          "tableTo": "teachers",
-          "columnsFrom": [
-            "teacher_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "schedule_subject_id_subjects_id_fk": {
-          "name": "schedule_subject_id_subjects_id_fk",
-          "tableFrom": "schedule",
-          "tableTo": "subjects",
-          "columnsFrom": [
-            "subject_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.seating_history": {
-      "name": "seating_history",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(12)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "laboratory_id": {
-          "name": "laboratory_id",
-          "type": "varchar(12)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "student_id": {
-          "name": "student_id",
-          "type": "varchar(12)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "seating_id": {
-          "name": "seating_id",
-          "type": "varchar(12)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "monitor": {
-          "name": "monitor",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "mouse": {
-          "name": "mouse",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "keyboard": {
-          "name": "keyboard",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "cables": {
-          "name": "cables",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "seating_history_laboratory_id_laboratory_id_fk": {
-          "name": "seating_history_laboratory_id_laboratory_id_fk",
-          "tableFrom": "seating_history",
-          "tableTo": "laboratory",
-          "columnsFrom": [
-            "laboratory_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "seating_history_student_id_students_id_fk": {
-          "name": "seating_history_student_id_students_id_fk",
-          "tableFrom": "seating_history",
-          "tableTo": "students",
-          "columnsFrom": [
-            "student_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "seating_history_seating_id_seating_plan_id_fk": {
-          "name": "seating_history_seating_id_seating_plan_id_fk",
-          "tableFrom": "seating_history",
-          "tableTo": "seating_plan",
-          "columnsFrom": [
-            "seating_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.seating_plan": {
-      "name": "seating_plan",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(12)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "laboratory_id": {
-          "name": "laboratory_id",
-          "type": "varchar(12)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "schedule_id": {
-          "name": "schedule_id",
-          "type": "varchar(12)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "student_id": {
-          "name": "student_id",
-          "type": "varchar(12)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "seat_number": {
-          "name": "seat_number",
-          "type": "varchar(10)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "monitor_status": {
-          "name": "monitor_status",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "mouse_status": {
-          "name": "mouse_status",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "keyboard_status": {
-          "name": "keyboard_status",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "cables_status": {
-          "name": "cables_status",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "seating_plan_laboratory_id_laboratory_id_fk": {
-          "name": "seating_plan_laboratory_id_laboratory_id_fk",
-          "tableFrom": "seating_plan",
-          "tableTo": "laboratory",
-          "columnsFrom": [
-            "laboratory_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "seating_plan_schedule_id_schedule_id_fk": {
-          "name": "seating_plan_schedule_id_schedule_id_fk",
-          "tableFrom": "seating_plan",
-          "tableTo": "schedule",
-          "columnsFrom": [
-            "schedule_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "seating_plan_student_id_students_id_fk": {
-          "name": "seating_plan_student_id_students_id_fk",
-          "tableFrom": "seating_plan",
-          "tableTo": "students",
-          "columnsFrom": [
-            "student_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.students": {
-      "name": "students",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(12)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "firstname": {
-          "name": "firstname",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "lastname": {
-          "name": "lastname",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "student_id": {
-          "name": "student_id",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "section": {
-          "name": "section",
-          "type": "varchar(30)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "course": {
-          "name": "course",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "students_student_id_unique": {
-          "name": "students_student_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "student_id"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.subjects": {
-      "name": "subjects",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(12)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "subject_name": {
-          "name": "subject_name",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "subject_code": {
-          "name": "subject_code",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.teachers": {
-      "name": "teachers",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(12)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "varchar(12)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "firstname": {
-          "name": "firstname",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "lastname": {
-          "name": "lastname",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "attendance": {
-          "name": "attendance",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'present'"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "teachers_user_id_users_id_fk": {
-          "name": "teachers_user_id_users_id_fk",
-          "tableFrom": "teachers",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.technical_staff": {
-      "name": "technical_staff",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(12)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "varchar(12)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "firstname": {
-          "name": "firstname",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "lastname": {
-          "name": "lastname",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "technical_staff_user_id_users_id_fk": {
-          "name": "technical_staff_user_id_users_id_fk",
-          "tableFrom": "technical_staff",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.users": {
-      "name": "users",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(12)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "email": {
-          "name": "email",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "password": {
-          "name": "password",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "username": {
-          "name": "username",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_type": {
-          "name": "user_type",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "is_deleted": {
-          "name": "is_deleted",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "users_email_unique": {
-          "name": "users_email_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
-        },
-        "users_username_unique": {
-          "name": "users_username_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "username"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    }
-  },
-  "enums": {},
-  "schemas": {},
-  "sequences": {},
-  "roles": {},
-  "policies": {},
-  "views": {},
-  "_meta": {
-    "columns": {},
+    "enums": {},
     "schemas": {},
-    "tables": {}
-  }
+    "sequences": {},
+    "roles": {},
+    "policies": {},
+    "views": {},
+    "_meta": {
+        "columns": {},
+        "schemas": {},
+        "tables": {}
+    }
 }
