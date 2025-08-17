@@ -230,7 +230,7 @@ export class TeacherService {
 
       // Validate teacher exists after parallel execution
       if (!teacherExists.length) {
-        throw new Error(`Teacher with ID ${teacherId} not found`)
+        throw new Error(`Teacher does not exist`)
       }
 
       const result: TeacherDashboardResult = {

@@ -7,6 +7,7 @@ import {
   teacherDashboardResponseSchema,
 } from '@/lib/zod-schemas'
 import jsonContent from '@/middleware/utils/json-content'
+
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 
 export const getTeacherDashboardRoute = createRoute({
@@ -17,13 +18,14 @@ export const getTeacherDashboardRoute = createRoute({
     query: teacherDashboardQuerySchema,
   },
   responses: {
-    [httpStatusCodes.OK]: jsonContent(
-      z.object({
-        message: z.string(),
-        data: teacherDashboardResponseSchema,
-      }),
-      'Teacher dashboard data retrieved successfully',
-    ),
+    [httpStatusCodes.OK]: {
+      content: {
+        'application/json': {
+          schema: teacherDashboardResponseSchema,
+        },
+      },
+      description: 'Teacher dashboard data retrieved successfully',
+    },
     [httpStatusCodes.BAD_REQUEST]: jsonContent(
       z.object({
         message: z.string(),
