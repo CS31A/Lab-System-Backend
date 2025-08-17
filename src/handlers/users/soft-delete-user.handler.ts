@@ -38,7 +38,7 @@ export const SoftDeleteUserHandler: AppRouteHandler<typeof import('@/routes/user
     return c.json(
       {
         message: 'Internal Server Error',
-        errors: errorMessage,
+        errors: 'An unexpected error occurred while soft deleting the user',
       },
       httpStatusCodes.INTERNAL_SERVER_ERROR,
     )

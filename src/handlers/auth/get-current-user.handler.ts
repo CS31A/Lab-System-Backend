@@ -22,10 +22,15 @@ export const GetCurrentUserHandler: AppRouteHandler<GetCurrentUserRoute> = async
   }
   catch (error) {
     const errMsg = (error as Error).message
+    c.var.logger.error('Failed to retrieve current user information', {
+      error: errMsg,
+      timestamp: new Date().toISOString(),
+    })
+    
     return c.json(
       {
         message: 'Internal Server Error',
-        errors: errMsg,
+        errors: 'An unexpected error occurred while retrieving user information',
       },
       httpStatusCodes.INTERNAL_SERVER_ERROR,
     )
