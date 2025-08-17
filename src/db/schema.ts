@@ -1,14 +1,8 @@
 import { z } from '@hono/zod-openapi'
+import { relations } from 'drizzle-orm'
 import { boolean, pgTable, timestamp, varchar } from 'drizzle-orm/pg-core'
 import { createSchemaFactory } from 'drizzle-zod'
 import { nanoid } from 'nanoid'
-
-// const customId = (length = 12): string => {
-//   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-//   let result = ''
-//   for (let i = 0; i < length; i++) result += chars.charAt(Math.floor(Math.random() * chars.length))
-//   return result
-// }
 
 export const users = pgTable('users', {
   id: varchar({ length: 12 })
@@ -121,7 +115,7 @@ export const patchUserSchema = z.object({
 })
   .refine(
     (data) => {
-    // Only check password confirmation if both password and confirmPassword are provided
+      // Only check password confirmation if both password and confirmPassword are provided
       if (data.password && data.confirm_password) {
         return data.password === data.confirm_password
       }
@@ -501,3 +495,15 @@ export const refreshTokens = pgTable('refresh_tokens', {
 export const refreshTokenSelectSchema = createSelectSchema(refreshTokens)
 export const refreshTokenInsertSchema = createInsertSchema(refreshTokens)
   .omit({ id: true, createdAt: true, updatedAt: true })
+
+// Define relations for users and refresh tokens
+export const usersRelations = relations(users, ({ many }) => ({
+  refreshTokens: many(refreshTokens),
+}))
+
+export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [refreshTokens.user_id],
+    references: [users.id],
+  }),
+}))
