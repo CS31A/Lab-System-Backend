@@ -6,7 +6,7 @@ import { authMiddleware, requireRole } from '@/middleware/auth'
 import { getTeacherDashboardRoute, getTeachersRoute } from '@/routes/teachers/teachers.routes'
 
 const router = createRouter()
-router.use('/teachers/dashboard', authMiddleware(), requireRole(['teacher']))
+router.use('/teachers/dashboard', authMiddleware(), requireRole(['teacher', 'admin']))
 
 router.openapi(getTeachersRoute, teachersHandlers.GetTeachersHandler)
 router.openapi(getTeacherDashboardRoute, dashboardHandlers.GetTeacherDashboardHandler)
