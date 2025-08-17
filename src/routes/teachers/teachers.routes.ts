@@ -1,8 +1,47 @@
 import { createRoute, z } from '@hono/zod-openapi'
 import { teacherSelectSchema } from '@/db/schema'
-import { pagination, paginationQuery } from '@/lib/zod-schemas'
+import {
+  pagination,
+  paginationQuery,
+  teacherDashboardQuerySchema,
+  teacherDashboardResponseSchema,
+} from '@/lib/zod-schemas'
 import jsonContent from '@/middleware/utils/json-content'
+
 import * as httpStatusCodes from '@/openapi/http-status-codes'
+
+export const getTeacherDashboardRoute = createRoute({
+  tags: ['Teachers'],
+  method: 'get',
+  path: '/teachers/dashboard',
+  request: {
+    query: teacherDashboardQuerySchema,
+  },
+  responses: {
+    [httpStatusCodes.OK]: {
+      content: {
+        'application/json': { // TODO: Refactor this to follow the standard convention by directly using jsoncContent instead of this
+          schema: teacherDashboardResponseSchema,
+        },
+      },
+      description: 'Teacher dashboard data retrieved successfully',
+    },
+    [httpStatusCodes.BAD_REQUEST]: jsonContent(
+      z.object({
+        message: z.string(),
+        errors: z.any(),
+      }),
+      'Invalid query parameters',
+    ),
+    [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({
+        message: z.string(),
+        errors: z.any(),
+      }),
+      'Internal Server Error',
+    ),
+  },
+})
 
 export const getTeachersRoute = createRoute({
   tags: ['Teachers'],
@@ -38,3 +77,4 @@ export const getTeachersRoute = createRoute({
 })
 
 export type GetTeachers = typeof getTeachersRoute
+export type GetTeacherDashboard = typeof getTeacherDashboardRoute
