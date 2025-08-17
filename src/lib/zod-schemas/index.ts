@@ -13,3 +13,9 @@ export {
   pagination,
   paginationQuery,
 } from './pagination.schema'
+
+// Teacher dashboard schemas
+export {
+  teacherDashboardQuerySchema,
+  teacherDashboardResponseSchema,
+} from './teacher-dashboard.schema'
