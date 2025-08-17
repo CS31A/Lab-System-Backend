@@ -4,18 +4,9 @@ import { createMiddleware } from 'hono/factory'
 import { verify } from 'hono/jwt'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 
-/**
- * Note: this is added to fix mismatch between JWT payload and expected
- * JWTPayload from auth service line 103-106 (it works)
- */
 interface JWTPayload {
-  sub: string // User ID (from AuthService)
-  role: string // User type (from AuthService)
-  exp: number
-}
-interface MappedJWTPayload {
-  userId: string
-  userType: string
+  sub: string
+  role: string
   exp: number
 }
 
@@ -35,13 +26,7 @@ export function authMiddleware() {
 
     try {
       const payload = await verify(token, c.env.JWT_SECRET) as unknown as JWTPayload
-      // Map the actual JWT fields to expected format
-      const mappedPayload: MappedJWTPayload = {
-        userId: payload.sub,
-        userType: payload.role,
-        exp: payload.exp,
-      }
-      c.set('jwtPayload', mappedPayload)
+      c.set('jwtPayload', payload)
     }
     catch (error) {
       c.var.logger.warn('Authentication failed: Invalid access token', { error: (error as Error).message })
@@ -59,7 +44,7 @@ export function authMiddleware() {
 
 export function requireRole(allowedRoles: string[]) {
   return createMiddleware<AppBindings>(async (c, next) => {
-    const payload = c.get('jwtPayload') as MappedJWTPayload
+    const payload = c.get('jwtPayload') as JWTPayload
 
     if (!payload) {
       c.var.logger.warn('Role check failed: No JWT payload found')
@@ -71,11 +56,11 @@ export function requireRole(allowedRoles: string[]) {
       )
     }
 
-    if (!allowedRoles.includes(payload.userType)) {
+    if (!allowedRoles.includes(payload.role)) {
       c.var.logger.warn('Role check failed: Insufficient permissions', {
-        userType: payload.userType,
+        userType: payload.role,
         allowedRoles,
-        userId: payload.userId,
+        userId: payload.sub,
       })
       return c.json(
         {
