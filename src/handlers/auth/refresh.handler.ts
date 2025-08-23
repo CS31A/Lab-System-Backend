@@ -8,7 +8,15 @@ import { getCookie, setCookie } from 'hono/cookie'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 import { AuthService } from '@/services/AuthService'
 
+/**
+ * Handles access token renewal. It uses the refresh token (from an HTTP-only cookie)
+ * to issue a new access token, which is then set in a new cookie.
+ *
+ * @param c - The Hono context, containing the refresh token cookie.
+ * @returns A JSON response confirming the token refresh, or an error response.
+ */
 export const RefreshHandler: AppRouteHandler<RefreshRoute> = async (c) => {
+  // Get the refresh token from the HTTP-only cookie
   const refreshToken = getCookie(c, 'refreshToken')
 
   if (!refreshToken) {
@@ -21,9 +29,12 @@ export const RefreshHandler: AppRouteHandler<RefreshRoute> = async (c) => {
     )
   }
   try {
+    // Instantiate the authentication service
     const authService = new AuthService(c)
+    // Issue a new access token using the refresh token
     const newAccessToken = await authService.issueNewAccessToken(refreshToken)
 
+    // Set the new access token in a secure, HTTP-only cookie
     setCookie(c, 'accessToken', newAccessToken, {
       httpOnly: true,
       secure: c.env.NODE_ENV === 'production',
@@ -35,7 +46,7 @@ export const RefreshHandler: AppRouteHandler<RefreshRoute> = async (c) => {
     return c.json({ message: 'Access token refreshed' }, httpStatusCodes.OK)
   }
   catch (err) {
-    // Typed error check for invalid/expired refresh token
+    // Handle cases where the refresh token is invalid or expired
     if (err instanceof Error && (err.message === 'Invalid refresh token' || err.message === 'Refresh token expired')) {
       c.var.logger.warn('Refresh token invalid or expired', err)
       return c.json(
@@ -43,6 +54,7 @@ export const RefreshHandler: AppRouteHandler<RefreshRoute> = async (c) => {
         httpStatusCodes.UNAUTHORIZED,
       )
     }
+    // Log any other unexpected errors
     c.var.logger.error('Failed to refresh access token', err)
     return c.json(
       { message: 'Internal Server Error', errors: null },
