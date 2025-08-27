@@ -56,7 +56,7 @@ export const UpdateUserHandler: AppRouteHandler<UpdateUserRoute> = async (c) => 
       return c.json(
         {
           message: 'Bad Request',
-          errors: errorMessage,
+          errors: 'Password confirmation does not match',
         },
         httpStatusCodes.BAD_REQUEST,
       )
@@ -72,7 +72,7 @@ export const UpdateUserHandler: AppRouteHandler<UpdateUserRoute> = async (c) => 
     return c.json(
       {
         message: 'Internal Server Error',
-        errors: errorMessage,
+        errors: 'An unexpected error occurred during user update',
       },
       httpStatusCodes.INTERNAL_SERVER_ERROR,
     )

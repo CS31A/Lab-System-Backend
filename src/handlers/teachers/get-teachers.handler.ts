@@ -38,7 +38,7 @@ export const GetTeachersHandler: AppRouteHandler<GetTeachers> = async (c) => {
     return c.json(
       {
         message: 'Internal Server Error',
-        errors: (err as Error).message,
+        errors: 'An unexpected error occurred while retrieving teachers',
       },
       httpStatusCodes.INTERNAL_SERVER_ERROR,
     )

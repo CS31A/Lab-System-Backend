@@ -50,7 +50,7 @@ export const CreateUserHandler: AppRouteHandler<CreateUserRoute> = async (c) => 
     return c.json(
       {
         message: 'Internal Server Error',
-        errors: (err as Error).message,
+        errors: 'An unexpected error occurred during user creation',
       },
       httpStatusCodes.INTERNAL_SERVER_ERROR,
     )
