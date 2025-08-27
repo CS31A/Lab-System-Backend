@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import app from '@/index'
 
-const MOCK_ENV = {
+export const MOCK_ENV = {
   LOG_LEVEL: 'silent',
   DB_URL: 'postgresql://neondb_owner:npg_nwdvIUp6hg4b@ep-flat-sun-a1s7no3s-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require',
   NODE_ENV: 'development',
