@@ -6,7 +6,7 @@
 import type { Context } from 'hono'
 import bcrypt from 'bcryptjs'
 import { and, count, eq } from 'drizzle-orm'
-import { createDb } from '@/db'
+import { createDb, createServerlessDb } from '@/db'
 import { admins, teachers, technical_staff, users } from '@/db/schema'
 
 export interface CreateUserData {
@@ -68,6 +68,7 @@ export type UserWithRole = typeof users.$inferSelect & {
  */
 export class UserService {
   private db: ReturnType<typeof createDb>
+  private serverlessDb: ReturnType<typeof createServerlessDb>
   private logger: any
 
   /**
@@ -76,17 +77,18 @@ export class UserService {
    */
   constructor(c: Context) {
     this.db = createDb(c)
+    this.serverlessDb = createServerlessDb(c)
     this.logger = c.var.logger
   }
 
   /**
    * Creates a new user account with hashed password and role-specific profile
    *
-   * This method performs the following operations:
+   * This method performs the following operations within a database transaction:
    * 1. Hashes the user's password using bcrypt (10 rounds)
    * 2. Creates the base user record
    * 3. Creates the appropriate role-specific profile (teacher/admin/technical_staff)
-   * 4. Handles cleanup if role creation fails
+   * 4. Automatically rolls back the entire transaction if any step fails
    *
    * @param userData - User data including credentials and role information
    * @param userData.username - Unique username for the user
@@ -101,7 +103,7 @@ export class UserService {
    * @returns result.roleRecord - The created role-specific record or null
    *
    * @throws {Error} When user creation fails due to validation or database constraints
-   * @throws {Error} When role creation fails (triggers user cleanup)
+   * @throws {Error} When role creation fails (triggers automatic transaction rollback)
    *
    * @example
    * ```typescript
@@ -125,64 +127,60 @@ export class UserService {
     // Hash password with bcrypt using 10 rounds for security/performance balance
     const hashedPassword = await bcrypt.hash(userData.password, 10)
 
-    // Declare variables outside try block for proper scope
-    let createdUser: typeof users.$inferSelect
-    let roleRecord = null
-
     try {
-      // Create the user first
-      [createdUser] = await this.db
-        .insert(users)
-        .values({
-          password: hashedPassword,
-          username: userData.username,
-          user_type: userData.user_type,
-          email: userData.email,
-        })
-        .returning()
+      // Use transaction to ensure atomicity - if any operation fails, everything rolls back
+      const result = await this.serverlessDb.transaction(async (tx) => {
+        // Create the user first
+        const [createdUser] = await tx
+          .insert(users)
+          .values({
+            password: hashedPassword,
+            username: userData.username,
+            user_type: userData.user_type,
+            email: userData.email,
+          })
+          .returning()
 
-      // Create corresponding role-specific record
-      roleRecord = await this.createUserProfile(createdUser.id, userData)
+        // Create corresponding role-specific record using the transaction
+        const roleRecord = await this.createUserProfileInTransaction(tx, createdUser.id, userData)
 
-      // Check if role should have been created but wasn't
-      const shouldHaveRole = ['teacher', 'technical_staff', 'admin'].includes(userData.user_type)
-      if (shouldHaveRole && !roleRecord) {
-        this.logger.error('Role record was not created for required user type', {
-          user_id: createdUser.id,
-          user_type: userData.user_type,
-          timestamp: new Date().toISOString(),
-        })
+        // Check if role should have been created but wasn't
+        const shouldHaveRole = ['teacher', 'technical_staff', 'admin'].includes(userData.user_type)
+        if (shouldHaveRole && !roleRecord) {
+          this.logger.error('Role record was not created for required user type', {
+            user_id: createdUser.id,
+            user_type: userData.user_type,
+            timestamp: new Date().toISOString(),
+          })
 
-        // Cleanup user since role creation silently failed
-        await this.cleanupUser(createdUser.id)
-        throw new Error('Role creation silently failed')
-      }
+          // Throw error to trigger transaction rollback
+          throw new Error('Role creation silently failed')
+        }
+
+        return { user: createdUser, roleRecord }
+      })
 
       // Log successful creation with role information
       this.logger.info('User and role record created successfully', {
-        user_id: createdUser.id,
+        user_id: result.user.id,
         user_type: userData.user_type,
-        role_record_created: !!roleRecord,
-        should_have_role: shouldHaveRole,
+        role_record_created: !!result.roleRecord,
+        should_have_role: ['teacher', 'technical_staff', 'admin'].includes(userData.user_type),
         timestamp: new Date().toISOString(),
       })
 
-      return { user: createdUser, roleRecord }
+      return result
     }
-    catch (roleError) {
-      // Role creation failed - cleanup user if it was created
-      if (createdUser!) {
-        this.logger.error('Role creation failed, cleaning up user', {
-          user_id: createdUser.id,
-          user_type: userData.user_type,
-          error: (roleError as Error).message,
-          timestamp: new Date().toISOString(),
-        })
+    catch (error) {
+      // Transaction automatically rolled back - log the error and re-throw
+      this.logger.error('User creation failed, transaction rolled back', {
+        user_type: userData.user_type,
+        username: userData.username,
+        error: (error as Error).message,
+        timestamp: new Date().toISOString(),
+      })
 
-        await this.cleanupUser(createdUser.id)
-      }
-
-      throw roleError
+      throw error
     }
   }
 
@@ -267,37 +265,70 @@ export class UserService {
   }
 
   /**
-   * Cleans up a user record when role creation fails
+   * Creates a role-specific profile for a user within a database transaction
    *
-   * This private method is called when user creation succeeds but role creation fails.
-   * It removes the orphaned user record to maintain data consistency.
-   * Cleanup errors are logged but don't prevent the original error from being thrown.
+   * This method is similar to createUserProfile but operates within a transaction context.
+   * It creates the appropriate role record in the corresponding table using the provided transaction.
    *
-   * @param userId - The ID of the user record to clean up
+   * @param tx - The database transaction to use for the operation
+   * @param userId - The ID of the user to create a profile for
+   * @param userData - User data containing role type and profile information
    *
-   * @returns Promise that resolves when cleanup is complete
+   * @returns Promise resolving to the created role record or null if no role needed
    *
-   * @throws {Error} When cleanup fails (logged and re-thrown)
+   * @throws {Error} When database insertion fails
    *
    * @private
    */
-  private async cleanupUser(userId: string): Promise<void> {
-    try {
-      await this.db.delete(users).where(eq(users.id, userId))
-      this.logger.info('User cleanup completed after role creation failure', {
-        user_id: userId,
-        timestamp: new Date().toISOString(),
-      })
-    }
-    catch (cleanupError) {
-      this.logger.error('Failed to cleanup user after role creation failure', {
-        user_id: userId,
-        cleanup_error: (cleanupError as Error).message,
-        timestamp: new Date().toISOString(),
-      })
-      throw cleanupError
+  private async createUserProfileInTransaction(tx: any, userId: string, userData: CreateUserData): Promise<RoleRecord | null> {
+    const { user_type, firstname, lastname } = userData
+
+    switch (user_type) {
+      case 'teacher':
+      { const [teacherRecord] = await tx
+        .insert(teachers)
+        .values({
+          user_id: userId,
+          firstname: firstname || null,
+          lastname: lastname || null,
+          attendance: 'present', // Default value
+        })
+        .returning()
+      return teacherRecord }
+
+      case 'technical_staff':
+      { const [staffRecord] = await tx
+        .insert(technical_staff)
+        .values({
+          user_id: userId,
+          firstname: firstname || null,
+          lastname: lastname || null,
+        })
+        .returning()
+      return staffRecord }
+
+      case 'admin':
+      { const [adminRecord] = await tx
+        .insert(admins)
+        .values({
+          user_id: userId,
+          firstname: firstname || null,
+          lastname: lastname || null,
+        })
+        .returning()
+      return adminRecord }
+
+      default:
+        // If user_type doesn't match any role, just return null
+        this.logger.warn('Unknown user_type, only user record created', {
+          user_type,
+          user_id: userId,
+          timestamp: new Date().toISOString(),
+        })
+        return null
     }
   }
+
 
   /**
    * Updates an existing user and their role-specific profile
