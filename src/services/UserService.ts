@@ -38,7 +38,10 @@ export interface UpdateUserResult {
   roleRecord: RoleRecord | null
 }
 
-export type RoleRecord = typeof teachers.$inferSelect | typeof technical_staff.$inferSelect | typeof admins.$inferSelect
+export type RoleRecord
+  = | typeof teachers.$inferSelect
+    | typeof technical_staff.$inferSelect
+    | typeof admins.$inferSelect
 
 // Define a type for the combined user and role data
 export type UserWithRole = typeof users.$inferSelect & {
@@ -142,16 +145,25 @@ export class UserService {
           .returning()
 
         // Create corresponding role-specific record using the transaction
-        const roleRecord = await this.createUserProfileInTransaction(tx, createdUser.id, userData)
+        const roleRecord = await this.createUserProfileInTransaction(
+          tx,
+          createdUser.id,
+          userData,
+        )
 
         // Check if role should have been created but wasn't
-        const shouldHaveRole = ['teacher', 'technical_staff', 'admin'].includes(userData.user_type)
+        const shouldHaveRole = ['teacher', 'technical_staff', 'admin'].includes(
+          userData.user_type,
+        )
         if (shouldHaveRole && !roleRecord) {
-          this.logger.error('Role record was not created for required user type', {
-            user_id: createdUser.id,
-            user_type: userData.user_type,
-            timestamp: new Date().toISOString(),
-          })
+          this.logger.error(
+            'Role record was not created for required user type',
+            {
+              user_id: createdUser.id,
+              user_type: userData.user_type,
+              timestamp: new Date().toISOString(),
+            },
+          )
 
           // Throw error to trigger transaction rollback
           throw new Error('Role creation silently failed')
@@ -165,7 +177,9 @@ export class UserService {
         user_id: result.user.id,
         user_type: userData.user_type,
         role_record_created: !!result.roleRecord,
-        should_have_role: ['teacher', 'technical_staff', 'admin'].includes(userData.user_type),
+        should_have_role: ['teacher', 'technical_staff', 'admin'].includes(
+          userData.user_type,
+        ),
         timestamp: new Date().toISOString(),
       })
 
@@ -215,43 +229,49 @@ export class UserService {
    * }
    * ```
    */
-  async createUserProfile(userId: string, userData: CreateUserData): Promise<RoleRecord | null> {
+  async createUserProfile(
+    userId: string,
+    userData: CreateUserData,
+  ): Promise<RoleRecord | null> {
     const { user_type, firstname, lastname } = userData
 
     switch (user_type) {
-      case 'teacher':
-      { const [teacherRecord] = await this.db
-        .insert(teachers)
-        .values({
-          user_id: userId,
-          firstname: firstname || null,
-          lastname: lastname || null,
-          attendance: 'present', // Default value
-        })
-        .returning()
-      return teacherRecord }
+      case 'teacher': {
+        const [teacherRecord] = await this.db
+          .insert(teachers)
+          .values({
+            user_id: userId,
+            firstname: firstname || null,
+            lastname: lastname || null,
+            attendance: 'present', // Default value
+          })
+          .returning()
+        return teacherRecord
+      }
 
-      case 'technical_staff':
-      { const [staffRecord] = await this.db
-        .insert(technical_staff)
-        .values({
-          user_id: userId,
-          firstname: firstname || null,
-          lastname: lastname || null,
-        })
-        .returning()
-      return staffRecord }
+      case 'technical_staff': {
+        const [staffRecord] = await this.db
+          .insert(technical_staff)
+          .values({
+            user_id: userId,
+            firstname: firstname || null,
+            lastname: lastname || null,
+          })
+          .returning()
+        return staffRecord
+      }
 
-      case 'admin':
-      { const [adminRecord] = await this.db
-        .insert(admins)
-        .values({
-          user_id: userId,
-          firstname: firstname || null,
-          lastname: lastname || null,
-        })
-        .returning()
-      return adminRecord }
+      case 'admin': {
+        const [adminRecord] = await this.db
+          .insert(admins)
+          .values({
+            user_id: userId,
+            firstname: firstname || null,
+            lastname: lastname || null,
+          })
+          .returning()
+        return adminRecord
+      }
 
       default:
         // If user_type doesn't match any role, just return null
@@ -280,43 +300,50 @@ export class UserService {
    *
    * @private
    */
-  private async createUserProfileInTransaction(tx: any, userId: string, userData: CreateUserData): Promise<RoleRecord | null> {
+  private async createUserProfileInTransaction(
+    tx: any,
+    userId: string,
+    userData: CreateUserData,
+  ): Promise<RoleRecord | null> {
     const { user_type, firstname, lastname } = userData
 
     switch (user_type) {
-      case 'teacher':
-      { const [teacherRecord] = await tx
-        .insert(teachers)
-        .values({
-          user_id: userId,
-          firstname: firstname || null,
-          lastname: lastname || null,
-          attendance: 'present', // Default value
-        })
-        .returning()
-      return teacherRecord }
+      case 'teacher': {
+        const [teacherRecord] = await tx
+          .insert(teachers)
+          .values({
+            user_id: userId,
+            firstname: firstname || null,
+            lastname: lastname || null,
+            attendance: 'present', // Default value
+          })
+          .returning()
+        return teacherRecord
+      }
 
-      case 'technical_staff':
-      { const [staffRecord] = await tx
-        .insert(technical_staff)
-        .values({
-          user_id: userId,
-          firstname: firstname || null,
-          lastname: lastname || null,
-        })
-        .returning()
-      return staffRecord }
+      case 'technical_staff': {
+        const [staffRecord] = await tx
+          .insert(technical_staff)
+          .values({
+            user_id: userId,
+            firstname: firstname || null,
+            lastname: lastname || null,
+          })
+          .returning()
+        return staffRecord
+      }
 
-      case 'admin':
-      { const [adminRecord] = await tx
-        .insert(admins)
-        .values({
-          user_id: userId,
-          firstname: firstname || null,
-          lastname: lastname || null,
-        })
-        .returning()
-      return adminRecord }
+      case 'admin': {
+        const [adminRecord] = await tx
+          .insert(admins)
+          .values({
+            user_id: userId,
+            firstname: firstname || null,
+            lastname: lastname || null,
+          })
+          .returning()
+        return adminRecord
+      }
 
       default:
         // If user_type doesn't match any role, just return null
@@ -328,7 +355,6 @@ export class UserService {
         return null
     }
   }
-
 
   /**
    * Updates an existing user and their role-specific profile
@@ -366,7 +392,10 @@ export class UserService {
    * console.log('User updated:', result.user.username)
    * ```
    */
-  async updateUser(userId: string, updateData: UpdateUserData): Promise<UpdateUserResult> {
+  async updateUser(
+    userId: string,
+    updateData: UpdateUserData,
+  ): Promise<UpdateUserResult> {
     // First, check if user exists
     const existingUser = await this.getUserById(userId)
     if (!existingUser) {
@@ -378,8 +407,12 @@ export class UserService {
 
     // Handle password update if provided
     if (updateData.password) {
-      if (updateData.confirmPassword && updateData.password !== updateData.confirmPassword)
+      if (
+        updateData.confirmPassword
+        && updateData.password !== updateData.confirmPassword
+      ) {
         throw new Error('Passwords don\'t match')
+      }
       userUpdateData.password = await bcrypt.hash(updateData.password, 10)
     }
 
@@ -408,9 +441,11 @@ export class UserService {
       }
 
       // Handle role profile updates if firstname/lastname provided or user_type changed
-      const shouldUpdateRole = updateData.firstname !== undefined
-        || updateData.lastname !== undefined
-        || (updateData.user_type && updateData.user_type !== existingUser.user_type)
+      const shouldUpdateRole
+        = updateData.firstname !== undefined
+          || updateData.lastname !== undefined
+          || (updateData.user_type
+            && updateData.user_type !== existingUser.user_type)
 
       if (shouldUpdateRole) {
         const targetUserType = updateData.user_type || existingUser.user_type
@@ -681,13 +716,25 @@ export class UserService {
 
     switch (user.user_type) {
       case 'teacher':
-        [roleData] = await this.db.select().from(teachers).where(eq(teachers.user_id, userId)).limit(1)
+        [roleData] = await this.db
+          .select()
+          .from(teachers)
+          .where(eq(teachers.user_id, userId))
+          .limit(1)
         return { ...user, teacher: roleData || null }
       case 'technical_staff':
-        [roleData] = await this.db.select().from(technical_staff).where(eq(technical_staff.user_id, userId)).limit(1)
+        [roleData] = await this.db
+          .select()
+          .from(technical_staff)
+          .where(eq(technical_staff.user_id, userId))
+          .limit(1)
         return { ...user, technical_staff: roleData || null }
       case 'admin':
-        [roleData] = await this.db.select().from(admins).where(eq(admins.user_id, userId)).limit(1)
+        [roleData] = await this.db
+          .select()
+          .from(admins)
+          .where(eq(admins.user_id, userId))
+          .limit(1)
         return { ...user, admin: roleData || null }
       default:
         return user
@@ -725,15 +772,27 @@ export class UserService {
    * }
    * ```
    */
-  async listUsers(params: { page: number, limit: number }): Promise<{ users: Array<typeof users.$inferSelect>, pagination: { page: number, limit: number, total: number, totalPages: number, hasNext: boolean, hasPrev: boolean } }> {
+  async listUsers(params: { page: number, limit: number }): Promise<{
+    users: Array<typeof users.$inferSelect>
+    pagination: {
+      page: number
+      limit: number
+      total: number
+      totalPages: number
+      hasNext: boolean
+      hasPrev: boolean
+    }
+  }> {
     const { page, limit } = params
     const offset = (page - 1) * limit
 
     const [{ count: total }, usersData] = await Promise.all([
-      this.db.select({ count: count() })
+      this.db
+        .select({ count: count() })
         .from(users)
         .then(r => r[0] || { count: 0 }),
-      this.db.select()
+      this.db
+        .select()
         .from(users)
         .limit(limit)
         .offset(offset)
