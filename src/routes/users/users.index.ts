@@ -10,15 +10,16 @@ import { RestoreUserHandler } from '@/handlers/users/restore-user.handler'
 import { SoftDeleteUserHandler } from '@/handlers/users/soft-delete-user.handler'
 import * as updateHandlers from '@/handlers/users/update-user.handler'
 import { createRouter } from '@/lib/create-app'
-import * as routes from '@/routes/users/users.route'
 import { authMiddleware, requireRole } from '@/middleware/auth'
+import * as routes from '@/routes/users/users.route'
+
 
 /**
  * Users router group - Routes and their respective handlers are registered here
  * We then export this router to be registered in the root index.ts file
  */
 const router = createRouter()
-router.use('/users/*', authMiddleware())
+router.use('/users/*', authMiddleware)
 
 router.use('/users/*', requireRole(['admin']))
 router.openapi(routes.createUserRoute, createHandlers.CreateUserHandler)
