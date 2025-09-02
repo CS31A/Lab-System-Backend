@@ -8,11 +8,20 @@ import { deleteCookie, getCookie } from 'hono/cookie'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 import { AuthService } from '@/services/AuthService'
 
+/**
+ * Handles user logout. It invalidates the refresh token on the server-side
+ * and clears the access and refresh token cookies from the client's browser.
+ *
+ * @param c - The Hono context.
+ * @returns A JSON response confirming successful logout.
+ */
 export const LogoutHandler: AppRouteHandler<LogoutRoute> = async (c) => {
+  // Get the refresh token from the cookie
   const refreshToken = getCookie(c, 'refreshToken')
 
   if (refreshToken) {
     try {
+      // Invalidate the refresh token session in the database
       const authService = new AuthService(c)
       await authService.invalidateRefreshSession(refreshToken)
     }

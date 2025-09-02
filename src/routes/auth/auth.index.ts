@@ -24,7 +24,7 @@ authRouter.openapi(routes.loginRoute, LoginHandler)
 authRouter.openapi(routes.refreshRoute, RefreshHandler)
 
 // protected endpoints
-authRouter.use('*', authMiddleware())
+authRouter.use('*', authMiddleware)
 authRouter.openapi(routes.getCurrentUserRoute, GetCurrentUserHandler)
 authRouter.openapi(routes.logoutRoute, LogoutHandler)
 

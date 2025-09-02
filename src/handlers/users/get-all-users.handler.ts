@@ -41,7 +41,7 @@ export const GetAllUsersHandler: AppRouteHandler<GetAllUsersRoute> = async (c) =
     return c.json(
       {
         message: 'Internal Server Error',
-        errors: (err as Error).message,
+        errors: 'An unexpected error occurred while retrieving all users',
       },
       httpStatusCodes.INTERNAL_SERVER_ERROR,
     )

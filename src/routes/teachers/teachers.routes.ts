@@ -20,7 +20,7 @@ export const getTeacherDashboardRoute = createRoute({
   responses: {
     [httpStatusCodes.OK]: {
       content: {
-        'application/json': {
+        'application/json': { // TODO: Refactor this to follow the standard convention by directly using jsoncContent instead of this
           schema: teacherDashboardResponseSchema,
         },
       },

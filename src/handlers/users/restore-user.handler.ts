@@ -37,7 +37,7 @@ export const RestoreUserHandler: AppRouteHandler<typeof import('@/routes/users/u
     return c.json(
       {
         message: 'Internal Server Error',
-        errors: errorMessage,
+        errors: 'An unexpected error occurred while restoring the user',
       },
       httpStatusCodes.INTERNAL_SERVER_ERROR,
     )

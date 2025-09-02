@@ -55,7 +55,7 @@ export const GetUserHandler: AppRouteHandler<GetUserRoute> = async (c) => {
     return c.json(
       {
         message: 'Internal Server Error',
-        errors: errorMessage,
+        errors: 'An unexpected error occurred while retrieving the user',
       },
       httpStatusCodes.INTERNAL_SERVER_ERROR,
     )

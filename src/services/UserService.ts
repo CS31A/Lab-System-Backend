@@ -5,7 +5,7 @@
 
 import type { Context } from 'hono'
 import bcrypt from 'bcryptjs'
-import { count, eq } from 'drizzle-orm'
+import { and, count, eq } from 'drizzle-orm'
 import { createDb } from '@/db'
 import { admins, teachers, technical_staff, users } from '@/db/schema'
 
@@ -640,7 +640,7 @@ export class UserService {
     const [user] = await this.db
       .select()
       .from(users)
-      .where(eq(users.id, userId) && eq(users.is_deleted, false))
+      .where(and(eq(users.id, userId), eq(users.is_deleted, false)))
       .limit(1)
     if (!user) {
       return null
