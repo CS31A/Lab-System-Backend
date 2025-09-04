@@ -27,6 +27,11 @@ function createMockDb() {
       selectResults = results
     },
 
+    // Set insert values (for sharing state with transaction)
+    setLastInsertValues: (vals: any) => {
+      insertValues = vals
+    },
+
     // Mock insert chain: db.insert(table).values(data).returning()
     insert: vi.fn(() => ({
       values: vi.fn((vals: any) => {
@@ -78,9 +83,47 @@ function createMockDb() {
   return mockDb
 }
 
-// Mock the createDb function
+// Create mock serverless database with transaction support
+function createMockServerlessDb() {
+  const mockDb = createMockDb()
+
+  return {
+    ...mockDb,
+    // Mock transaction method that executes the callback with the mock db
+    transaction: vi.fn(async (callback: (tx: any) => Promise<any>) => {
+      // Create a transaction mock that shares the same state as the main mock
+      const txMock = {
+        ...mockDb,
+        // Override insert to use the same tracking mechanism
+        insert: vi.fn(() => ({
+          values: vi.fn((vals: any) => {
+            // Store values in the main mock for tracking
+            mockDb.setLastInsertValues(vals)
+            return {
+              returning: vi.fn(async () => [
+                {
+                  id: mockCreatedUserId,
+                  ...vals,
+                  is_deleted: false,
+                  created_at: mockCreatedAt,
+                  updated_at: mockUpdatedAt,
+                },
+              ]),
+            }
+          }),
+        })),
+      }
+
+      // Execute the callback with the transaction mock
+      return await callback(txMock)
+    }),
+  }
+}
+
+// Mock the createDb and createServerlessDb functions
 vi.mock('@/db', () => ({
   createDb: vi.fn(() => createMockDb()),
+  createServerlessDb: vi.fn(() => createMockServerlessDb()),
 }))
 
 // Mock bcrypt to make hashing deterministic and fast
@@ -103,6 +146,11 @@ function getMockDb(service: UserService): ReturnType<typeof createMockDb> {
   return (service as any).db
 }
 
+// Helper to get the mock serverless database instance
+function getMockServerlessDb(service: UserService): ReturnType<typeof createMockServerlessDb> {
+  return (service as any).serverlessDb
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
 })
@@ -111,7 +159,7 @@ describe('userService.createUser', () => {
   it('creates user and role when role is required and profile is created', async () => {
     const ctx = createFakeContext()
     const service = new UserService(ctx)
-    const mockDb = getMockDb(service)
+    const mockServerlessDb = getMockServerlessDb(service)
 
     const userData: CreateUserData = {
       username: 'johndoe',
@@ -124,23 +172,22 @@ describe('userService.createUser', () => {
 
     const roleRecord = { id: 'role_1', user_id: mockCreatedUserId }
     const createProfileSpy = vi
-      .spyOn(service, 'createUserProfile')
+      .spyOn(service as any, 'createUserProfileInTransaction')
       .mockResolvedValue(roleRecord as any)
 
     const result = await service.createUser(userData)
 
-    // Verify the correct data was inserted
-    const insertedValues = mockDb.getLastInsertValues()
-    expect(insertedValues.password).toBe('hashedPW')
-    expect(insertedValues.username).toBe(userData.username)
-    expect(insertedValues.email).toBe(userData.email)
-    expect(insertedValues.user_type).toBe(userData.user_type)
+    // Verify transaction was called
+    expect(mockServerlessDb.transaction).toHaveBeenCalled()
 
-    // Ensures role profile creation was invoked with created user id
-    expect(createProfileSpy).toHaveBeenCalledWith(mockCreatedUserId, userData)
+    // Ensures role profile creation was invoked with transaction, user id, and userData
+    expect(createProfileSpy).toHaveBeenCalledWith(expect.anything(), mockCreatedUserId, userData)
 
     // Result shape
     expect(result.user.id).toBe(mockCreatedUserId)
+    expect(result.user.username).toBe(userData.username)
+    expect(result.user.email).toBe(userData.email)
+    expect(result.user.user_type).toBe(userData.user_type)
     expect(result.roleRecord).toEqual(roleRecord)
 
     // Logged success
@@ -162,13 +209,13 @@ describe('userService.createUser', () => {
 
     const roleRecord = { id: 'role_1', user_id: mockCreatedUserId }
     const createProfileSpy = vi
-      .spyOn(service, 'createUserProfile')
+      .spyOn(service as any, 'createUserProfileInTransaction')
       .mockResolvedValue(roleRecord as any)
 
     const result = await service.createUser(userData)
 
-    // Verify null values are passed correctly to createUserProfile
-    expect(createProfileSpy).toHaveBeenCalledWith(mockCreatedUserId, userData)
+    // Verify null values are passed correctly to createUserProfileInTransaction
+    expect(createProfileSpy).toHaveBeenCalledWith(expect.anything(), mockCreatedUserId, userData)
     expect(result.user.id).toBe(mockCreatedUserId)
     expect(result.roleRecord).toEqual(roleRecord)
   })
@@ -187,20 +234,21 @@ describe('userService.createUser', () => {
 
     const roleRecord = { id: 'role_1', user_id: mockCreatedUserId }
     const createProfileSpy = vi
-      .spyOn(service, 'createUserProfile')
+      .spyOn(service as any, 'createUserProfileInTransaction')
       .mockResolvedValue(roleRecord as any)
 
     const result = await service.createUser(userData)
 
     // Verify undefined values are handled correctly
-    expect(createProfileSpy).toHaveBeenCalledWith(mockCreatedUserId, userData)
+    expect(createProfileSpy).toHaveBeenCalledWith(expect.anything(), mockCreatedUserId, userData)
     expect(result.user.id).toBe(mockCreatedUserId)
     expect(result.roleRecord).toEqual(roleRecord)
   })
 
-  it('cleans up and throws when role is required but profile creation returns null', async () => {
+  it('throws and rolls back transaction when role is required but profile creation returns null', async () => {
     const ctx = createFakeContext()
     const service = new UserService(ctx)
+    const mockServerlessDb = getMockServerlessDb(service)
 
     const userData: CreateUserData = {
       username: 'janedoe',
@@ -209,13 +257,12 @@ describe('userService.createUser', () => {
       user_type: 'teacher', // requires role
     }
 
-    vi.spyOn(service, 'createUserProfile').mockResolvedValue(null)
-    const cleanupSpy = vi.spyOn<any, any>(service as any, 'cleanupUser').mockResolvedValue(void 0)
+    vi.spyOn(service as any, 'createUserProfileInTransaction').mockResolvedValue(null)
 
     await expect(service.createUser(userData)).rejects.toThrow('Role creation silently failed')
 
-    // Ensure cleanup was attempted on the created user id
-    expect(cleanupSpy).toHaveBeenCalledWith(mockCreatedUserId)
+    // Verify transaction was called (and would have rolled back automatically)
+    expect(mockServerlessDb.transaction).toHaveBeenCalled()
 
     // Logged error
     expect(ctx.var.logger.error).toHaveBeenCalled()
@@ -232,7 +279,7 @@ describe('userService.createUser', () => {
       user_type: 'guest', // not in required roles list
     }
 
-    vi.spyOn(service, 'createUserProfile').mockResolvedValue(null)
+    vi.spyOn(service as any, 'createUserProfileInTransaction').mockResolvedValue(null)
 
     const result = await service.createUser(userData)
 
