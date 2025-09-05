@@ -37,7 +37,7 @@ export const GetCurrentUserHandler: AppRouteHandler<GetCurrentUserRoute> = async
       error: errMsg,
       timestamp: new Date().toISOString(),
     })
-    
+
     // Return a generic error response to the client
     return c.json(
       {

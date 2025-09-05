@@ -1,7 +1,7 @@
 import type { Context } from 'hono'
 import type { AppBindings } from '@/lib/types/app-types'
 import bcrypt from 'bcryptjs'
-import { eq } from 'drizzle-orm'
+import { and, eq, gte, lt } from 'drizzle-orm'
 import { sign } from 'hono/jwt'
 import { nanoid } from 'nanoid'
 import { createDb } from '@/db'
@@ -88,7 +88,7 @@ export class AuthService {
    */
   async authenticateUser(username: string, passwordFromUser: string) {
     const user = await this.db.query.users.findFirst({
-      where: eq(users.username, username),
+      where: and(eq(users.username, username), eq(users.is_deleted, false)),
     })
 
     if (!user) {
@@ -107,11 +107,12 @@ export class AuthService {
     }, this.c.env.JWT_SECRET)
 
     const refreshToken = nanoid(48)
+    const refreshTokenHash = await bcrypt.hash(refreshToken, 10)
     const refreshTokenExpiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)) // 7 days
 
     await this.db.insert(refreshTokens).values({
       user_id: user.id,
-      token_hash: refreshToken,
+      token_hash: refreshTokenHash,
       expires_at: refreshTokenExpiresAt,
     })
 
@@ -158,30 +159,50 @@ export class AuthService {
    * ```
    */
   async issueNewAccessToken(refreshToken: string): Promise<string> {
-    const session = await this.db.query.refreshTokens.findFirst({
-      where: eq(refreshTokens.token_hash, refreshToken),
+    const now = new Date();
+    
+    // Clean up expired tokens first
+    await this.db.delete(refreshTokens).where(lt(refreshTokens.expires_at, now));
+    
+    // Get potentially valid refresh tokens (not expired)
+    const sessions = await this.db.query.refreshTokens.findMany({
+      where: gte(refreshTokens.expires_at, now),
       with: { user: true },
-    })
-    if (!session) {
-      throw new Error('Invalid refresh token')
+    });
+
+    // Find the session by comparing the hashed token
+    let validSession = null;
+    for (const session of sessions) {
+      const isValidToken = await bcrypt.compare(refreshToken, session.token_hash);
+      if (isValidToken) {
+        validSession = session;
+        break;
+      }
     }
-    const now = new Date()
-    if (now > session.expires_at) {
-      await this.db.delete(refreshTokens).where(eq(refreshTokens.id, session.id))
-      throw new Error('Refresh token expired')
+
+    if (!validSession) {
+      throw new Error('Invalid refresh token');
     }
-    const user = session.user
+
+    const user = validSession.user;
     if (!user) {
-      await this.db.delete(refreshTokens).where(eq(refreshTokens.id, session.id))
-      throw new Error('User for this session not found')
+      await this.db.delete(refreshTokens).where(eq(refreshTokens.id, validSession.id));
+      throw new Error('User for this session not found');
+    }
+
+    // Check if user is soft deleted
+    if (user.is_deleted) {
+      await this.db.delete(refreshTokens).where(eq(refreshTokens.id, validSession.id));
+      throw new Error('User account is deactivated');
     }
 
     const newAccessToken = await sign({
       sub: user.id,
       role: user.user_type,
       exp: Math.floor(Date.now() / 1000) + (15 * 60), // 15 minutes
-    }, this.c.env.JWT_SECRET)
-    return newAccessToken
+    }, this.c.env.JWT_SECRET);
+    
+    return newAccessToken;
   }
 
   /**
@@ -213,6 +234,22 @@ export class AuthService {
    *       making it safe to call during cleanup operations
    */
   async invalidateRefreshSession(refreshToken: string) {
-    await this.db.delete(refreshTokens).where(eq(refreshTokens.token_hash, refreshToken))
+    // Clean up expired tokens first
+    const now = new Date();
+    await this.db.delete(refreshTokens).where(lt(refreshTokens.expires_at, now));
+    
+    // Get potentially valid refresh tokens (not expired)
+    const sessions = await this.db.query.refreshTokens.findMany({
+      where: gte(refreshTokens.expires_at, now),
+    });
+
+    // Find the session by comparing the hashed token
+    for (const session of sessions) {
+      const isValidToken = await bcrypt.compare(refreshToken, session.token_hash);
+      if (isValidToken) {
+        await this.db.delete(refreshTokens).where(eq(refreshTokens.id, session.id));
+        break;
+      }
+    }
   }
 }

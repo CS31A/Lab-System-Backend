@@ -481,8 +481,7 @@ export const refreshTokens = pgTable('refresh_tokens', {
     .notNull()
     .unique(),
   expires_at: timestamp('expires_at', { mode: 'date' })
-    .notNull()
-    .unique(),
+    .notNull(),
   created_at: timestamp({ mode: 'date' })
     .notNull()
     .defaultNow(),
