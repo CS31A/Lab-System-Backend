@@ -2,6 +2,7 @@
 export {
   basicMessageResponseSchema,
   errorResponseSchema,
+  jwtPayloadSchema,
   loginBodySchema,
   loginResponseSchema,
   meDataSchema,

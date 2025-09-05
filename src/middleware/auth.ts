@@ -1,14 +1,12 @@
+import type { z } from '@hono/zod-openapi'
 import type { AppBindings } from '@/lib/types/app-types'
 import { getCookie } from 'hono/cookie'
 import { createMiddleware } from 'hono/factory'
 import { verify } from 'hono/jwt'
+import { jwtPayloadSchema } from '@/lib/zod-schemas'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 
-interface JWTPayload {
-  sub: string
-  role: string
-  exp: number
-}
+export type JWTPayload = z.infer<typeof jwtPayloadSchema>
 
 /**
  * Middleware for authenticating requests using a JWT token from a cookie.
@@ -33,8 +31,9 @@ export const authMiddleware = createMiddleware<AppBindings>(async (c, next) => {
 
   try {
     // Verify the token and set the payload in the context
-    const payload = await verify(token, c.env.JWT_SECRET) as unknown as JWTPayload
-    c.set('jwtPayload', payload)
+    const payload = await verify(token, c.env.JWT_SECRET)
+    const validatedPayload = jwtPayloadSchema.parse(payload)
+    c.set('jwtPayload', validatedPayload)
   }
   catch (error) {
     // If the token is invalid, return an unauthorized response
@@ -59,6 +58,19 @@ export function requireRole(allowedRoles: string[]) {
       return c.json(
         {
           message: 'Unauthorized: Authentication required',
+        },
+        httpStatusCodes.UNAUTHORIZED,
+      )
+    }
+
+    // Validate the payload structure
+    try {
+      jwtPayloadSchema.parse(payload)
+    } catch (error) {
+      c.var.logger.warn('Role check failed: Invalid JWT payload structure', { error: (error as Error).message })
+      return c.json(
+        {
+          message: 'Unauthorized: Invalid token structure',
         },
         httpStatusCodes.UNAUTHORIZED,
       )

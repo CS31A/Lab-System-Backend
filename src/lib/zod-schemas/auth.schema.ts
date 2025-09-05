@@ -10,6 +10,12 @@ export const meDataSchema = z.object({
   role: z.string(),
 })
 
+export const jwtPayloadSchema = z.object({
+  sub: z.string(),
+  role: z.string(),
+  exp: z.number(),
+})
+
 export const loginResponseSchema = z.object({
   message: z.string(),
   data: z.object({

@@ -3,9 +3,13 @@
  * Response follows { message, data } format.
  */
 
+import type { z } from '@hono/zod-openapi'
 import type { AppRouteHandler } from '@/lib/types/app-types'
+import type { jwtPayloadSchema } from '@/lib/zod-schemas'
 import type { GetCurrentUserRoute } from '@/routes/auth/auth.routes'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
+
+type JWTPayload = z.infer<typeof jwtPayloadSchema>
 
 /**
  * Handles the request to get the current user's information from the JWT payload.
@@ -18,7 +22,7 @@ import * as httpStatusCodes from '@/openapi/http-status-codes'
 export const GetCurrentUserHandler: AppRouteHandler<GetCurrentUserRoute> = async (c) => {
   try {
     // Retrieve the JWT payload attached by the authentication middleware
-    const payload = c.get('jwtPayload')
+    const payload = c.get('jwtPayload') as JWTPayload
     const { sub, role } = payload
 
     // Return the essential user information from the token
