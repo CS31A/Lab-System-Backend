@@ -106,13 +106,20 @@ export class AuthService {
       exp: Math.floor(Date.now() / 1000) + (15 * 60), // 15 minutes
     }, this.c.env.JWT_SECRET)
 
-    const refreshToken = nanoid(48)
-    const refreshTokenHash = await bcrypt.hash(refreshToken, 10)
+    // Generate selector/verifier pattern for secure O(1) lookups
+    const selector = nanoid(12) // Public, indexable part
+    const verifier = nanoid(48) // Secret part
+    const refreshToken = `${selector}.${verifier}` // Client receives this
+
+    // Hash only the verifier part
+    const bcryptCost = Number.parseInt(this.c.env.BCRYPT_COST || '10')
+    const refreshTokenHash = await bcrypt.hash(verifier, bcryptCost)
     const refreshTokenExpiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)) // 7 days
 
     await this.db.insert(refreshTokens).values({
       user_id: user.id,
-      token_hash: refreshTokenHash,
+      selector, // Store the public selector for indexable lookups
+      token_hash: refreshTokenHash, // Store hash of the secret verifier
       expires_at: refreshTokenExpiresAt,
     })
 
@@ -159,50 +166,59 @@ export class AuthService {
    * ```
    */
   async issueNewAccessToken(refreshToken: string): Promise<string> {
-    const now = new Date();
-    
-    // Clean up expired tokens first
-    await this.db.delete(refreshTokens).where(lt(refreshTokens.expires_at, now));
-    
-    // Get potentially valid refresh tokens (not expired)
-    const sessions = await this.db.query.refreshTokens.findMany({
-      where: gte(refreshTokens.expires_at, now),
-      with: { user: true },
-    });
+    const now = new Date()
 
-    // Find the session by comparing the hashed token
-    let validSession = null;
-    for (const session of sessions) {
-      const isValidToken = await bcrypt.compare(refreshToken, session.token_hash);
-      if (isValidToken) {
-        validSession = session;
-        break;
-      }
+    // Will convert this to a bg process / j*b in the future
+    await this.db.delete(refreshTokens).where(lt(refreshTokens.expires_at, now))
+
+    // Split the refresh token into selector and verifier
+    const parts = refreshToken.split('.')
+    if (parts.length !== 2) {
+      throw new Error('Invalid refresh token format')
     }
+    const [selector, verifier] = parts
+    if (!selector || !verifier) {
+      throw new Error('Invalid refresh token')
+    }
+
+    // Find token by selector and check expiry in one indexed query (O(1) lookup)
+    const validSession = await this.db.query.refreshTokens.findFirst({
+      where: and(
+        eq(refreshTokens.selector, selector),
+        gte(refreshTokens.expires_at, now),
+      ),
+      with: { user: true },
+    })
 
     if (!validSession) {
-      throw new Error('Invalid refresh token');
+      throw new Error('Invalid refresh token') // Not found or expired
     }
 
-    const user = validSession.user;
+    // Verify the secret part (verifier) with a single bcrypt compare
+    const isValidToken = await bcrypt.compare(verifier, validSession.token_hash)
+    if (!isValidToken) {
+      throw new Error('Invalid refresh token') // Hash mismatch
+    }
+
+    const user = validSession.user
     if (!user) {
-      await this.db.delete(refreshTokens).where(eq(refreshTokens.id, validSession.id));
-      throw new Error('User for this session not found');
+      await this.db.delete(refreshTokens).where(eq(refreshTokens.id, validSession.id))
+      throw new Error('User for this session not found')
     }
 
     // Check if user is soft deleted
     if (user.is_deleted) {
-      await this.db.delete(refreshTokens).where(eq(refreshTokens.id, validSession.id));
-      throw new Error('User account is deactivated');
+      await this.db.delete(refreshTokens).where(eq(refreshTokens.id, validSession.id))
+      throw new Error('User account is deactivated')
     }
 
     const newAccessToken = await sign({
       sub: user.id,
       role: user.user_type,
       exp: Math.floor(Date.now() / 1000) + (15 * 60), // 15 minutes
-    }, this.c.env.JWT_SECRET);
-    
-    return newAccessToken;
+    }, this.c.env.JWT_SECRET)
+
+    return newAccessToken
   }
 
   /**
@@ -234,22 +250,31 @@ export class AuthService {
    *       making it safe to call during cleanup operations
    */
   async invalidateRefreshSession(refreshToken: string) {
-    // Clean up expired tokens first
-    const now = new Date();
-    await this.db.delete(refreshTokens).where(lt(refreshTokens.expires_at, now));
-    
-    // Get potentially valid refresh tokens (not expired)
-    const sessions = await this.db.query.refreshTokens.findMany({
-      where: gte(refreshTokens.expires_at, now),
-    });
+    const now = new Date()
+    // will convert this later if it causes issues
+    await this.db.delete(refreshTokens).where(lt(refreshTokens.expires_at, now))
 
-    // Find the session by comparing the hashed token
-    for (const session of sessions) {
-      const isValidToken = await bcrypt.compare(refreshToken, session.token_hash);
-      if (isValidToken) {
-        await this.db.delete(refreshTokens).where(eq(refreshTokens.id, session.id));
-        break;
-      }
+    // Split the refresh token into selector and verifier
+    const parts = refreshToken.split('.')
+    if (parts.length !== 2)
+      return
+
+    const [selector, verifier] = parts
+    if (!selector || !verifier)
+      return
+
+    // Find token by selector and check expiry (O(1) lookup)
+    const session = await this.db.query.refreshTokens.findFirst({
+      where: and(
+        eq(refreshTokens.selector, selector),
+        gte(refreshTokens.expires_at, now),
+      ),
+    })
+
+    // Verify the token and delete if valid
+    if (session && await bcrypt.compare(verifier, session.token_hash)) {
+      await this.db.delete(refreshTokens).where(eq(refreshTokens.id, session.id))
     }
+    // If not found, expired, or hash mismatch, do nothing (no-op)
   }
 }

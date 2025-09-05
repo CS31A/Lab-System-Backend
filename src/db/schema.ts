@@ -1,6 +1,6 @@
 import { z } from '@hono/zod-openapi'
 import { relations } from 'drizzle-orm'
-import { boolean, pgTable, timestamp, varchar } from 'drizzle-orm/pg-core'
+import { boolean, index, pgTable, timestamp, uniqueIndex, varchar } from 'drizzle-orm/pg-core'
 import { createSchemaFactory } from 'drizzle-zod'
 import { nanoid } from 'nanoid'
 
@@ -477,9 +477,11 @@ export const refreshTokens = pgTable('refresh_tokens', {
   user_id: varchar('user_id', { length: 12 })
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  token_hash: varchar('token_hash', { length: 255 })
+  selector: varchar('selector', { length: 12 })
     .notNull()
-    .unique(),
+    .unique(), // Unique constraint on selector for O(1) lookups
+  token_hash: varchar('token_hash', { length: 255 })
+    .notNull(), // Removed unique constraint - hash of verifier part only
   expires_at: timestamp('expires_at', { mode: 'date' })
     .notNull(),
   created_at: timestamp({ mode: 'date' })
@@ -489,7 +491,10 @@ export const refreshTokens = pgTable('refresh_tokens', {
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
-})
+}, (table) => ({
+  selectorIdx: uniqueIndex('refresh_tokens_selector_idx').on(table.selector),
+  expiresAtIdx: index('refresh_tokens_expires_at_idx').on(table.expires_at),
+}))
 
 export const refreshTokenSelectSchema = createSelectSchema(refreshTokens)
 export const refreshTokenInsertSchema = createInsertSchema(refreshTokens)
