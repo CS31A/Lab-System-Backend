@@ -10,6 +10,7 @@ import { RestoreUserHandler } from '@/handlers/users/restore-user.handler'
 import { SoftDeleteUserHandler } from '@/handlers/users/soft-delete-user.handler'
 import * as updateHandlers from '@/handlers/users/update-user.handler'
 import { createRouter } from '@/lib/create-app'
+import { authMiddleware, requireRole } from '@/middleware/auth'
 import * as routes from '@/routes/users/users.route'
 
 /**
@@ -17,12 +18,17 @@ import * as routes from '@/routes/users/users.route'
  * We then export this router to be registered in the root index.ts file
  */
 const router = createRouter()
-  .openapi(routes.createUserRoute, createHandlers.CreateUserHandler)
-  .openapi(routes.updateUserRoute, updateHandlers.UpdateUserHandler)
-  .openapi(routes.getUserRoute, GetUserHandler)
-  .openapi(routes.getAllUsersRoute, GetAllUsersHandler)
-  .openapi(routes.listUsersRoute, ListUsersHandler)
-  .openapi(routes.softDeleteUserRoute, SoftDeleteUserHandler)
-  .openapi(routes.restoreUserRoute, RestoreUserHandler)
+router.use('/users', authMiddleware)
+// Admin only routes
+router.use('/users', requireRole(['admin']))
+router.openapi(routes.createUserRoute, createHandlers.CreateUserHandler)
+router.openapi(routes.updateUserRoute, updateHandlers.UpdateUserHandler)
+router.openapi(routes.softDeleteUserRoute, SoftDeleteUserHandler)
+router.openapi(routes.restoreUserRoute, RestoreUserHandler)
+// Admin, Teacher, Technical routes
+router.use('/users', requireRole(['admin', 'teacher', 'technical']))
+router.openapi(routes.getUserRoute, GetUserHandler)
+router.openapi(routes.getAllUsersRoute, GetAllUsersHandler)
+router.openapi(routes.listUsersRoute, ListUsersHandler)
 
 export default router
