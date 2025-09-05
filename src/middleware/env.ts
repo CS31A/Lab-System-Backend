@@ -5,6 +5,7 @@ const EnvSchema = z.object({
   NODE_ENV: z.string(),
   DATABASE_URL: z.string(),
   JWT_SECRET: z.string(),
+  BCRYPT_COST: z.string().default('10'),
 })
 
 export type Environment = z.infer<typeof EnvSchema>
