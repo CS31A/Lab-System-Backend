@@ -537,18 +537,20 @@ describe('userService.hardDeleteUser', () => {
       }
     }) as any
 
-    // Mock the transaction to return the deleted user
+    // Mock the transaction to return the deleted user and record delete sequence
+    const deleteSequence: any[] = []
     mockServerlessDb.transaction = vi.fn(async (callback: (tx: any) => Promise<any>) => {
-      // Create a transaction mock
       const txMock = {
-        delete: vi.fn(() => ({
-          where: vi.fn(() => ({
-            returning: vi.fn(async () => [mockUser]),
-          })),
+        delete: vi.fn((table: any) => ({
+          where: vi.fn((cond: any) => {
+            deleteSequence.push({ table, cond })
+            return {
+              // Return the user row only when deleting from users; empty for role tables
+              returning: vi.fn(async () => (table === users ? [mockUser] : [])),
+            }
+          }),
         })),
       }
-
-      // Execute the callback with the transaction mock
       return await callback(txMock)
     })
 
@@ -562,6 +564,10 @@ describe('userService.hardDeleteUser', () => {
 
     // Verify logger was called
     expect(ctx.var.logger.info).toHaveBeenCalled()
+
+    // Verify we deleted role profile first, then the user
+    expect(deleteSequence.map((c) => c.table)).toEqual([teachers, users])
+    expect(deleteSequence.length).toBe(2)
   })
 
   it('throws an error when user is not found', async () => {
