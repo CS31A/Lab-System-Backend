@@ -74,9 +74,11 @@ function createMockDb() {
       })),
     })),
 
-    // Mock delete chain: db.delete(table).where(condition)
+    // Mock delete chain: db.delete(table).where(condition).returning()
     delete: vi.fn(() => ({
-      where: vi.fn(async () => void 0),
+      where: vi.fn(() => ({
+        returning: vi.fn(async () => selectResults),
+      })),
     })),
   }
 
@@ -490,5 +492,95 @@ describe('userService.getUserById', () => {
 
     // Should return null because the user is deleted
     expect(result).toBeNull()
+  })
+})
+
+describe('userService.hardDeleteUser', () => {
+  const mockUser = {
+    id: 'user123',
+    email: 'test@example.com',
+    username: 'testuser',
+    user_type: 'teacher',
+    password: 'hashedPassword',
+    is_deleted: false,
+    created_at: mockCreatedAt,
+    updated_at: mockUpdatedAt,
+  }
+
+  it('successfully deletes a user and their role profile', async () => {
+    const ctx = createFakeContext()
+    const service = new UserService(ctx)
+    const mockServerlessDb = getMockServerlessDb(service)
+    const mockDb = getMockDb(service)
+
+    // Mock getUserById to return the user
+    mockDb.setSelectResults([mockUser])
+
+    // Mock the second select call for teacher profile
+    const originalSelect = mockDb.select
+    let callCount = 0
+    mockDb.select = vi.fn(() => {
+      callCount++
+      if (callCount === 1) {
+        // First call for user
+        return originalSelect()
+      }
+      else {
+        // Second call for teacher profile
+        return {
+          from: vi.fn(() => ({
+            where: vi.fn((_condition: any) => ({
+              limit: vi.fn(() => []),
+            })),
+          })),
+        }
+      }
+    }) as any
+
+    // Mock the transaction to return the deleted user and record delete sequence
+    const deleteSequence: any[] = []
+    mockServerlessDb.transaction = vi.fn(async (callback: (tx: any) => Promise<any>) => {
+      const txMock = {
+        delete: vi.fn((table: any) => ({
+          where: vi.fn((cond: any) => {
+            deleteSequence.push({ table, cond })
+            return {
+              // Return the user row only when deleting from users; empty for role tables
+              returning: vi.fn(async () => (table === users ? [mockUser] : [])),
+            }
+          }),
+        })),
+      }
+      return await callback(txMock)
+    })
+
+    const result = await service.hardDeleteUser('user123')
+
+    // Verify transaction was called
+    expect(mockServerlessDb.transaction).toHaveBeenCalled()
+
+    // Verify the result
+    expect(result).toEqual(mockUser)
+
+    // Verify logger was called
+    expect(ctx.var.logger.info).toHaveBeenCalled()
+
+    // Verify we deleted role profile first, then the user
+    expect(deleteSequence.map((c) => c.table)).toEqual([teachers, users])
+    expect(deleteSequence.length).toBe(2)
+  })
+
+  it('throws an error when user is not found', async () => {
+    const ctx = createFakeContext()
+    const service = new UserService(ctx)
+    const mockDb = getMockDb(service)
+
+    // Mock getUserById to return null (user not found)
+    mockDb.setSelectResults([])
+
+    await expect(service.hardDeleteUser('user123')).rejects.toThrow('User not found')
+
+    // Verify logger was called
+    expect(ctx.var.logger.error).not.toHaveBeenCalled()
   })
 })

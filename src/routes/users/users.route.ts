@@ -226,6 +226,36 @@ export const getAllUsersRoute = createRoute({
   },
 })
 
+export const hardDeleteUserRoute = createRoute({
+  tags: ['Users'],
+  method: 'delete',
+  path: '/users/{id}',
+  request: {
+    params: IdParamsSchema,
+  },
+  responses: {
+    [httpStatusCodes.OK]: jsonContent(
+      z.object({
+        message: z.string(),
+      }),
+      'User permanently deleted successfully',
+    ),
+    [httpStatusCodes.NOT_FOUND]: jsonContent(
+      z.object({
+        message: z.string(),
+      }),
+      'User not found',
+    ),
+    [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({
+        message: z.string(),
+        errors: z.any(),
+      }),
+      'Internal Server Error',
+    ),
+  },
+})
+
 export type CreateUserRoute = typeof createUserRoute
 
 export type UpdateUserRoute = typeof updateUserRoute
@@ -239,3 +269,5 @@ export type GetAllUsersRoute = typeof getAllUsersRoute
 export type SoftDeleteUserRoute = typeof softDeleteUserRoute
 
 export type RestoreUserRoute = typeof restoreUserRoute
+
+export type HardDeleteUserRoute = typeof hardDeleteUserRoute

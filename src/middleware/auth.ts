@@ -66,7 +66,8 @@ export function requireRole(allowedRoles: string[]) {
     // Validate the payload structure
     try {
       jwtPayloadSchema.parse(payload)
-    } catch (error) {
+    }
+    catch (error) {
       c.var.logger.warn('Role check failed: Invalid JWT payload structure', { error: (error as Error).message })
       return c.json(
         {

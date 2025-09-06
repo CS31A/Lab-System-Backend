@@ -299,6 +299,24 @@ export const subjects = pgTable('subjects', {
     .$onUpdate(() => new Date()),
 })
 
+export const subjectSelectSchema = createSelectSchema(subjects)
+
+export const subjectInsertSchema = createInsertSchema(subjects)
+  .required({
+    subject_name: true,
+    subject_code: true,
+  })
+  .omit({
+    id: true,
+    created_at: true,
+    updated_at: true,
+  })
+
+export const patchSubjectSchema = z.object({
+  subject_name: z.string().optional(),
+  subject_code: z.string().optional(),
+})
+
 export const schedule = pgTable('schedule', {
   id: varchar({ length: 12 })
     .primaryKey()
@@ -491,7 +509,7 @@ export const refreshTokens = pgTable('refresh_tokens', {
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
-}, (table) => ({
+}, table => ({
   selectorIdx: uniqueIndex('refresh_tokens_selector_idx').on(table.selector),
   expiresAtIdx: index('refresh_tokens_expires_at_idx').on(table.expires_at),
 }))

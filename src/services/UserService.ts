@@ -839,4 +839,137 @@ export class UserService {
     const allUsers = await this.db.select().from(users)
     return allUsers
   }
+
+  /**
+   * Permanently deletes a user and their associated role data from the database
+   *
+   * This method performs a hard delete operation that completely removes the user
+   * and their role-specific profile from the database. This operation cannot be undone.
+   * Use with extreme caution as this will permanently destroy user data.
+   *
+   * The method performs the following operations within a database transaction:
+   * 1. Checks if the user exists
+   * 2. Deletes the associated role-specific profile (teacher/admin/technical_staff)
+   * 3. Deletes the base user record
+   * 4. Automatically rolls back the entire transaction if any step fails
+   *
+   * @param userId - The ID of the user to permanently delete
+   *
+   * @returns Promise resolving to the deleted user record (without password)
+   *
+   * @throws {Error} When user is not found
+   * @throws {Error} When database deletion fails
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   const deletedUser = await userService.hardDeleteUser('user123')
+   *   console.log('User permanently deleted:', deletedUser.username)
+   * } catch (error) {
+   *   if (error.message === 'User not found') {
+   *     console.log('User does not exist')
+   *   } else {
+   *     console.error('Deletion failed:', error.message)
+   *   }
+   * }
+   * ```
+   *
+   * @warning This operation is irreversible. Consider using softDeleteUser() instead
+   * for most use cases to maintain data integrity and allow for recovery.
+   */
+  async hardDeleteUser(userId: string): Promise<typeof users.$inferSelect> {
+    // First, check if user exists and get their data
+    const existingUser = await this.getUserById(userId)
+    if (!existingUser) {
+      throw new Error('User not found')
+    }
+
+    try {
+      // Use transaction to ensure atomicity - if any operation fails, everything rolls back
+      const deletedUser = await this.serverlessDb.transaction(async (tx) => {
+        // Delete role-specific profile first (foreign key constraint)
+        await this.deleteUserProfileInTransaction(tx, userId, existingUser.user_type)
+
+        // Delete the user record
+        const [deleted] = await tx
+          .delete(users)
+          .where(eq(users.id, userId))
+          .returning()
+
+        if (!deleted) {
+          throw new Error('Failed to delete user record')
+        }
+
+        return deleted
+      })
+
+      this.logger.info('User permanently deleted successfully', {
+        user_id: userId,
+        username: existingUser.username,
+        user_type: existingUser.user_type,
+        timestamp: new Date().toISOString(),
+      })
+
+      return deletedUser
+    }
+    catch (error) {
+      // Transaction automatically rolled back - log the error and re-throw
+      this.logger.error('Hard delete operation failed, transaction rolled back', {
+        user_id: userId,
+        username: existingUser.username,
+        error: (error as Error).message,
+        timestamp: new Date().toISOString(),
+      })
+
+      throw error
+    }
+  }
+
+  /**
+   * Deletes role-specific profile for a user within a database transaction
+   *
+   * This method removes the appropriate role record from the corresponding table:
+   * - 'teacher' → deletes record from teachers table
+   * - 'technical_staff' → deletes record from technical_staff table
+   * - 'admin' → deletes record from admins table
+   * - Other types → no action (no role record to delete)
+   *
+   * @param tx - The database transaction to use for the operation
+   * @param userId - The ID of the user whose profile should be deleted
+   * @param userType - The type of role profile to delete
+   *
+   * @returns Promise that resolves when deletion is complete
+   *
+   * @throws {Error} When database deletion fails
+   *
+   * @private
+   */
+  private async deleteUserProfileInTransaction(
+    tx: any,
+    userId: string,
+    userType: string,
+  ): Promise<void> {
+    switch (userType) {
+      case 'teacher':
+        await tx.delete(teachers).where(eq(teachers.user_id, userId))
+        break
+
+      case 'technical_staff':
+        await tx.delete(technical_staff).where(eq(technical_staff.user_id, userId))
+        break
+
+      case 'admin':
+        await tx.delete(admins).where(eq(admins.user_id, userId))
+        break
+
+      default:
+        // If user_type doesn't match any role, no profile to delete
+        this.logger.info('No role profile to delete for user type', {
+          user_type: userType,
+          user_id: userId,
+          timestamp: new Date().toISOString(),
+        })
+        break
+    }
+  }
 }
