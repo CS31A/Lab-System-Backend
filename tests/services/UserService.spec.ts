@@ -74,9 +74,11 @@ function createMockDb() {
       })),
     })),
 
-    // Mock delete chain: db.delete(table).where(condition)
+    // Mock delete chain: db.delete(table).where(condition).returning()
     delete: vi.fn(() => ({
-      where: vi.fn(async () => void 0),
+      where: vi.fn(() => ({
+        returning: vi.fn(async () => selectResults),
+      })),
     })),
   }
 
@@ -490,5 +492,89 @@ describe('userService.getUserById', () => {
 
     // Should return null because the user is deleted
     expect(result).toBeNull()
+  })
+})
+
+describe('userService.hardDeleteUser', () => {
+  const mockUser = {
+    id: 'user123',
+    email: 'test@example.com',
+    username: 'testuser',
+    user_type: 'teacher',
+    password: 'hashedPassword',
+    is_deleted: false,
+    created_at: mockCreatedAt,
+    updated_at: mockUpdatedAt,
+  }
+
+  it('successfully deletes a user and their role profile', async () => {
+    const ctx = createFakeContext()
+    const service = new UserService(ctx)
+    const mockServerlessDb = getMockServerlessDb(service)
+    const mockDb = getMockDb(service)
+
+    // Mock getUserById to return the user
+    mockDb.setSelectResults([mockUser])
+
+    // Mock the second select call for teacher profile
+    const originalSelect = mockDb.select
+    let callCount = 0
+    mockDb.select = vi.fn(() => {
+      callCount++
+      if (callCount === 1) {
+        // First call for user
+        return originalSelect()
+      }
+      else {
+        // Second call for teacher profile
+        return {
+          from: vi.fn(() => ({
+            where: vi.fn((_condition: any) => ({
+              limit: vi.fn(() => []),
+            })),
+          })),
+        }
+      }
+    }) as any
+
+    // Mock the transaction to return the deleted user
+    mockServerlessDb.transaction = vi.fn(async (callback: (tx: any) => Promise<any>) => {
+      // Create a transaction mock
+      const txMock = {
+        delete: vi.fn(() => ({
+          where: vi.fn(() => ({
+            returning: vi.fn(async () => [mockUser]),
+          })),
+        })),
+      }
+
+      // Execute the callback with the transaction mock
+      return await callback(txMock)
+    })
+
+    const result = await service.hardDeleteUser('user123')
+
+    // Verify transaction was called
+    expect(mockServerlessDb.transaction).toHaveBeenCalled()
+
+    // Verify the result
+    expect(result).toEqual(mockUser)
+
+    // Verify logger was called
+    expect(ctx.var.logger.info).toHaveBeenCalled()
+  })
+
+  it('throws an error when user is not found', async () => {
+    const ctx = createFakeContext()
+    const service = new UserService(ctx)
+    const mockDb = getMockDb(service)
+
+    // Mock getUserById to return null (user not found)
+    mockDb.setSelectResults([])
+
+    await expect(service.hardDeleteUser('user123')).rejects.toThrow('User not found')
+
+    // Verify logger was called
+    expect(ctx.var.logger.error).not.toHaveBeenCalled()
   })
 })
