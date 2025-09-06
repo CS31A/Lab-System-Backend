@@ -491,7 +491,7 @@ export const refreshTokens = pgTable('refresh_tokens', {
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
-}, (table) => ({
+}, table => ({
   selectorIdx: uniqueIndex('refresh_tokens_selector_idx').on(table.selector),
   expiresAtIdx: index('refresh_tokens_expires_at_idx').on(table.expires_at),
 }))

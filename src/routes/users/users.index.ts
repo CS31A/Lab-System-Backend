@@ -5,6 +5,7 @@
 import * as createHandlers from '@/handlers/users/create-user.handler'
 import { GetAllUsersHandler } from '@/handlers/users/get-all-users.handler'
 import { GetUserHandler } from '@/handlers/users/get-user.handler'
+import { HardDeleteUserHandler } from '@/handlers/users/hard-delete-user.handler'
 import { ListUsersHandler } from '@/handlers/users/list-users.handler'
 import { RestoreUserHandler } from '@/handlers/users/restore-user.handler'
 import { SoftDeleteUserHandler } from '@/handlers/users/soft-delete-user.handler'
@@ -25,6 +26,7 @@ router.openapi(routes.createUserRoute, createHandlers.CreateUserHandler)
 router.openapi(routes.updateUserRoute, updateHandlers.UpdateUserHandler)
 router.openapi(routes.softDeleteUserRoute, SoftDeleteUserHandler)
 router.openapi(routes.restoreUserRoute, RestoreUserHandler)
+router.openapi(routes.hardDeleteUserRoute, HardDeleteUserHandler)
 // Admin, Teacher, Technical routes
 router.use('/users', requireRole(['admin', 'teacher', 'technical']))
 router.openapi(routes.getUserRoute, GetUserHandler)
