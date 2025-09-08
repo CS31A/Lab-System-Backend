@@ -230,9 +230,7 @@ export const laboratory = pgTable('laboratory', {
     .primaryKey()
     .$default(() => nanoid(12)),
   name: varchar({ length: 128 }).notNull(),
-  status: boolean().default(true),
-  time_in: timestamp({ mode: 'date' }),
-  time_out: timestamp({ mode: 'date' }),
+  status: boolean().default(true).notNull(),
   created_at: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updated_at: timestamp({ mode: 'date' })
     .notNull()
@@ -245,8 +243,6 @@ export const laboratorySelectSchema = createSelectSchema(laboratory)
 export const laboratoryInsertSchema = createInsertSchema(laboratory)
   .required({
     name: true,
-    time_in: true,
-    time_out: true,
   })
   .omit({
     id: true,
@@ -254,7 +250,11 @@ export const laboratoryInsertSchema = createInsertSchema(laboratory)
     updated_at: true,
   })
 
-export const patchLaboratorySchema = createInsertSchema(laboratory).partial()
+export const patchLaboratorySchema = createInsertSchema(laboratory).partial().omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+})
 
 export const students = pgTable('students', {
   id: varchar({ length: 12 })
