@@ -229,7 +229,7 @@ export const laboratory = pgTable('laboratory', {
   id: varchar({ length: 12 })
     .primaryKey()
     .$default(() => nanoid(12)),
-  name: varchar({ length: 128 }).notNull(),
+  name: varchar({ length: 128 }).notNull().unique(),
   status: boolean().default(true).notNull(),
   created_at: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updated_at: timestamp({ mode: 'date' })

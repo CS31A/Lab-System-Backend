@@ -78,6 +78,13 @@
       "when": 1757325175462,
       "tag": "0010_naive_exiles",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1757327916433,
+      "tag": "0011_careful_kang",
+      "breakpoints": true
     }
   ]
 }

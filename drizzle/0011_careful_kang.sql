@@ -1,0 +1,1 @@
+ALTER TABLE "laboratory" ADD CONSTRAINT "laboratory_name_unique" UNIQUE("name");
