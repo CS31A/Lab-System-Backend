@@ -4,7 +4,7 @@
 
 import * as handlers from '@/handlers/subjects/subjects.handler'
 import { createRouter } from '@/lib/create-app'
-import { authMiddleware, requireRole, adminOnlyForNonGet } from '@/middleware/auth'
+import { adminOnlyForNonGet, authMiddleware, requireRole } from '@/middleware/auth'
 import * as routes from '@/routes/subjects/subjects.route'
 
 /**

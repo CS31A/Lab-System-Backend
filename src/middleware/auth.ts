@@ -99,8 +99,17 @@ export function requireRole(allowedRoles: string[]) {
 }
 
 export const adminOnlyForNonGet = createMiddleware<AppBindings>(async (c, next) => {
-  if (c.req.method === 'GET')
+  if (c.req.method === 'GET' || c.req.method === 'HEAD' || c.req.method === 'OPTIONS')
     return next()
+  return requireRole(['admin'])(c, next)
+})
 
-  return requireRole(['admin']) (c, next)
+/**
+ * Middleware that restricts access to the GET /users endpoint to admin users only.
+ * Does not affect nested paths like /users/123.
+ */
+export const adminOnlyUsersListGet = createMiddleware<AppBindings>(async (c, next) => {
+  if (c.req.method === 'GET' && c.req.path === '/users')
+    return requireRole(['admin'])(c, next)
+  return next()
 })

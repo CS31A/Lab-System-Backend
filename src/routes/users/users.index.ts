@@ -11,7 +11,7 @@ import { RestoreUserHandler } from '@/handlers/users/restore-user.handler'
 import { SoftDeleteUserHandler } from '@/handlers/users/soft-delete-user.handler'
 import * as updateHandlers from '@/handlers/users/update-user.handler'
 import { createRouter } from '@/lib/create-app'
-import { adminOnlyForNonGet, authMiddleware, requireRole } from '@/middleware/auth'
+import { adminOnlyForNonGet, adminOnlyUsersListGet, authMiddleware, requireRole } from '@/middleware/auth'
 import * as routes from '@/routes/users/users.route'
 
 /**
@@ -31,10 +31,10 @@ router.use('/users/*', adminOnlyForNonGet)
 // Keep specific admin-only GET endpoint(s)
 router.use('/users/all', requireRole(['admin']))
 
-// Allow read access
-// - List (/users): admin only
-router.use('/users', requireRole(['admin']))
-// - Single user and other nested GETs: admin, teacher, technical
+// Exact-path admin-only guard for GET /users that does not affect nested paths
+router.use('/users', adminOnlyUsersListGet)
+
+// - Single user and other nested GETs: admin, teacher, technical (GET only)
 router.use('/users/*', requireRole(['admin', 'teacher', 'technical']))
 
 // Route registrations
