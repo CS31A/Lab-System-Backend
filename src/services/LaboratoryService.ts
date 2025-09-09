@@ -97,18 +97,17 @@ export class LaboratoryService {
    */
   async updateLaboratory(id: string, updateData: UpdateLaboratoryData) {
     try {
-      // First check if laboratory exists
-      const existingLaboratory = await this.getLaboratoryById(id)
-      if (!existingLaboratory) {
-        throw new Error('Laboratory not found')
-      }
-
-      // Update the laboratory
+      // Update the laboratory directly
       const [updatedLaboratory] = await this.db
         .update(laboratory)
         .set(updateData)
         .where(eq(laboratory.id, id))
         .returning()
+
+      // Check if any rows were updated
+      if (!updatedLaboratory) {
+        throw new Error('Laboratory not found')
+      }
 
       this.logger.info('Laboratory updated successfully', {
         laboratoryId: id,
@@ -119,6 +118,16 @@ export class LaboratoryService {
       return updatedLaboratory
     }
     catch (error) {
+      // Handle unique constraint violation (PostgreSQL error code 23505)
+      if ((error as any).code === '23505' && (error as any).message.includes('laboratory_name_unique')) {
+        this.logger.warn('Attempt to update laboratory with duplicate name', {
+          laboratoryId: id,
+          updateData,
+          timestamp: new Date().toISOString(),
+        })
+        throw new Error('A laboratory with this name already exists')
+      }
+
       this.logger.error('Failed to update laboratory', {
         error: (error as Error).message,
         laboratoryId: id,
@@ -134,17 +143,16 @@ export class LaboratoryService {
    */
   async deleteLaboratory(id: string) {
     try {
-      // First check if laboratory exists
-      const existingLaboratory = await this.getLaboratoryById(id)
-      if (!existingLaboratory) {
-        throw new Error('Laboratory not found')
-      }
-
-      // Delete the laboratory
+      // Delete the laboratory directly
       const [deletedLaboratory] = await this.db
         .delete(laboratory)
         .where(eq(laboratory.id, id))
         .returning()
+
+      // Check if any rows were deleted
+      if (!deletedLaboratory) {
+        throw new Error('Laboratory not found')
+      }
 
       this.logger.info('Laboratory deleted successfully', {
         laboratoryId: id,
