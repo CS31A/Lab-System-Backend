@@ -8,3 +8,5 @@ LOG_LEVEL=debug
 # Node Environment
 # development | production
 NODE_ENV=development
+
+BCRYPT_COST=10

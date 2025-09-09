@@ -11,7 +11,7 @@ import { RestoreUserHandler } from '@/handlers/users/restore-user.handler'
 import { SoftDeleteUserHandler } from '@/handlers/users/soft-delete-user.handler'
 import * as updateHandlers from '@/handlers/users/update-user.handler'
 import { createRouter } from '@/lib/create-app'
-import { authMiddleware, requireRole } from '@/middleware/auth'
+import { adminOnlyForNonGet, adminOnlyUsersListGet, authMiddleware, requireRole } from '@/middleware/auth'
 import * as routes from '@/routes/users/users.route'
 
 /**
@@ -19,18 +19,35 @@ import * as routes from '@/routes/users/users.route'
  * We then export this router to be registered in the root index.ts file
  */
 const router = createRouter()
+
+// Apply authentication to base and nested paths
 router.use('/users', authMiddleware)
-// Admin only routes
-router.use('/users', requireRole(['admin']))
+router.use('/users/*', authMiddleware)
+
+// Admin-only guard for non-GET methods
+router.use('/users', adminOnlyForNonGet)
+router.use('/users/*', adminOnlyForNonGet)
+
+// Keep specific admin-only GET endpoint(s)
+// Using the new dynamic middleware approach for /users/all
+// router.use('/users/all', adminOnlyUsersAllGet)  // Alternative dynamic approach
+router.use('/users/all', requireRole(['admin']))
+
+// Exact-path admin-only guard for GET /users that does not affect nested paths
+// Now using the new dynamic middleware (behind the scenes)
+router.use('/users', adminOnlyUsersListGet)
+
+// - Single user and other nested GETs: admin, teacher, technical (GET only)
+router.use('/users/*', requireRole(['admin', 'teacher', 'technical']))
+
+// Route registrations
 router.openapi(routes.createUserRoute, createHandlers.CreateUserHandler)
 router.openapi(routes.updateUserRoute, updateHandlers.UpdateUserHandler)
+router.openapi(routes.getAllUsersRoute, GetAllUsersHandler)
 router.openapi(routes.softDeleteUserRoute, SoftDeleteUserHandler)
 router.openapi(routes.restoreUserRoute, RestoreUserHandler)
 router.openapi(routes.hardDeleteUserRoute, HardDeleteUserHandler)
-// Admin, Teacher, Technical routes
-router.use('/users', requireRole(['admin', 'teacher', 'technical']))
 router.openapi(routes.getUserRoute, GetUserHandler)
-router.openapi(routes.getAllUsersRoute, GetAllUsersHandler)
 router.openapi(routes.listUsersRoute, ListUsersHandler)
 
 export default router
