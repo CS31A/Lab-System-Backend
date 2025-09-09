@@ -6,8 +6,9 @@ import {
   teacherDashboardQuerySchema,
   teacherDashboardResponseSchema,
 } from '@/lib/zod-schemas'
-import jsonContent from '@/middleware/utils/json-content'
+import { errorSchema } from '@/lib/zod-schemas/error.schema'
 
+import jsonContent from '@/middleware/utils/json-content'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 
 export const getTeacherDashboardRoute = createRoute({
@@ -18,26 +19,16 @@ export const getTeacherDashboardRoute = createRoute({
     query: teacherDashboardQuerySchema,
   },
   responses: {
-    [httpStatusCodes.OK]: {
-      content: {
-        'application/json': { // TODO: Refactor this to follow the standard convention by directly using jsoncContent instead of this
-          schema: teacherDashboardResponseSchema,
-        },
-      },
-      description: 'Teacher dashboard data retrieved successfully',
-    },
+    [httpStatusCodes.OK]: jsonContent(
+      teacherDashboardResponseSchema,
+      'Teacher dashboard data retrieved successfully',
+    ),
     [httpStatusCodes.BAD_REQUEST]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Invalid query parameters',
     ),
     [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Internal Server Error',
     ),
   },
@@ -60,17 +51,11 @@ export const getTeachersRoute = createRoute({
       'List of teachers retrieved successfully',
     ),
     [httpStatusCodes.BAD_REQUEST]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Invalid query parameters',
     ),
     [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Internal Server Error',
     ),
   },

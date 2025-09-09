@@ -1,6 +1,7 @@
 import { createRoute, z } from '@hono/zod-openapi'
 import { laboratoryInsertSchema, laboratorySelectSchema, patchLaboratorySchema } from '@/db/schema'
 import { pagination, paginationQuery } from '@/lib/zod-schemas'
+import { errorSchema } from '@/lib/zod-schemas/error.schema'
 import IdParamsSchema from '@/middleware/utils/id-params-validator'
 import jsonContent, { jsonContentRequired } from '@/middleware/utils/json-content'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
@@ -27,17 +28,11 @@ export const createLaboratoryRoute = createRoute({
       'Laboratory successfully created',
     ),
     [httpStatusCodes.BAD_REQUEST]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Validation failed',
     ),
     [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Internal Server Error',
     ),
   },
@@ -68,10 +63,7 @@ export const getLaboratoryRoute = createRoute({
       'Laboratory not found',
     ),
     [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Internal Server Error',
     ),
   },
@@ -106,17 +98,11 @@ export const updateLaboratoryRoute = createRoute({
       'Laboratory not found',
     ),
     [httpStatusCodes.BAD_REQUEST]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Bad Request',
     ),
     [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Internal Server Error',
     ),
   },
@@ -146,10 +132,7 @@ export const deleteLaboratoryRoute = createRoute({
       'Laboratory not found',
     ),
     [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Internal Server Error',
     ),
   },
@@ -175,10 +158,7 @@ export const listLaboratoriesRoute = createRoute({
       'Laboratories successfully retrieved',
     ),
     [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Internal Server Error',
     ),
   },
@@ -200,10 +180,7 @@ export const getAllLaboratoriesRoute = createRoute({
       'All laboratories successfully retrieved',
     ),
     [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Internal Server Error',
     ),
   },

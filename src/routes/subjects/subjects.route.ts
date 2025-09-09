@@ -5,6 +5,7 @@
 import { createRoute, z } from '@hono/zod-openapi'
 import { patchSubjectSchema, subjectInsertSchema, subjectSelectSchema } from '@/db/schema'
 import { pagination, paginationQuery } from '@/lib/zod-schemas'
+import { errorSchema } from '@/lib/zod-schemas/error.schema'
 import IdParamsSchema from '@/middleware/utils/id-params-validator'
 import jsonContent, { jsonContentRequired } from '@/middleware/utils/json-content'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
@@ -31,17 +32,11 @@ export const createSubjectRoute = createRoute({
       'Subject successfully created',
     ),
     [httpStatusCodes.BAD_REQUEST]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Validation failed',
     ),
     [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Internal Server Error',
     ),
   },
@@ -72,10 +67,7 @@ export const getSubjectRoute = createRoute({
       'Subject not found',
     ),
     [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Internal Server Error',
     ),
   },
@@ -110,17 +102,11 @@ export const updateSubjectRoute = createRoute({
       'Subject not found',
     ),
     [httpStatusCodes.BAD_REQUEST]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Bad Request',
     ),
     [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Internal Server Error',
     ),
   },
@@ -150,10 +136,7 @@ export const deleteSubjectRoute = createRoute({
       'Subject not found',
     ),
     [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Internal Server Error',
     ),
   },
@@ -179,10 +162,7 @@ export const listSubjectsRoute = createRoute({
       'Subjects successfully retrieved',
     ),
     [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Internal Server Error',
     ),
   },
@@ -204,18 +184,20 @@ export const getAllSubjectsRoute = createRoute({
       'All subjects successfully retrieved',
     ),
     [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Internal Server Error',
     ),
   },
 })
 
 export type CreateSubjectRoute = typeof createSubjectRoute
+
 export type GetSubjectRoute = typeof getSubjectRoute
+
 export type UpdateSubjectRoute = typeof updateSubjectRoute
+
 export type DeleteSubjectRoute = typeof deleteSubjectRoute
+
 export type ListSubjectsRoute = typeof listSubjectsRoute
+
 export type GetAllSubjectsRoute = typeof getAllSubjectsRoute

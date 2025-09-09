@@ -5,6 +5,7 @@
 import { createRoute, z } from '@hono/zod-openapi'
 import { adminSelectSchema, patchUserSchema, teacherSelectSchema, technicalStaffSelectSchema, userInsertSchema, userSelectSchema } from '@/db/schema'
 import { pagination, paginationQuery } from '@/lib/zod-schemas'
+import { errorSchema } from '@/lib/zod-schemas/error.schema'
 import IdParamsSchema from '@/middleware/utils/id-params-validator'
 import jsonContent, { jsonContentRequired } from '@/middleware/utils/json-content'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
@@ -27,23 +28,16 @@ export const createUserRoute = createRoute({
     [httpStatusCodes.CREATED]: jsonContent(
       z.object({
         message: z.string(),
-        // data: userInsertSchema.omit({ password: true, confirmPassword: true }),
         data: userSelectSchema.omit({ password: true }),
       }),
       'User successfully created',
     ),
     [httpStatusCodes.BAD_REQUEST]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Validation failed',
     ),
     [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Internal Server Error',
     ),
   },
@@ -195,10 +189,7 @@ export const listUsersRoute = createRoute({
       'Users successfully retrieved',
     ),
     [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Internal Server Error',
     ),
   },
@@ -217,10 +208,7 @@ export const getAllUsersRoute = createRoute({
       'All users successfully retrieved',
     ),
     [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Internal Server Error',
     ),
   },
@@ -247,10 +235,7 @@ export const hardDeleteUserRoute = createRoute({
       'User not found',
     ),
     [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-      z.object({
-        message: z.string(),
-        errors: z.any(),
-      }),
+      errorSchema,
       'Internal Server Error',
     ),
   },
