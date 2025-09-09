@@ -4,7 +4,7 @@
 
 import * as handlers from '@/handlers/subjects/subjects.handler'
 import { createRouter } from '@/lib/create-app'
-import { authMiddleware, requireRole } from '@/middleware/auth'
+import { authMiddleware, requireRole, adminOnlyForNonGet } from '@/middleware/auth'
 import * as routes from '@/routes/subjects/subjects.route'
 
 /**
@@ -12,17 +12,24 @@ import * as routes from '@/routes/subjects/subjects.route'
  * We then export this router to be registered in the root index.ts file
  */
 const router = createRouter()
+
+// Apply authentication to base and nested paths
+router.use('/subjects', authMiddleware)
 router.use('/subjects/*', authMiddleware)
-router.use('/subjects', requireRole(['admin']))
 
-router.openapi(routes.createSubjectRoute, handlers.CreateSubjectHandler)
-router.openapi(routes.getAllSubjectsRoute, handlers.GetAllSubjectsHandler)
-router.openapi(routes.updateSubjectRoute, handlers.UpdateSubjectHandler)
-router.openapi(routes.deleteSubjectRoute, handlers.DeleteSubjectHandler)
+// Admin-only guard for non-GET methods
+router.use('/subjects', adminOnlyForNonGet)
+router.use('/subjects/*', adminOnlyForNonGet)
 
+// Allow read access for admin, teacher, technical on GET endpoints
 router.use('/subjects', requireRole(['admin', 'teacher', 'technical']))
+router.use('/subjects/*', requireRole(['admin', 'teacher', 'technical']))
 
+// Route registrations
 router.openapi(routes.getSubjectRoute, handlers.GetSubjectHandler)
 router.openapi(routes.listSubjectsRoute, handlers.ListSubjectsHandler)
+router.openapi(routes.createSubjectRoute, handlers.CreateSubjectHandler)
+router.openapi(routes.updateSubjectRoute, handlers.UpdateSubjectHandler)
+router.openapi(routes.deleteSubjectRoute, handlers.DeleteSubjectHandler)
 
 export default router

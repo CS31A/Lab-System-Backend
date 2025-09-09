@@ -63,9 +63,26 @@ export function requireRole(allowedRoles: string[]) {
       )
     }
 
+    c.var.logger.warn('\nThis is the role of the user  ', payload.role)
+    c.var.logger.warn('\nThese are the allowed roles: ', allowedRoles)
+
     // Validate the payload structure
     try {
       jwtPayloadSchema.parse(payload)
+
+      if (!allowedRoles.includes(payload.role)) {
+        c.var.logger.warn('Role check failed: Insufficient permissions', {
+          userType: payload.role,
+          allowedRoles,
+          userId: payload.sub,
+        })
+        return c.json(
+          {
+            message: 'Forbidden: Insufficient permissions',
+          },
+          httpStatusCodes.FORBIDDEN,
+        )
+      }
     }
     catch (error) {
       c.var.logger.warn('Role check failed: Invalid JWT payload structure', { error: (error as Error).message })
@@ -77,20 +94,13 @@ export function requireRole(allowedRoles: string[]) {
       )
     }
 
-    if (!allowedRoles.includes(payload.role)) {
-      c.var.logger.warn('Role check failed: Insufficient permissions', {
-        userType: payload.role,
-        allowedRoles,
-        userId: payload.sub,
-      })
-      return c.json(
-        {
-          message: 'Forbidden: Insufficient permissions',
-        },
-        httpStatusCodes.FORBIDDEN,
-      )
-    }
-
     await next()
   })
 }
+
+export const adminOnlyForNonGet = createMiddleware<AppBindings>(async (c, next) => {
+  if (c.req.method === 'GET')
+    return next()
+
+  return requireRole(['admin']) (c, next)
+})
