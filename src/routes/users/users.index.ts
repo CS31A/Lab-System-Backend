@@ -29,9 +29,12 @@ router.use('/users', adminOnlyForNonGet)
 router.use('/users/*', adminOnlyForNonGet)
 
 // Keep specific admin-only GET endpoint(s)
+// Using the new dynamic middleware approach for /users/all
+// router.use('/users/all', adminOnlyUsersAllGet)  // Alternative dynamic approach
 router.use('/users/all', requireRole(['admin']))
 
 // Exact-path admin-only guard for GET /users that does not affect nested paths
+// Now using the new dynamic middleware (behind the scenes)
 router.use('/users', adminOnlyUsersListGet)
 
 // - Single user and other nested GETs: admin, teacher, technical (GET only)

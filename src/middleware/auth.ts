@@ -105,11 +105,34 @@ export const adminOnlyForNonGet = createMiddleware<AppBindings>(async (c, next) 
 })
 
 /**
+ * Factory function that creates middleware to restrict access based on path, method, and required roles.
+ *
+ * @param paths - Array of exact paths to protect (e.g., ['/users', '/admin'])
+ * @param methods - Array of HTTP methods to protect (e.g., ['GET', 'POST'])
+ * @param roles - Array of roles that are allowed access (e.g., ['admin'])
+ * @returns Middleware function
+ */
+export function createPathRoleMiddleware(
+  paths: string[],
+  methods: string[],
+  roles: string[],
+) {
+  return createMiddleware<AppBindings>(async (c, next) => {
+    // Check if current path and method match the protected ones
+    if (paths.includes(c.req.path) && methods.includes(c.req.method))
+      return requireRole(roles)(c, next)
+    return next()
+  })
+}
+
+/**
  * Middleware that restricts access to the GET /users endpoint to admin users only.
  * Does not affect nested paths like /users/123.
+ *
+ * This is now implemented using the more flexible createPathRoleMiddleware factory.
  */
-export const adminOnlyUsersListGet = createMiddleware<AppBindings>(async (c, next) => {
-  if (c.req.method === 'GET' && c.req.path === '/users')
-    return requireRole(['admin'])(c, next)
-  return next()
-})
+export const adminOnlyUsersListGet = createPathRoleMiddleware(
+  ['/users'], // Protected paths
+  ['GET'], // Protected methods
+  ['admin'], // Required roles
+)
