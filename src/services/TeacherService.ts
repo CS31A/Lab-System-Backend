@@ -260,4 +260,97 @@ export class TeacherService {
       throw error
     }
   }
+
+  /**
+   * Retrieves all laboratories with their current status
+   * Determines if a lab is available, occupied, or under maintenance
+   */
+  async getLaboratoriesWithCurrentStatus() {
+    try {
+      const now = new Date()
+      // Get all laboratories with their current schedules (if any)
+      const laboratoriesWithSchedules = await this.db
+        .select({
+          id: laboratory.id,
+          name: laboratory.name,
+          status: laboratory.status,
+          created_at: laboratory.created_at,
+          updated_at: laboratory.updated_at,
+          // Schedule information (if currently active)
+          scheduleId: schedule.id,
+          section: schedule.section,
+          startTime: schedule.start_time,
+          endTime: schedule.end_time,
+          scheduleStatus: schedule.status,
+          // Subject and teacher information
+          subjectName: subjects.subject_name,
+          teacherFirstname: teachers.firstname,
+          teacherLastname: teachers.lastname,
+        })
+        .from(laboratory)
+        .leftJoin(
+          schedule,
+          and(
+            eq(laboratory.id, schedule.laboratory_id),
+            lte(schedule.start_time, now),
+            gte(schedule.end_time, now),
+          ),
+        )
+        .leftJoin(subjects, eq(schedule.subject_id, subjects.id))
+        .leftJoin(teachers, eq(schedule.teacher_id, teachers.id))
+        .orderBy(laboratory.name)
+
+      // Transform the data to include current status
+      const laboratoriesWithVacancy = laboratoriesWithSchedules.map((lab) => {
+        let vacancyStatus: 'available' | 'occupied' | 'maintenance'
+        let currentSchedule = null
+
+        // Determine current status
+        if (!lab.status) {
+          vacancyStatus = 'maintenance' // Laboratory is unavailable/under maintenance
+        }
+        else if (lab.scheduleId && lab.startTime && lab.endTime) {
+          vacancyStatus = 'occupied' // Laboratory has an active schedule
+          currentSchedule = {
+            id: lab.scheduleId,
+            section: lab.section || '',
+            start_time: lab.startTime.toISOString(),
+            end_time: lab.endTime.toISOString(),
+            subject_name: lab.subjectName || '',
+            teacher_name: `${lab.teacherFirstname || ''} ${lab.teacherLastname || ''}`.trim() || 'Unknown',
+          }
+        }
+        else {
+          vacancyStatus = 'available' // Laboratory is available
+        }
+
+        return {
+          id: lab.id,
+          name: lab.name,
+          status: lab.status,
+          vacancy_status: vacancyStatus,
+          current_schedule: currentSchedule,
+          created_at: lab.created_at.toISOString(),
+          updated_at: lab.updated_at.toISOString(),
+        }
+      })
+
+      this.logger.info('Laboratories with current status retrieved successfully', {
+        totalLaboratories: laboratoriesWithVacancy.length,
+        available: laboratoriesWithVacancy.filter(lab => lab.vacancy_status === 'available').length,
+        occupied: laboratoriesWithVacancy.filter(lab => lab.vacancy_status === 'occupied').length,
+        maintenance: laboratoriesWithVacancy.filter(lab => lab.vacancy_status === 'maintenance').length,
+        timestamp: new Date().toISOString(),
+      })
+
+      return laboratoriesWithVacancy
+    }
+    catch (error) {
+      this.logger.error('Failed to retrieve laboratories with current status', {
+        error: (error as Error).message,
+        timestamp: new Date().toISOString(),
+      })
+      throw error
+    }
+  }
 }
