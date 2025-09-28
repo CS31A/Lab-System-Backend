@@ -1,5 +1,6 @@
 import type { AppBindings, AppOpenAPI } from '@/lib/types/app-types'
 import { OpenAPIHono } from '@hono/zod-openapi'
+import { cors } from 'hono/cors'
 import logger from '@/middleware/pino-logger'
 import notFound from '@/middleware/utils/not-found'
 import onError from '@/middleware/utils/on-error'
@@ -9,6 +10,12 @@ import defaultHook from '@/openapi/default-hook'
 export default function createApp() {
   const app = createRouter()
     .use(logger())
+    .use(
+      cors({
+        origin: ['http://localhost:5173'],
+        credentials: true,
+      }),
+    )
     // .use(serveEmojiFavicon('🔥'))
   app.notFound(notFound)
   app.onError(onError)
