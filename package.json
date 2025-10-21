@@ -8,7 +8,10 @@
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
     "@cloudflare/vitest-pool-workers": "^0.8.62",
@@ -26,6 +29,7 @@
     "nanoid": "^5.1.5",
     "pino-pretty": "^13.1.1",
     "postgres": "^3.4.7",
+    "resend": "^6.2.0",
     "zod": "^4.0.17"
   },
   "devDependencies": {
