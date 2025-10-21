@@ -134,7 +134,7 @@ export class EmailService {
             throw new Error(`Resend API error: ${response.status} - ${errorData}`)
         }
 
-        const result = await response.json()
+        const result = await response.json() as { id?: string }
 
         this.logger.info('Email sent via Resend', {
             to: options.to.replace(/(.{2}).*(@.*)/, '$1***$2'),
