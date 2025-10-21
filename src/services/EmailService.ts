@@ -20,19 +20,38 @@ export interface PasswordResetEmailData {
 }
 
 /**
+ * A simple helper to escape HTML characters and prevent XSS.
+ * @param str The string to escape.
+ * @returns The escaped string.
+ */
+function escapeHTML(str: string): string {
+    return str.replace(
+        /[&<>"']/g,
+        (match) =>
+        ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;',
+        }[match]!)
+    )
+}
+
+/**
  * EmailService - Handles email sending functionality
- * 
+ *
  * Supports multiple email providers:
  * - Resend (recommended for production)
  * - SMTP (fallback option)
- * 
+ *
  * @example
  * ```typescript
  * const emailService = new EmailService(context)
  * await emailService.sendPasswordResetEmail('user@example.com', {
- *   username: 'john_doe',
- *   resetUrl: 'https://app.com/reset-password?token=abc123',
- *   expiryHours: 1
+ * username: 'john_doe',
+ * resetUrl: '[https://app.com/reset-password?token=abc123](https://app.com/reset-password?token=abc123)',
+ * expiryHours: 1
  * })
  * ```
  */
@@ -45,9 +64,21 @@ export class EmailService {
         this.logger = c.var.logger
     }
 
+    private maskEmail(email: string): string {
+        const [localPart, domain] = email.split('@');
+        if (!localPart || !domain) {
+            // Not a valid email format, return a generic masked string
+            return '***@***';
+        }
+        if (localPart.length <= 1) {
+            return `${localPart}***@${domain}`;
+        }
+        return `${localPart.substring(0, 2)}***@${domain}`;
+    }
+
     /**
      * Sends a password reset email to the user
-     * 
+     *
      * @param email - Recipient email address
      * @param data - Password reset email data
      * @returns Promise that resolves when email is sent
@@ -68,7 +99,7 @@ export class EmailService {
         })
 
         this.logger.info('Password reset email sent successfully', {
-            email: email.replace(/(.{2}).*(@.*)/, '$1***$2'), // Mask email for privacy
+            email: this.maskEmail(email), // Use robust masking
             username,
             timestamp: new Date().toISOString(),
         })
@@ -76,7 +107,7 @@ export class EmailService {
 
     /**
      * Sends an email using the configured email provider
-     * 
+     *
      * @param options - Email options
      * @returns Promise that resolves when email is sent
      * @throws {Error} When email sending fails
@@ -90,7 +121,7 @@ export class EmailService {
             } else {
                 // Development mode - log email instead of sending
                 this.logger.warn('No email provider configured - logging email content', {
-                    to: options.to,
+                    to: options.to.replace(/(.{2}).*(@.*)/, '$1***$2'),
                     subject: options.subject,
                     html: options.html,
                     text: options.text,
@@ -113,9 +144,11 @@ export class EmailService {
     private async sendWithResend(options: EmailOptions): Promise<void> {
         const { RESEND_API_KEY, SMTP_FROM } = this.c.env
         const fromEmail = SMTP_FROM || 'onboarding@resend.dev' // Default Resend domain for testing
-
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
         const response = await fetch('https://api.resend.com/emails', {
             method: 'POST',
+            signal: controller.signal,
             headers: {
                 'Authorization': `Bearer ${RESEND_API_KEY}`,
                 'Content-Type': 'application/json',
@@ -140,7 +173,9 @@ export class EmailService {
             to: options.to.replace(/(.{2}).*(@.*)/, '$1***$2'),
             subject: options.subject,
             messageId: result.id,
+
         })
+        clearTimeout(timeoutId)
     }
 
 
@@ -149,6 +184,10 @@ export class EmailService {
      * Generates HTML content for password reset email
      */
     private generatePasswordResetHTML(username: string, resetUrl: string, expiryHours: number): string {
+        // Escape user-controlled data to prevent XSS
+        const safeUsername = escapeHTML(username);
+        const safeResetUrl = escapeHTML(resetUrl);
+
         return `
 <!DOCTYPE html>
 <html lang="en">
@@ -171,18 +210,18 @@ export class EmailService {
     </div>
     <div class="content">
         <h2>Reset Your Password</h2>
-        <p>Hello <strong>${username}</strong>,</p>
+        <p>Hello <strong>${safeUsername}</strong>,</p>
         <p>We received a request to reset your password for your Lab System account. If you didn't make this request, you can safely ignore this email.</p>
         
         <p>To reset your password, click the button below:</p>
-        <a href="${resetUrl}" class="button">Reset Password</a>
+        <a href="${safeResetUrl}" class="button">Reset Password</a>
         
         <div class="warning">
             <strong>Important:</strong> This link will expire in ${expiryHours} hour${expiryHours !== 1 ? 's' : ''}. For security reasons, you can only use this link once.
         </div>
         
         <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
-        <p style="word-break: break-all; background-color: #f8f9fa; padding: 10px; border-radius: 4px;">${resetUrl}</p>
+        <p style="word-break: break-all; background-color: #f8f9fa; padding: 10px; border-radius: 4px;">${safeResetUrl}</p>
         
         <p>If you continue to have problems, please contact our support team.</p>
         

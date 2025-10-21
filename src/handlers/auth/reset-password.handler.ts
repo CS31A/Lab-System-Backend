@@ -38,8 +38,7 @@ export const ResetPasswordHandler: AppRouteHandler<ResetPasswordRoute> = async (
             httpStatusCodes.OK,
         )
     } catch (error) {
-        const errorMessage = (error as Error).message
-
+        const errorMessage = error instanceof Error ? error.message : String(error)
         c.var.logger.warn('Password reset failed', {
             error: errorMessage,
             timestamp: new Date().toISOString(),

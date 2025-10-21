@@ -36,11 +36,10 @@ export const ForgotPasswordHandler: AppRouteHandler<ForgotPasswordRoute> = async
         )
     } catch (error) {
         c.var.logger.error('Forgot password request failed', {
-            email: email.replace(/(.{2}).*(@.*)/, '$1***$2'),
+            email: email.replace(/^(.{1,2})(.*)(@.*)/, '$1***$3'),
             error: (error as Error).message,
             timestamp: new Date().toISOString(),
         })
-
         // Still return success to prevent information leakage
         return c.json(
             {

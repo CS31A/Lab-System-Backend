@@ -188,13 +188,16 @@ export const resetPasswordRoute = createRoute({
 
 export const validateResetTokenRoute = createRoute({
   tags: ['Auth'],
-  method: 'get',
+  method: 'post',
   path: '/validate-reset-token',
   description: 'Validate a password reset token without consuming it',
   request: {
-    query: z.object({
-      token: z.string().min(1, 'Reset token is required'),
-    }),
+    body: jsonContentRequired(
+      z.object({
+        token: z.string().min(1, 'Reset token is required'),
+      }),
+      'Reset token to validate',
+    ),
   },
   responses: {
     [httpStatusCodes.OK]: jsonContent(
@@ -205,7 +208,7 @@ export const validateResetTokenRoute = createRoute({
           username: z.string(),
           email: z.string(),
         }).optional(),
-        expiresAt: z.date().optional(),
+        expiresAt: z.string().datetime().optional(),
       }),
       'Token validation result',
     ),
@@ -225,7 +228,6 @@ export const validateResetTokenRoute = createRoute({
     ),
   },
 })
-
 export type LoginRoute = typeof loginRoute
 export type GetCurrentUserRoute = typeof getCurrentUserRoute
 export type LogoutRoute = typeof logoutRoute

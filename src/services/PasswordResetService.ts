@@ -6,7 +6,7 @@
 import type { Context } from 'hono'
 import type { AppBindings } from '@/lib/types/app-types'
 import bcrypt from 'bcryptjs'
-import { and, eq, lt } from 'drizzle-orm'
+import { and, eq, isNull, lt } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { createDb } from '@/db'
 import { passwordResetTokens, users } from '@/db/schema'
@@ -113,7 +113,7 @@ export class PasswordResetService {
         // Always return success to prevent user enumeration attacks
         if (!user) {
             this.logger.warn('Password reset requested for non-existent user', {
-                email: email.replace(/(.{2}).*(@.*)/, '$1***$2'),
+                email: email.includes('@') ? email.replace(/^(.{1,2})(.*)(@.+)$/, '$1***$3') : '***',
                 timestamp: new Date().toISOString(),
             })
 
@@ -157,7 +157,7 @@ export class PasswordResetService {
             this.logger.info('Password reset token generated and email sent', {
                 user_id: user.id,
                 username: user.username,
-                email: email.replace(/(.{2}).*(@.*)/, '$1***$2'),
+                email: email.includes('@') ? email.replace(/^(.{1,2})(.*)(@.+)$/, '$1***$3') : '***',
                 expires_at: expiresAt.toISOString(),
                 timestamp: new Date().toISOString(),
             })
@@ -417,30 +417,31 @@ export class PasswordResetService {
      * ```
      */
     async cleanupExpiredTokens(): Promise<void> {
-        const now = new Date()
 
         try {
-            // Delete expired tokens and tokens used more than 24 hours ago
-            const oneDayAgo = new Date(Date.now() - (24 * 60 * 60 * 1000))
+            const now = new Date()
+            const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
 
+            // Delete expired tokens
             await this.db.delete(passwordResetTokens).where(
-                and(
-                    lt(passwordResetTokens.expires_at, now),
-                    // Also clean up old used tokens
-                    lt(passwordResetTokens.used_at, oneDayAgo)
-                )
+                lt(passwordResetTokens.expires_at, now)
             )
 
-            this.logger.debug('Expired password reset tokens cleaned up', {
+            // Delete tokens used more than 24 hours ago
+            await this.db.delete(passwordResetTokens).where(
+                lt(passwordResetTokens.used_at, oneDayAgo)
+            )
+
+            this.logger.debug('Expired and old used password reset tokens cleaned up', {
                 timestamp: new Date().toISOString(),
             })
-
         } catch (error) {
             this.logger.error('Failed to cleanup expired tokens', {
                 error: (error as Error).message,
                 timestamp: new Date().toISOString(),
             })
         }
+
     }
 
     /**
@@ -470,7 +471,7 @@ export class PasswordResetService {
                 .where(
                     and(
                         eq(passwordResetTokens.user_id, userId),
-                        eq(passwordResetTokens.used_at, null as any)
+                        isNull(passwordResetTokens.used_at)
                     )
                 )
 

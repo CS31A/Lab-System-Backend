@@ -518,9 +518,10 @@ export const refreshTokenSelectSchema = createSelectSchema(refreshTokens)
 export const refreshTokenInsertSchema = createInsertSchema(refreshTokens)
   .omit({ id: true, createdAt: true, updatedAt: true })
 
-// Define relations for users and refresh tokens
+//Define relations for users and refresh tokens, and password reset tokens
 export const usersRelations = relations(users, ({ many }) => ({
   refreshTokens: many(refreshTokens),
+  passwordResetTokens: many(passwordResetTokens),
 }))
 
 export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
@@ -567,8 +568,3 @@ export const passwordResetTokensRelations = relations(passwordResetTokens, ({ on
   }),
 }))
 
-// Update users relations to include password reset tokens
-export const usersRelationsUpdated = relations(users, ({ many }) => ({
-  refreshTokens: many(refreshTokens),
-  passwordResetTokens: many(passwordResetTokens),
-}))
