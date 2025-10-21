@@ -10,3 +10,11 @@ LOG_LEVEL=debug
 NODE_ENV=development
 
 BCRYPT_COST=10
+JWT_SECRET=dev-jwt-secret-key-change-in-production
+
+# Email Configuration (for development)
+RESEND_API_KEY=re_your_dev_resend_api_key_here
+
+# App Configuration
+APP_URL=http://localhost:5173
+RESET_TOKEN_EXPIRY_HOURS=1

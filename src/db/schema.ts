@@ -518,9 +518,10 @@ export const refreshTokenSelectSchema = createSelectSchema(refreshTokens)
 export const refreshTokenInsertSchema = createInsertSchema(refreshTokens)
   .omit({ id: true, createdAt: true, updatedAt: true })
 
-// Define relations for users and refresh tokens
+//Define relations for users and refresh tokens, and password reset tokens
 export const usersRelations = relations(users, ({ many }) => ({
   refreshTokens: many(refreshTokens),
+  passwordResetTokens: many(passwordResetTokens),
 }))
 
 export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
@@ -529,3 +530,41 @@ export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
     references: [users.id],
   }),
 }))
+
+// Password Reset Tokens Table
+export const passwordResetTokens = pgTable('password_reset_tokens', {
+  id: varchar({ length: 12 })
+    .primaryKey()
+    .$default(() => nanoid(12)),
+  user_id: varchar('user_id', { length: 12 })
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  selector: varchar('selector', { length: 12 })
+    .notNull()
+    .unique(), // Public part for O(1) lookups
+  token_hash: varchar('token_hash', { length: 255 })
+    .notNull(), // Hash of the secret verifier part
+  expires_at: timestamp('expires_at', { mode: 'date' })
+    .notNull(),
+  used_at: timestamp('used_at', { mode: 'date' }), // Track when token was used
+  created_at: timestamp({ mode: 'date' })
+    .notNull()
+    .defaultNow(),
+}, table => ({
+  selectorIdx: uniqueIndex('password_reset_tokens_selector_idx').on(table.selector),
+  expiresAtIdx: index('password_reset_tokens_expires_at_idx').on(table.expires_at),
+  userIdIdx: index('password_reset_tokens_user_id_idx').on(table.user_id),
+}))
+
+export const passwordResetTokenSelectSchema = createSelectSchema(passwordResetTokens)
+export const passwordResetTokenInsertSchema = createInsertSchema(passwordResetTokens)
+  .omit({ id: true, created_at: true, used_at: true })
+
+// Relations for password reset tokens
+export const passwordResetTokensRelations = relations(passwordResetTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [passwordResetTokens.user_id],
+    references: [users.id],
+  }),
+}))
+
