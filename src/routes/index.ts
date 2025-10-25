@@ -7,8 +7,11 @@ import { createRouter } from '@/lib/create-app'
 import jsonContent from '@/middleware/utils/json-content'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 
+/**
+ * API welcome message route
+ * @description Provides a welcome message for the API root endpoint
+ */
 const router = createRouter()
-  // API welcome message
   .openapi(createRoute({
     tags: ['Index'],
     method: 'get',
@@ -26,7 +29,10 @@ const router = createRouter()
       message: 'Hono API',
     })
   })
-  // Health check for monitoring
+/**
+ * Health check for monitoring
+ * @description Provides health status information for monitoring systems
+ */
   .openapi(createRoute({
     tags: ['Health Check'],
     method: 'get',

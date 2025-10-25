@@ -13,6 +13,21 @@ import * as PinoPretty from 'pino-pretty'
  * formatting (pretty printing in development).
  *
  * @returns A Hono middleware handler that adds logging functionality
+ *
+ * @example
+ * ```typescript
+ * import createApp from '@/lib/create-app'
+ * import logger from '@/middleware/pino-logger'
+ *
+ * const app = createApp()
+ * app.use(logger()) // Add logging middleware
+ *
+ * // Access logger in handlers via c.var.logger
+ * app.get('/example', (c) => {
+ *   c.var.logger.info('Request received')
+ *   return c.json({ message: 'Hello World' })
+ * })
+ * ```
  */
 function logger() {
  return ((c, next) => pinoLogger({
