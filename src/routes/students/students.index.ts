@@ -40,5 +40,8 @@ router.openapi(routes.createStudentRoute, handlers.CreateStudentHandler)
 router.openapi(routes.getAllStudentsRoute, handlers.ListStudentsHandler)
 router.openapi(routes.getAllStudentsNoPaginationRoute, handlers.GetAllStudentsHandler)
 router.openapi(routes.getStudentRoute, handlers.GetStudentHandler)
+router.openapi(routes.updateStudentRoute, handlers.UpdateStudentHandler)
+router.openapi(routes.softDeleteStudentRoute, handlers.SoftDeleteStudentHandler)
+router.openapi(routes.hardDeleteStudentRoute, handlers.HardDeleteStudentHandler)
 
 export default router
