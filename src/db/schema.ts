@@ -549,6 +549,8 @@ export const patchLaboratorySchema = createInsertSchema(laboratory).partial().om
  * @property {string} student_id - Unique student identification number
  * @property {string} section - Student's class section
  * @property {string} course - Student's course/program
+ * @property {boolean} is_deleted - Flag indicating if the student has been soft-deleted (default: false)
+ * @property {Date} deleted_at - Timestamp when the student was soft-deleted (nullable)
  * @property {Date} created_at - Timestamp when the student was created (auto-generated)
  * @property {Date} updated_at - Timestamp when the student was last updated (auto-generated and auto-updated)
  */
@@ -561,6 +563,8 @@ export const students = pgTable('students', {
   student_id: varchar({ length: 50 }).notNull().unique(),
   section: varchar({ length: 30 }).notNull(),
   course: varchar({ length: 50 }).notNull(),
+  is_deleted: boolean().default(false),
+  deleted_at: timestamp({ mode: 'date' }),
   created_at: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updated_at: timestamp({ mode: 'date' })
     .notNull()
@@ -581,6 +585,8 @@ export const students = pgTable('students', {
  *   student_id: "S12345678",
  *   section: "CS101-A",
  *   course: "Computer Science",
+ *   is_deleted: false,
+ *   deleted_at: null,
  *   created_at: "2023-01-01T00:00:00.00Z",
  *   updated_at: "2023-01-02T00:00:00.000Z"
  * }
