@@ -29,4 +29,9 @@ routes.forEach(route =>
 
 // Setup OpenAPI documentation at /docs and /reference (after routes are registered)
 configureOpenAPI(app as AppOpenAPI)
+
+/**
+ * The main Hono application instance for the Lab System Backend API.
+ * @type {typeof app}
+ */
 export default app

@@ -1,7 +1,17 @@
+/**
+ * @fileoverview OpenAPI configuration module for Lab System Backend API.
+ * Sets up OpenAPI documentation and Scalar API reference.
+ */
 import type { AppOpenAPI } from '@/lib/types/app-types'
 import { Scalar } from '@scalar/hono-api-reference'
 import packageJSON from '../../package.json'
 
+/**
+ * Configures OpenAPI documentation for the application.
+ * Sets up OpenAPI spec at /docs endpoint and Scalar API reference at /reference.
+ * @param {AppOpenAPI} app - The Hono application instance with OpenAPI support
+ * @returns {void}
+*/
 export default function configureOpenAPI(app: AppOpenAPI) {
   app.doc('/docs', {
     openapi: '3.0.0',

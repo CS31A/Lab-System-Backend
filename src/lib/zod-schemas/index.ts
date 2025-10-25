@@ -1,4 +1,13 @@
-// Auth schemas
+/**
+ * @fileoverview Export module for all Zod schemas
+ * This file serves as the central export point for all Zod schema definitions
+ * used throughout the application, organized by feature area.
+ */
+
+/**
+ * @module Auth Schemas
+ * Export schemas related to authentication and authorization functionality
+ */
 export {
   basicMessageResponseSchema,
   errorResponseSchema,
@@ -9,13 +18,19 @@ export {
   unauthorizedResponseSchema,
 } from './auth.schema'
 
-// Pagination schemas
+/**
+ * @module Pagination Schemas
+ * Export schemas related to pagination functionality
+ */
 export {
   pagination,
   paginationQuery,
 } from './pagination.schema'
 
-// Teacher dashboard schemas
+/**
+ * @module Teacher Dashboard Schemas
+ * Export schemas related to teacher dashboard functionality
+ */
 export {
   teacherDashboardQuerySchema,
   teacherDashboardResponseSchema,

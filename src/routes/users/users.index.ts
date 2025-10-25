@@ -20,26 +20,39 @@ import * as routes from '@/routes/users/users.route'
  */
 const router = createRouter()
 
-// Apply authentication to base and nested paths
+/**
+ * @description Apply authentication to base and nested paths
+ */
 router.use('/users', authMiddleware)
 router.use('/users/*', authMiddleware)
 
-// Admin-only guard for non-GET methods
+/**
+ * @description Admin-only guard for non-GET methods
+ */
 router.use('/users', adminOnlyForNonGet)
 router.use('/users/*', adminOnlyForNonGet)
 
-// Keep specific admin-only GET endpoint(s)
+/**
+ * @description Keep specific admin-only GET endpoint(s)
+ */
 // Using the new dynamic middleware approach for /users/all
 // router.use('/users/all', adminOnlyUsersAllGet)  // Alternative dynamic approach
 router.use('/users/all', requireRole(['admin']))
 
-// Exact-path admin-only guard for GET /users that does not affect nested paths
+/**
+ * @description Exact-path admin-only guard for GET /users that does not affect nested paths
+ */
 // Now using the new dynamic middleware (behind the scenes)
 router.use('/users', adminOnlyUsersListGet)
 
-// - Single user and other nested GETs: admin, teacher, technical (GET only)
+/**
+ * @description Single user and other nested GETs: admin, teacher, technical (GET only)
+ */
 router.use('/users/*', requireRole(['admin', 'teacher', 'technical']))
 
+/**
+ * @description Route registrations - connects each route with its respective handler
+ */
 // Route registrations
 router.openapi(routes.createUserRoute, createHandlers.CreateUserHandler)
 router.openapi(routes.updateUserRoute, updateHandlers.UpdateUserHandler)

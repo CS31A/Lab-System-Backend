@@ -1,9 +1,20 @@
-import type { AppRouteHandler } from '@/lib/types/app-types'
+/**
+ * @fileoverview Soft delete user handler - marks user as deleted without removing from database
+ */
 
+import type { AppRouteHandler } from '@/lib/types/app-types'
+import type { SoftDeleteUserRoute } from '@/routes/users/users.route'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 import { UserService } from '@/services/UserService'
 
-export const SoftDeleteUserHandler: AppRouteHandler<typeof import('@/routes/users/users.route').softDeleteUserRoute> = async (c) => {
+/**
+ * Soft deletes a user by marking them as deleted in the database while preserving their data.
+ * This operation can be reversed using the restore endpoint.
+ *
+ * @param c - The Hono context object containing the validated request parameters
+ * @returns A JSON response indicating success or failure of the soft delete operation
+ */
+export const SoftDeleteUserHandler: AppRouteHandler<SoftDeleteUserRoute> = async (c) => {
   const { id: userId } = c.req.valid('param')
 
   try {

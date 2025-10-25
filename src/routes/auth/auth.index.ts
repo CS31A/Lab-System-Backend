@@ -16,13 +16,21 @@ import { authMiddleware } from '@/middleware/auth'
 // Import blueprints
 import * as routes from './auth.routes'
 
-// Sub-router that contains actual endpoints
+/**
+ * @description Sub-router that contains auth endpoints and self-prefixes its routes under "/auth"
+ */
 const authRouter = createRouter().basePath('/auth')
 
+/**
+ * @description Public authentication endpoints that don't require authentication
+ */
 // public endpoints
 authRouter.openapi(routes.loginRoute, LoginHandler)
 authRouter.openapi(routes.refreshRoute, RefreshHandler)
 
+/**
+ * @description Protected authentication endpoints that require valid authentication token
+ */
 // protected endpoints
 authRouter.use('*', authMiddleware)
 authRouter.openapi(routes.getCurrentUserRoute, GetCurrentUserHandler)

@@ -4,10 +4,11 @@ import * as httpStatusCodes from '@/openapi/http-status-codes'
 import { UserService } from '@/services/UserService'
 
 /**
- * Gets all users without pagination
- * Filename and export follow conventions:
- * - File: get-all-users.handler.ts
- * - Export: GetAllUsersHandler
+ * Retrieves all users from the database without pagination.
+ * Delegates business logic to UserService for better separation of concerns.
+ *
+ * @param c - The Hono context object containing the request and response
+ * @returns A JSON response containing the list of users or an error message
  */
 export const GetAllUsersHandler: AppRouteHandler<GetAllUsersRoute> = async (c) => {
   try {

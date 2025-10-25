@@ -3,6 +3,28 @@ import type { GetUserRoute } from '@/routes/users/users.route'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 import { UserService } from '@/services/UserService'
 
+/**
+ * Handler for retrieving a user by ID.
+ *
+ * This handler processes GET requests to retrieve a specific user by their ID.
+ * It uses the UserService to fetch user data from the database, handles
+ * cases where the user is not found, and returns appropriate responses.
+ * The user's password is excluded from the response for security.
+ *
+ * @param c - The Hono context containing request and response objects
+ * @param c.req.valid - Validates the request parameters using Zod schema
+ * @param c.req.valid('param') - Extracts the user ID from URL parameters
+ * @param c.json - Sends JSON response with user data or error message
+ * @returns A Promise resolving to a Hono response object containing user data or error
+ *
+ * @example
+ * // Example usage in route:
+ * // GET /users/:id
+ * // Response: { message: 'User of Id 123 is successfully retrieved', data: {...} }
+ *
+ * @throws {404} When user is not found
+ * @throws {500} When an internal server error occurs
+ */
 export const GetUserHandler: AppRouteHandler<GetUserRoute> = async (c) => {
   const { id: userId } = c.req.valid('param')
 

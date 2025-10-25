@@ -70,6 +70,9 @@ export class TeacherService {
   /**
    * Lists teachers with pagination
    * Retrieves paginated list of teachers from the database with metadata
+   * @param {ListTeachersParams} params - The pagination parameters
+   * @returns {Promise<ListTeachersResult>} The list of teachers with pagination metadata
+   * @throws {Error} If the retrieval fails
    */
   async listTeachers(params: ListTeachersParams): Promise<ListTeachersResult> {
     const { page, limit } = params
@@ -128,6 +131,8 @@ export class TeacherService {
   /**
    * Retrieves all teachers without pagination
    * Useful for administrative operations or exports
+   * @returns {Promise<Array<typeof teachers.$inferSelect>>} All teacher records
+   * @throws {Error} If the retrieval fails
    */
   async getAllTeachers(): Promise<Array<typeof teachers.$inferSelect>> {
     try {
@@ -155,6 +160,9 @@ export class TeacherService {
   /**
    * Retrieves teacher dashboard data including schedules and active lab activities
    * Returns schedules within the specified date range and any currently active lab activity
+   * @param {TeacherDashboardParams} params - The parameters for retrieving dashboard data
+   * @returns {Promise<TeacherDashboardResult>} The teacher dashboard data
+   * @throws {Error} If the retrieval fails
    */
   async getTeacherDashboard(params: TeacherDashboardParams): Promise<TeacherDashboardResult> {
     const { teacherId, startDate, endDate } = params
@@ -264,6 +272,8 @@ export class TeacherService {
   /**
    * Retrieves all laboratories with their current status
    * Determines if a lab is available, occupied, or under maintenance
+   * @returns {Promise<any[]>} The list of laboratories with their current status
+   * @throws {Error} If the retrieval fails
    */
   async getLaboratoriesWithCurrentStatus() {
     try {

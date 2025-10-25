@@ -1,8 +1,19 @@
+/**
+ * @fileoverview Restore user handler - restores a soft-deleted user
+ */
+
 import type { AppRouteHandler } from '@/lib/types/app-types'
+import type { RestoreUserRoute } from '@/routes/users/users.route'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 import { UserService } from '@/services/UserService'
 
-export const RestoreUserHandler: AppRouteHandler<typeof import('@/routes/users/users.route').restoreUserRoute> = async (c) => {
+/**
+ * Restores a soft-deleted user by removing the deleted status from the database.
+ *
+ * @param c - The Hono context object containing the validated request parameters
+ * @returns A JSON response containing the restored user data or an error message
+ */
+export const RestoreUserHandler: AppRouteHandler<RestoreUserRoute> = async (c) => {
   const { id: userId } = c.req.valid('param')
 
   try {
