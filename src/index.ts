@@ -12,6 +12,7 @@ import auth from '@/routes/auth/auth.index'
 import index from '@/routes/index'
 
 import laboratories from '@/routes/laboratories/laboratories.index'
+import students from '@/routes/students/students.index'
 import subjects from '@/routes/subjects/subjects.index'
 import teachers from '@/routes/teachers/teachers.index'
 import users from '@/routes/users/users.index'
@@ -20,7 +21,7 @@ import users from '@/routes/users/users.index'
 const app = createApp()
 
 // Array of all index routes to register
-const routes = [index, users, teachers, subjects, laboratories, auth]
+const routes = [index, users, teachers, subjects, laboratories, students, auth]
 
 // Register all index routes at root path
 routes.forEach(route =>
