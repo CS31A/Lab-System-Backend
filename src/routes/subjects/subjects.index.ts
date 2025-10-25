@@ -13,18 +13,27 @@ import * as routes from '@/routes/subjects/subjects.route'
  */
 const router = createRouter()
 
-// Apply authentication to base and nested paths
+/**
+ * @description Apply authentication to base and nested paths
+ */
 router.use('/subjects', authMiddleware)
 router.use('/subjects/*', authMiddleware)
 
-// Admin-only guard for non-GET methods
+/**
+ * @description Admin-only guard for non-GET methods
+ */
 router.use('/subjects', adminOnlyForNonGet)
 router.use('/subjects/*', adminOnlyForNonGet)
 
-// Allow read access for admin, teacher, technical on GET endpoints
+/**
+ * @description Allow read access for admin, teacher, technical on GET endpoints
+ */
 router.use('/subjects', requireRole(['admin', 'teacher', 'technical']))
 router.use('/subjects/*', requireRole(['admin', 'teacher', 'technical']))
 
+/**
+ * @description Route registrations - connects each route with its respective handler
+ */
 // Route registrations
 router.openapi(routes.getSubjectRoute, handlers.GetSubjectHandler)
 router.openapi(routes.listSubjectsRoute, handlers.ListSubjectsHandler)

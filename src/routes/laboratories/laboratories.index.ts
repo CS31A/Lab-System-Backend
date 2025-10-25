@@ -13,21 +13,32 @@ import * as routes from '@/routes/laboratories/laboratories.route'
  */
 const router = createRouter()
 
-// Apply authentication to all laboratory routes, including base and nested paths
+/**
+ * @description Apply authentication to all laboratory routes, including base and nested paths
+ */
 router.use('/laboratories', authMiddleware)
 router.use('/laboratories/*', authMiddleware)
 
-// Admin-only guard for non-GET methods (e.g., POST, PATCH, DELETE)
+/**
+ * @description Admin-only guard for non-GET methods (e.g., POST, PATCH, DELETE)
+ */
 router.use('/laboratories', adminOnlyForNonGet)
 router.use('/laboratories/*', adminOnlyForNonGet)
 
-// Keep specific admin-only GET endpoint(s)
+/**
+ * @description Keep specific admin-only GET endpoint(s)
+ */
 router.use('/laboratories/all', requireRole(['admin']))
 
-// Allow read access to non-admin roles on GET endpoints (applies to base and nested paths)
+/**
+ * @description Allow read access to non-admin roles on GET endpoints (applies to base and nested paths)
+ */
 router.use('/laboratories', requireRole(['admin', 'teacher', 'technical']))
 router.use('/laboratories/*', requireRole(['admin', 'teacher', 'technical']))
 
+/**
+ * @description Route registrations - connects each route with its respective handler
+ */
 // Route registrations
 router.openapi(routes.createLaboratoryRoute, handlers.CreateLaboratoryHandler)
 router.openapi(routes.getAllLaboratoriesRoute, handlers.GetAllLaboratoriesHandler)
