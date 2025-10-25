@@ -11,6 +11,10 @@ import { errorSchema } from '@/lib/zod-schemas/error.schema'
 import jsonContent from '@/middleware/utils/json-content'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 
+/**
+ * Route definition for getting teacher dashboard data
+ * @description Retrieves dashboard information for a teacher based on query parameters
+ */
 export const getTeacherDashboardRoute = createRoute({
   tags: ['Teachers'],
   method: 'get',
@@ -34,6 +38,10 @@ export const getTeacherDashboardRoute = createRoute({
   },
 })
 
+/**
+ * Route definition for getting a list of teachers with pagination
+ * @description Retrieves a paginated list of teachers
+ */
 export const getTeachersRoute = createRoute({
   tags: ['Teachers'],
   method: 'get',
@@ -61,6 +69,10 @@ export const getTeachersRoute = createRoute({
   },
 })
 
+/**
+ * Route definition for getting laboratories assigned to a teacher
+ * @description Retrieves laboratories with their current status for a teacher
+ */
 export const getTeacherLaboratoriesRoute = createRoute({
   tags: ['Teachers'],
   method: 'get',
@@ -100,6 +112,17 @@ export const getTeacherLaboratoriesRoute = createRoute({
   },
 })
 
-export type GetTeachers = typeof getTeachersRoute
-export type GetTeacherDashboard = typeof getTeacherDashboardRoute
-export type GetTeacherLaboratories = typeof getTeacherLaboratoriesRoute
+/**
+ * @typedef {typeof getTeachersRoute} GetTeachers
+ * @description Type definition for the get teachers route
+ */
+
+/**
+ * @typedef {typeof getTeacherDashboardRoute} GetTeacherDashboard
+ * @description Type definition for the get teacher dashboard route
+ */
+
+/**
+ * @typedef {typeof getTeacherLaboratoriesRoute} GetTeacherLaboratories
+ * @description Type definition for the get teacher laboratories route
+ */

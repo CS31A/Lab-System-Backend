@@ -1,5 +1,9 @@
-// Do not edit
-// Phrases retrieved on Thu, 03 Oct 2024 12:05:14 GMT from https://raw.githubusercontent.com/prettymuchbryce/http-status-codes/refs/heads/master/codes.json
+/**
+ * @fileoverview HTTP status phrases for Lab System Backend API.
+ * Contains human-readable phrases for HTTP status codes.
+ * Do not edit - Phrases retrieved on Thu, 03 Oct 2024 12:05:14 GMT from https://raw.githubusercontent.com/prettymuchbryce/http-status-codes/refs/heads/master/codes.json
+ */
+
 /**
  * Official Documentation @ https://tools.ietf.org/html/rfc7231#section-6.3.3
  *

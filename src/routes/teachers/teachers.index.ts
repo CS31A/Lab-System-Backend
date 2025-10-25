@@ -8,10 +8,15 @@ import { getTeacherDashboardRoute, getTeacherLaboratoriesRoute, getTeachersRoute
 
 const router = createRouter()
 
-// Apply authentication and role guard to base and nested paths
+/**
+ * @description Apply authentication and role guard to base and nested paths
+ */
 router.use('/teachers', authMiddleware, requireRole(['teacher', 'admin']))
 router.use('/teachers/*', authMiddleware, requireRole(['teacher', 'admin']))
 
+/**
+ * @description Route registrations - connects each route with its respective handler
+ */
 router.openapi(getTeachersRoute, teachersHandlers.GetTeachersHandler)
 router.openapi(getTeacherDashboardRoute, dashboardHandlers.GetTeacherDashboardHandler)
 router.openapi(getTeacherLaboratoriesRoute, laboratoriesHandlers.GetTeacherLaboratoriesHandler)

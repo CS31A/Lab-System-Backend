@@ -14,6 +14,10 @@ import {
 import jsonContent, { jsonContentRequired } from '@/middleware/utils/json-content'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 
+/**
+ * Route definition for user login
+ * @description Handles user authentication and returns access/refresh tokens
+ */
 export const loginRoute = createRoute({
   tags: ['Auth'],
   method: 'post',
@@ -44,6 +48,10 @@ export const loginRoute = createRoute({
   },
 })
 
+/**
+ * Route definition for getting current user information
+ * @description Retrieves user information based on the authentication token
+ */
 export const getCurrentUserRoute = createRoute({
   tags: ['Auth'],
   method: 'get',
@@ -67,6 +75,10 @@ export const getCurrentUserRoute = createRoute({
   },
 })
 
+/**
+ * Route definition for user logout
+ * @description Handles user logout by clearing the refresh token
+ */
 export const logoutRoute = createRoute({
   tags: ['Auth'],
   method: 'post',
@@ -87,6 +99,10 @@ export const logoutRoute = createRoute({
   },
 })
 
+/**
+ * Route definition for refreshing access token
+ * @description Refreshes the access token using the refresh token
+ */
 export const refreshRoute = createRoute({
   tags: ['Auth'],
   method: 'post',
@@ -108,6 +124,25 @@ export const refreshRoute = createRoute({
   },
 })
 
+/**
+ * @typedef {typeof loginRoute} LoginRoute
+ * @description Type definition for the login route
+ */
+
+/**
+ * @typedef {typeof getCurrentUserRoute} GetCurrentUserRoute
+ * @description Type definition for the get current user route
+ */
+
+/**
+ * @typedef {typeof logoutRoute} LogoutRoute
+ * @description Type definition for the logout route
+ */
+
+/**
+ * @typedef {typeof refreshRoute} RefreshRoute
+ * @description Type definition for the refresh route
+ */
 // Password Reset Routes
 export const forgotPasswordRoute = createRoute({
   tags: ['Auth'],

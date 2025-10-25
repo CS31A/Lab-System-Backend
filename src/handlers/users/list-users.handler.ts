@@ -4,10 +4,11 @@ import * as httpStatusCodes from '@/openapi/http-status-codes'
 import { UserService } from '@/services/UserService'
 
 /**
- * Lists users with pagination
- * Filename and export follow conventions:
- * - File: list-users.handler.ts
- * - Export: ListUsersHandler
+ * Lists users with pagination.
+ * Delegates business logic to UserService for better separation of concerns.
+ *
+ * @param c - The Hono context object containing the request and response
+ * @returns A JSON response containing the paginated list of users or an error message
  */
 export const ListUsersHandler: AppRouteHandler<ListUsersRoute> = async (c) => {
   const userService = new UserService(c)

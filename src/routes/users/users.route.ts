@@ -11,8 +11,8 @@ import jsonContent, { jsonContentRequired } from '@/middleware/utils/json-conten
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 
 /**
- * User creation route with role-based access (teacher/technical_staff/admin).
- * Validates email/username uniqueness and password strength requirements.
+ * Route definition for creating a new user
+ * @description Handles the creation of a new user with role-based access (teacher/technical_staff/admin)
  */
 export const createUserRoute = createRoute({
   tags: ['Users'],
@@ -43,6 +43,10 @@ export const createUserRoute = createRoute({
   },
 })
 
+/**
+ * Route definition for getting a user by ID
+ * @description Retrieves a specific user by their ID
+ */
 export const getUserRoute = createRoute({
   tags: ['Users'],
   method: 'get',
@@ -78,6 +82,10 @@ export const getUserRoute = createRoute({
   },
 })
 
+/**
+ * Route definition for updating a user
+ * @description Updates an existing user by their ID
+ */
 export const updateUserRoute = createRoute({
   tags: ['Users'],
   method: 'patch',
@@ -120,6 +128,10 @@ export const updateUserRoute = createRoute({
   },
 })
 
+/**
+ * Route definition for soft deleting a user
+ * @description Soft deletes an existing user by their ID (marks as deleted without removing from DB)
+ */
 export const softDeleteUserRoute = createRoute({
   tags: ['Users'],
   method: 'patch',
