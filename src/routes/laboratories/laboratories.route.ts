@@ -7,7 +7,8 @@ import jsonContent, { jsonContentRequired } from '@/middleware/utils/json-conten
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 
 /**
- * Create laboratory route
+ * Route definition for creating a new laboratory
+ * @description Handles the creation of a new laboratory
  */
 export const createLaboratoryRoute = createRoute({
   tags: ['Laboratories'],
@@ -39,7 +40,8 @@ export const createLaboratoryRoute = createRoute({
 })
 
 /**
- * Get laboratory by ID route
+ * Route definition for getting a laboratory by ID
+ * @description Retrieves a specific laboratory by its ID
  */
 export const getLaboratoryRoute = createRoute({
   tags: ['Laboratories'],
@@ -70,7 +72,8 @@ export const getLaboratoryRoute = createRoute({
 })
 
 /**
- * Update laboratory route
+ * Route definition for updating a laboratory
+ * @description Updates an existing laboratory by its ID
  */
 export const updateLaboratoryRoute = createRoute({
   tags: ['Laboratories'],
@@ -109,7 +112,8 @@ export const updateLaboratoryRoute = createRoute({
 })
 
 /**
- * Delete laboratory route
+ * Route definition for deleting a laboratory
+ * @description Deletes an existing laboratory by its ID
  */
 export const deleteLaboratoryRoute = createRoute({
   tags: ['Laboratories'],
@@ -139,7 +143,8 @@ export const deleteLaboratoryRoute = createRoute({
 })
 
 /**
- * List laboratories route with pagination
+ * Route definition for listing laboratories with pagination
+ * @description Retrieves a paginated list of laboratories
  */
 export const listLaboratoriesRoute = createRoute({
   tags: ['Laboratories'],
@@ -165,7 +170,8 @@ export const listLaboratoriesRoute = createRoute({
 })
 
 /**
- * Get all laboratories route
+ * Route definition for getting all laboratories
+ * @description Retrieves all laboratories without pagination
  */
 export const getAllLaboratoriesRoute = createRoute({
   tags: ['Laboratories'],
@@ -186,14 +192,38 @@ export const getAllLaboratoriesRoute = createRoute({
   },
 })
 
+/**
+ * @typedef {typeof createLaboratoryRoute} CreateLaboratoryRoute
+ * @description Type definition for the create laboratory route
+ */
 export type CreateLaboratoryRoute = typeof createLaboratoryRoute
 
+/**
+ * @typedef {typeof getLaboratoryRoute} GetLaboratoryRoute
+ * @description Type definition for the get laboratory route
+ */
 export type GetLaboratoryRoute = typeof getLaboratoryRoute
 
+/**
+ * @typedef {typeof updateLaboratoryRoute} UpdateLaboratoryRoute
+ * @description Type definition for the update laboratory route
+ */
 export type UpdateLaboratoryRoute = typeof updateLaboratoryRoute
 
+/**
+ * @typedef {typeof deleteLaboratoryRoute} DeleteLaboratoryRoute
+ * @description Type definition for the delete laboratory route
+ */
 export type DeleteLaboratoryRoute = typeof deleteLaboratoryRoute
 
+/**
+ * @typedef {typeof listLaboratoriesRoute} ListLaboratoriesRoute
+ * @description Type definition for the list laboratories route
+ */
 export type ListLaboratoriesRoute = typeof listLaboratoriesRoute
 
+/**
+ * @typedef {typeof getAllLaboratoriesRoute} GetAllLaboratoriesRoute
+ * @description Type definition for the get all laboratories route
+ */
 export type GetAllLaboratoriesRoute = typeof getAllLaboratoriesRoute

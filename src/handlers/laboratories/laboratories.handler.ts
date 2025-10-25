@@ -15,7 +15,24 @@ import * as httpStatusCodes from '@/openapi/http-status-codes'
 import { LaboratoryService } from '@/services/LaboratoryService'
 
 /**
- * Creates a new laboratory
+ * Handler for creating a new laboratory.
+ *
+ * This handler processes POST requests to create a new laboratory record.
+ * It validates the request body using Zod schema, delegates the creation
+ * logic to LaboratoryService, and returns appropriate responses.
+ *
+ * @param c - The Hono context containing request and response objects
+ * @param c.req.valid - Validates the request body using Zod schema
+ * @param c.req.valid('json') - Extracts and validates the laboratory data from request body
+ * @param c.json - Sends JSON response with created laboratory data or error message
+ * @returns A Promise resolving to a Hono response object containing created laboratory or error
+ *
+ * @example
+ * // Example usage in route:
+ * // POST /laboratories { name: "Chemistry Lab", location: "Building A" }
+ * // Response: { message: 'Laboratory created successfully', data: {...} }
+ *
+ * @throws {500} When an internal server error occurs
  */
 export const CreateLaboratoryHandler: AppRouteHandler<CreateLaboratoryRoute> = async (c) => {
   const validatedBody = c.req.valid('json')
@@ -50,7 +67,26 @@ export const CreateLaboratoryHandler: AppRouteHandler<CreateLaboratoryRoute> = a
 }
 
 /**
- * Retrieves a laboratory by ID
+ * Handler for retrieving a laboratory by ID.
+ *
+ * This handler processes GET requests to retrieve a specific laboratory by its ID.
+ * It validates the request parameters using Zod schema, delegates the retrieval
+ * logic to LaboratoryService, handles cases where the laboratory is not found,
+ * and returns appropriate responses.
+ *
+ * @param c - The Hono context containing request and response objects
+ * @param c.req.valid - Validates the request parameters using Zod schema
+ * @param c.req.valid('param') - Extracts the laboratory ID from URL parameters
+ * @param c.json - Sends JSON response with laboratory data or error message
+ * @returns A Promise resolving to a Hono response object containing laboratory data or error
+ *
+ * @example
+ * // Example usage in route:
+ * // GET /laboratories/:id
+ * // Response: { message: 'Laboratory retrieved successfully', data: {...} }
+ *
+ * @throws {404} When laboratory is not found
+ * @throws {500} When an internal server error occurs
  */
 export const GetLaboratoryHandler: AppRouteHandler<GetLaboratoryRoute> = async (c) => {
   const { id } = c.req.valid('param')
@@ -94,7 +130,27 @@ export const GetLaboratoryHandler: AppRouteHandler<GetLaboratoryRoute> = async (
 }
 
 /**
- * Updates a laboratory by ID
+ * Handler for updating a laboratory by ID.
+ *
+ * This handler processes PATCH requests to update an existing laboratory by its ID.
+ * It validates the request parameters and body using Zod schema, delegates the update
+ * logic to LaboratoryService, handles cases where the laboratory is not found,
+ * and returns appropriate responses.
+ *
+ * @param c - The Hono context containing request and response objects
+ * @param c.req.valid - Validates the request parameters and body using Zod schema
+ * @param c.req.valid('param') - Extracts the laboratory ID from URL parameters
+ * @param c.req.valid('json') - Extracts and validates the updated laboratory data from request body
+ * @param c.json - Sends JSON response with updated laboratory data or error message
+ * @returns A Promise resolving to a Hono response object containing updated laboratory or error
+ *
+ * @example
+ * // Example usage in route:
+ * // PATCH /laboratories/:id { name: "Physics Lab", location: "Building B" }
+ * // Response: { message: 'Laboratory updated successfully', data: {...} }
+ *
+ * @throws {404} When laboratory is not found
+ * @throws {500} When an internal server error occurs
  */
 export const UpdateLaboratoryHandler: AppRouteHandler<UpdateLaboratoryRoute> = async (c) => {
   const { id } = c.req.valid('param')
@@ -140,7 +196,26 @@ export const UpdateLaboratoryHandler: AppRouteHandler<UpdateLaboratoryRoute> = a
 }
 
 /**
- * Deletes a laboratory by ID
+ * Handler for deleting a laboratory by ID.
+ *
+ * This handler processes DELETE requests to remove a laboratory by its ID.
+ * It validates the request parameters using Zod schema, delegates the deletion
+ * logic to LaboratoryService, handles cases where the laboratory is not found,
+ * and returns appropriate responses.
+ *
+ * @param c - The Hono context containing request and response objects
+ * @param c.req.valid - Validates the request parameters using Zod schema
+ * @param c.req.valid('param') - Extracts the laboratory ID from URL parameters
+ * @param c.json - Sends JSON response with success or error message
+ * @returns A Promise resolving to a Hono response object containing success or error
+ *
+ * @example
+ * // Example usage in route:
+ * // DELETE /laboratories/:id
+ * // Response: { message: 'Laboratory deleted successfully' }
+ *
+ * @throws {404} When laboratory is not found
+ * @throws {500} When an internal server error occurs
  */
 export const DeleteLaboratoryHandler: AppRouteHandler<DeleteLaboratoryRoute> = async (c) => {
   const { id } = c.req.valid('param')
@@ -183,7 +258,24 @@ export const DeleteLaboratoryHandler: AppRouteHandler<DeleteLaboratoryRoute> = a
 }
 
 /**
- * Lists laboratories with pagination
+ * Handler for listing laboratories with pagination.
+ *
+ * This handler processes GET requests to retrieve a paginated list of laboratories.
+ * It validates the request query parameters using Zod schema, delegates the listing
+ * logic to LaboratoryService, and returns appropriate responses with pagination metadata.
+ *
+ * @param c - The Hono context containing request and response objects
+ * @param c.req.valid - Validates the request query parameters using Zod schema
+ * @param c.req.valid('query') - Extracts pagination parameters (page, limit) from query string
+ * @param c.json - Sends JSON response with paginated laboratory data or error message
+ * @returns A Promise resolving to a Hono response object containing paginated laboratories or error
+ *
+ * @example
+ * // Example usage in route:
+ * // GET /laboratories?page=1&limit=10
+ * // Response: { message: 'Laboratories retrieved successfully', data: [...], pagination: {...} }
+ *
+ * @throws {500} When an internal server error occurs
  */
 export const ListLaboratoriesHandler: AppRouteHandler<ListLaboratoriesRoute> = async (c) => {
   const { page = 1, limit = 10 } = c.req.valid('query')
@@ -220,7 +312,21 @@ export const ListLaboratoriesHandler: AppRouteHandler<ListLaboratoriesRoute> = a
 }
 
 /**
- * Retrieves all laboratories without pagination
+ * Handler for retrieving all laboratories without pagination.
+ *
+ * This handler processes GET requests to retrieve all laboratories at once.
+ * It delegates the retrieval logic to LaboratoryService and returns appropriate responses.
+ *
+ * @param c - The Hono context containing request and response objects
+ * @param c.json - Sends JSON response with all laboratory data or error message
+ * @returns A Promise resolving to a Hono response object containing all laboratories or error
+ *
+ * @example
+ * // Example usage in route:
+ * // GET /laboratories/all
+ * // Response: { message: 'All laboratories retrieved successfully', data: [...] }
+ *
+ * @throws {500} When an internal server error occurs
  */
 export const GetAllLaboratoriesHandler: AppRouteHandler<GetAllLaboratoriesRoute> = async (c) => {
   try {
