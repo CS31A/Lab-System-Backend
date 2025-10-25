@@ -13,6 +13,8 @@ const EnvSchema = z.object({
   JWT_SECRET: z.string(),
   BCRYPT_COST: z.string().default('10'),
   // Email configuration
+  SENDGRID_API_KEY: z.string().optional(), // For SendGrid email service
+  SENDGRID_TEMPLATE_ID: z.string().optional(), // SendGrid template ID for password reset
   RESEND_API_KEY: z.string().optional(), // For Resend email service
   SMTP_FROM: z.string().optional(), // Email sender address
   // App configuration
