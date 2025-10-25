@@ -43,6 +43,9 @@ export class LaboratoryService {
 
   /**
    * Creates a new laboratory
+   * @param {CreateLaboratoryData} laboratoryData - The data for creating the laboratory
+   * @returns {Promise<typeof laboratory.$inferSelect>} The created laboratory record
+   * @throws {Error} If the laboratory creation fails
    */
   async createLaboratory(laboratoryData: CreateLaboratoryData) {
     try {
@@ -71,6 +74,9 @@ export class LaboratoryService {
 
   /**
    * Retrieves a laboratory by ID
+   * @param {string} id - The unique identifier of the laboratory
+   * @returns {Promise<(typeof laboratory.$inferSelect) | null>} The laboratory record if found, null otherwise
+   * @throws {Error} If the retrieval fails
    */
   async getLaboratoryById(id: string) {
     try {
@@ -94,6 +100,10 @@ export class LaboratoryService {
 
   /**
    * Updates a laboratory by ID
+   * @param {string} id - The unique identifier of the laboratory to update
+   * @param {UpdateLaboratoryData} updateData - The data to update the laboratory with
+   * @returns {Promise<typeof laboratory.$inferSelect>} The updated laboratory record
+   * @throws {Error} If the update fails or if the laboratory is not found
    */
   async updateLaboratory(id: string, updateData: UpdateLaboratoryData) {
     try {
@@ -140,6 +150,9 @@ export class LaboratoryService {
 
   /**
    * Deletes a laboratory by ID
+   * @param {string} id - The unique identifier of the laboratory to delete
+   * @returns {Promise<typeof laboratory.$inferSelect>} The deleted laboratory record
+   * @throws {Error} If the deletion fails or if the laboratory is not found
    */
   async deleteLaboratory(id: string) {
     try {
@@ -174,6 +187,9 @@ export class LaboratoryService {
 
   /**
    * Lists laboratories with pagination
+   * @param {ListLaboratoriesParams} params - The pagination parameters
+   * @returns {Promise<ListLaboratoriesResult>} The list of laboratories with pagination metadata
+   * @throws {Error} If the retrieval fails
    */
   async listLaboratories(params: ListLaboratoriesParams): Promise<ListLaboratoriesResult> {
     const { page, limit } = params
@@ -236,6 +252,8 @@ export class LaboratoryService {
 
   /**
    * Retrieves all laboratories without pagination
+   * @returns {Promise<Array<typeof laboratory.$inferSelect>>} All laboratory records
+   * @throws {Error} If the retrieval fails
    */
   async getAllLaboratories() {
     try {

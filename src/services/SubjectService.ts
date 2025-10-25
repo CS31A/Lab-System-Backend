@@ -48,6 +48,9 @@ export class SubjectService {
 
   /**
    * Creates a new subject
+   * @param {CreateSubjectData} subjectData - The data for creating the subject
+   * @returns {Promise<typeof subjects.$inferSelect>} The created subject record
+   * @throws {Error} If the subject creation fails
    */
   async createSubject(subjectData: CreateSubjectData) {
     try {
@@ -76,6 +79,9 @@ export class SubjectService {
 
   /**
    * Retrieves a subject by ID
+   * @param {string} id - The unique identifier of the subject
+   * @returns {Promise<(typeof subjects.$inferSelect) | null>} The subject record if found, null otherwise
+   * @throws {Error} If the retrieval fails
    */
   async getSubjectById(id: string) {
     try {
@@ -99,6 +105,10 @@ export class SubjectService {
 
   /**
    * Updates a subject by ID
+   * @param {string} id - The unique identifier of the subject to update
+   * @param {UpdateSubjectData} updateData - The data to update the subject with
+   * @returns {Promise<typeof subjects.$inferSelect>} The updated subject record
+   * @throws {Error} If the update fails or if the subject is not found
    */
   async updateSubject(id: string, updateData: UpdateSubjectData) {
     try {
@@ -136,6 +146,9 @@ export class SubjectService {
 
   /**
    * Deletes a subject by ID
+   * @param {string} id - The unique identifier of the subject to delete
+   * @returns {Promise<typeof subjects.$inferSelect>} The deleted subject record
+   * @throws {Error} If the deletion fails or if the subject is not found
    */
   async deleteSubject(id: string) {
     try {
@@ -171,6 +184,9 @@ export class SubjectService {
 
   /**
    * Lists subjects with pagination
+   * @param {ListSubjectsParams} params - The pagination parameters
+   * @returns {Promise<ListSubjectsResult>} The list of subjects with pagination metadata
+   * @throws {Error} If the retrieval fails
    */
   async listSubjects(params: ListSubjectsParams): Promise<ListSubjectsResult> {
     const { page, limit } = params
@@ -233,6 +249,8 @@ export class SubjectService {
 
   /**
    * Retrieves all subjects without pagination
+   * @returns {Promise<Array<typeof subjects.$inferSelect>>} All subject records
+   * @throws {Error} If the retrieval fails
    */
   async getAllSubjects() {
     try {
