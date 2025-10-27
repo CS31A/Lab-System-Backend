@@ -1,5 +1,6 @@
 export * from './AuthService'
 export * from './LaboratoryService'
+export * from './ScheduleService'
 export * from './SubjectService'
 export * from './TeacherService'
 export * from './UserService'
