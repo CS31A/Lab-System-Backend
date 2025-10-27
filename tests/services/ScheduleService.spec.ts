@@ -36,6 +36,11 @@ function createMockDb() {
       deleteResults = results
     },
 
+    // Set insert values (for sharing state with transaction)
+    setLastInsertValues: (vals: any) => {
+      insertValues = vals
+    },
+
     // Mock insert chain: db.insert(table).values(data).returning()
     insert: vi.fn(() => ({
       values: vi.fn((vals: any) => {
@@ -100,9 +105,57 @@ function createMockDb() {
   return mockDb
 }
 
-// Mock serverless db (same as regular db for testing purposes)
+// Create mock serverless database with transaction support
 function createMockServerlessDb() {
-  return createMockDb()
+  const mockDb = createMockDb()
+  let selectResults: any[] = []
+  let countValue = 0
+
+  return {
+    ...mockDb,
+    // Keep reference to set methods for test setup
+    setSelectResults: (results: any[]) => {
+      selectResults = results
+      countValue = results.length
+      mockDb.setSelectResults(results)
+    },
+    setCountValue: (count: number) => {
+      countValue = count
+      mockDb.setCountValue(count)
+    },
+    // Mock transaction method that executes the callback with the mock db
+    transaction: vi.fn(async (callback: (tx: any) => Promise<any>) => {
+      // Create a transaction mock that shares the same state as the main mock
+      const txMock = {
+        // Override select to maintain transaction context with proper count access
+        select: vi.fn((fields?: any) => {
+          // Check if this is a count query
+          if (fields && typeof fields === 'object' && 'count' in fields) {
+            return {
+              from: vi.fn(async () => [{ count: countValue }]),
+            }
+          }
+          // Regular select query
+          return {
+            from: vi.fn(() => ({
+              where: vi.fn(() => ({
+                limit: vi.fn(() => selectResults),
+              })),
+              limit: vi.fn(() => ({
+                offset: vi.fn(() => ({
+                  orderBy: vi.fn(async () => selectResults),
+                })),
+              })),
+              orderBy: vi.fn(async () => selectResults),
+            })),
+          }
+        }),
+      }
+
+      // Execute the callback with the transaction mock
+      return await callback(txMock)
+    }),
+  }
 }
 
 // Mock the createDb and createServerlessDb functions
@@ -130,6 +183,11 @@ function createFakeContext(): Context {
 // Helper to get a fresh mock database instance
 function getMockDb(service: ScheduleService): ReturnType<typeof createMockDb> {
   return (service as any).db
+}
+
+// Helper to get the serverless mock database instance
+function getMockServerlessDb(service: ScheduleService): ReturnType<typeof createMockServerlessDb> {
+  return (service as any).serverlessDb
 }
 
 beforeEach(() => {
@@ -504,7 +562,7 @@ describe('scheduleService.listSchedules', () => {
   it('successfully retrieves schedules with default pagination', async () => {
     const ctx = createFakeContext()
     const service = new ScheduleService(ctx)
-    const mockDb = getMockDb(service)
+    const mockDb = getMockServerlessDb(service)
 
     const mockSchedules = [
       {
@@ -560,7 +618,7 @@ describe('scheduleService.listSchedules', () => {
   it('successfully retrieves schedules with custom pagination', async () => {
     const ctx = createFakeContext()
     const service = new ScheduleService(ctx)
-    const mockDb = getMockDb(service)
+    const mockDb = getMockServerlessDb(service)
 
     const mockSchedules = [
       {
@@ -606,7 +664,7 @@ describe('scheduleService.listSchedules', () => {
   it('successfully retrieves empty list when no schedules exist', async () => {
     const ctx = createFakeContext()
     const service = new ScheduleService(ctx)
-    const mockDb = getMockDb(service)
+    const mockDb = getMockServerlessDb(service)
 
     mockDb.setSelectResults([])
 
@@ -635,7 +693,7 @@ describe('scheduleService.listSchedules', () => {
   it('correctly calculates pagination on last page', async () => {
     const ctx = createFakeContext()
     const service = new ScheduleService(ctx)
-    const mockDb = getMockDb(service)
+    const mockDb = getMockServerlessDb(service)
 
     const mockSchedules = [
       {
@@ -671,14 +729,12 @@ describe('scheduleService.listSchedules', () => {
   it('handles database errors correctly', async () => {
     const ctx = createFakeContext()
     const service = new ScheduleService(ctx)
-    const mockDb = getMockDb(service)
+    const mockDb = getMockServerlessDb(service)
 
-    // Mock database error - need to reject in the from() method to match the actual query structure
-    mockDb.select = vi.fn((_fields?: any) => ({
-      from: vi.fn(() => {
-        throw new Error('Database query failed')
-      }),
-    })) as any
+    // Mock database error in transaction
+    mockDb.transaction = vi.fn(async () => {
+      throw new Error('Database query failed')
+    }) as any
 
     await expect(service.listSchedules({ page: 1, limit: 10 })).rejects.toThrow(
       'Database query failed',

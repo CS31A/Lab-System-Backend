@@ -199,41 +199,46 @@ export class ScheduleService {
     const offset = (page - 1) * limit
 
     try {
-      const [totalResult, schedulesData] = await Promise.all([
-        this.db.select({ count: count() }).from(schedule),
-        this.db
-          .select()
-          .from(schedule)
-          .limit(limit)
-          .offset(offset)
-          .orderBy(schedule.created_at),
-      ])
+      // Use transaction to ensure consistency between count and select queries
+      const result = await this.serverlessDb.transaction(async (tx) => {
+        const [totalResult, schedulesData] = await Promise.all([
+          tx.select({ count: count() }).from(schedule),
+          tx
+            .select()
+            .from(schedule)
+            .limit(limit)
+            .offset(offset)
+            .orderBy(schedule.created_at),
+        ])
 
-      const total = totalResult[0]?.count || 0
-      const totalPages = Math.ceil(total / limit) || 1
+        const total = totalResult[0]?.count || 0
+        const totalPages = Math.ceil(total / limit) || 1
 
-      const pagination = {
-        page,
-        limit,
-        total,
-        totalPages,
-        hasNext: page < totalPages,
-        hasPrev: page > 1,
-      }
+        const pagination = {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1,
+        }
+
+        return {
+          schedules: schedulesData,
+          pagination,
+        }
+      })
 
       this.logger.info('Schedules list retrieved successfully', {
-        page,
-        limit,
-        total,
-        totalPages,
-        returned_count: schedulesData.length,
+        page: result.pagination.page,
+        limit: result.pagination.limit,
+        total: result.pagination.total,
+        totalPages: result.pagination.totalPages,
+        returned_count: result.schedules.length,
         timestamp: new Date().toISOString(),
       })
 
-      return {
-        schedules: schedulesData,
-        pagination,
-      }
+      return result
     }
     catch (error) {
       this.logger.error('Failed to retrieve schedules list', {
