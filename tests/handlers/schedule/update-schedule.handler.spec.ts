@@ -1,3 +1,4 @@
+import type { ParamData } from '@tests/types/test-helpers.types'
 import type { Context } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { UpdateScheduleHandler } from '@/handlers/schedule/schedule.handler'
@@ -10,10 +11,6 @@ interface UpdateScheduleSchemaData {
   start_time?: Date
   end_time?: Date
   status?: string | null
-}
-
-interface ParamData {
-  id: string
 }
 
 const mockUpdateSchedule = vi.fn()

@@ -1,10 +1,7 @@
+import type { ParamData } from '@tests/types/test-helpers.types'
 import type { Context } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { GetScheduleHandler } from '@/handlers/schedule/schedule.handler'
-
-interface ParamData {
-  id: string
-}
 
 const mockGetScheduleById = vi.fn()
 vi.mock('@/services/ScheduleService', () => ({
