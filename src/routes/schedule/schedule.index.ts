@@ -34,6 +34,7 @@ router.use('/schedules/*', requireRole(['admin', 'teacher', 'technical']))
 /**
  * @description Route registrations - connects each route with its respective handler
  */
+router.openapi(routes.getAllSchedulesRoute, handlers.GetAllSchedulesHandler)
 router.openapi(routes.getScheduleRoute, handlers.GetScheduleHandler)
 router.openapi(routes.listSchedulesRoute, handlers.ListSchedulesHandler)
 router.openapi(routes.createScheduleRoute, handlers.CreateScheduleHandler)

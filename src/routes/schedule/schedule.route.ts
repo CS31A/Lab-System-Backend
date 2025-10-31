@@ -3,41 +3,12 @@
  */
 
 import { createRoute, z } from '@hono/zod-openapi'
-import { scheduleSelectSchema } from '@/db/schema'
+import { patchScheduleSchema, scheduleInsertSchema, scheduleSelectSchema } from '@/db/schema'
 import { pagination, paginationQuery } from '@/lib/zod-schemas'
 import { errorSchema } from '@/lib/zod-schemas/error.schema'
 import IdParamsSchema from '@/middleware/utils/id-params-validator'
 import jsonContent, { jsonContentRequired } from '@/middleware/utils/json-content'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
-
-/**
- * Custom schema for schedule creation that accepts ISO date strings
- * Using z.coerce.date() to accept and transform datetime strings to Date objects
- */
-const scheduleCreateSchema = z.object({
-  laboratory_id: z.string(),
-  teacher_id: z.string(),
-  subject_id: z.string(),
-  section: z.string(),
-  start_time: z.coerce.date(),
-  end_time: z.coerce.date(),
-  status: z.string().nullable().optional(),
-})
-
-/**
- * Custom schema for schedule updates that accepts ISO date strings
- * Using z.coerce.date() for datetime fields and transforming empty strings to undefined
- * Empty strings are transformed to undefined to allow partial updates
- */
-const scheduleUpdateSchema = z.object({
-  laboratory_id: z.string().optional().transform(val => val === '' ? undefined : val),
-  teacher_id: z.string().optional().transform(val => val === '' ? undefined : val),
-  subject_id: z.string().optional().transform(val => val === '' ? undefined : val),
-  section: z.string().optional().transform(val => val === '' ? undefined : val),
-  start_time: z.union([z.coerce.date(), z.literal('')]).transform(val => val === '' ? undefined : val).optional(),
-  end_time: z.union([z.coerce.date(), z.literal('')]).transform(val => val === '' ? undefined : val).optional(),
-  status: z.string().nullable().optional(),
-})
 
 /**
  * Route definition for creating a new schedule
@@ -49,7 +20,7 @@ export const createScheduleRoute = createRoute({
   path: '/schedules',
   request: {
     body: jsonContentRequired(
-      scheduleCreateSchema,
+      scheduleInsertSchema,
       'The schedule to create',
     ),
   },
@@ -115,7 +86,7 @@ export const updateScheduleRoute = createRoute({
   request: {
     params: IdParamsSchema,
     body: jsonContent(
-      scheduleUpdateSchema,
+      patchScheduleSchema,
       'The schedule data to update',
     ),
   },
@@ -203,6 +174,29 @@ export const listSchedulesRoute = createRoute({
 })
 
 /**
+ * Route definition for getting all schedules without pagination
+ * @description Retrieves all schedules without pagination
+ */
+export const getAllSchedulesRoute = createRoute({
+  tags: ['Schedules'],
+  method: 'get',
+  path: '/schedules/all',
+  responses: {
+    [httpStatusCodes.OK]: jsonContent(
+      z.object({
+        message: z.string(),
+        data: z.array(scheduleSelectSchema),
+      }),
+      'All schedules successfully retrieved',
+    ),
+    [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      errorSchema,
+      'Internal Server Error',
+    ),
+  },
+})
+
+/**
  * @typedef {typeof createScheduleRoute} CreateScheduleRoute
  * @description Type definition for the create schedule route
  */
@@ -225,4 +219,9 @@ export const listSchedulesRoute = createRoute({
 /**
  * @typedef {typeof listSchedulesRoute} ListSchedulesRoute
  * @description Type definition for the list schedules route
+ */
+
+/**
+ * @typedef {typeof getAllSchedulesRoute} GetAllSchedulesRoute
+ * @description Type definition for the get all schedules route
  */

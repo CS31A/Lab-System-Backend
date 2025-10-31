@@ -6,6 +6,7 @@ import type { AppRouteHandler } from '@/lib/types/app-types'
 import type {
   createScheduleRoute,
   deleteScheduleRoute,
+  getAllSchedulesRoute,
   getScheduleRoute,
   listSchedulesRoute,
   updateScheduleRoute,
@@ -21,15 +22,7 @@ export const CreateScheduleHandler: AppRouteHandler<typeof createScheduleRoute> 
 
   try {
     const scheduleService = new ScheduleService(c)
-    const createdSchedule = await scheduleService.createSchedule({
-      laboratory_id: validatedBody.laboratory_id,
-      teacher_id: validatedBody.teacher_id,
-      subject_id: validatedBody.subject_id,
-      section: validatedBody.section,
-      start_time: validatedBody.start_time,
-      end_time: validatedBody.end_time,
-      status: validatedBody.status,
-    })
+    const createdSchedule = await scheduleService.createSchedule(validatedBody)
 
     return c.json(
       {
@@ -109,15 +102,7 @@ export const UpdateScheduleHandler: AppRouteHandler<typeof updateScheduleRoute> 
 
   try {
     const scheduleService = new ScheduleService(c)
-    const updatedSchedule = await scheduleService.updateSchedule(id, {
-      laboratory_id: body.laboratory_id,
-      teacher_id: body.teacher_id,
-      subject_id: body.subject_id,
-      section: body.section,
-      start_time: body.start_time,
-      end_time: body.end_time,
-      status: body.status,
-    })
+    const updatedSchedule = await scheduleService.updateSchedule(id, body)
 
     return c.json(
       {
@@ -220,6 +205,38 @@ export const ListSchedulesHandler: AppRouteHandler<typeof listSchedulesRoute> = 
       error: (err as Error).message,
       page,
       limit,
+      timestamp: new Date().toISOString(),
+    })
+
+    return c.json(
+      {
+        message: 'Internal Server Error',
+        errors: (err as Error).message,
+      },
+      httpStatusCodes.INTERNAL_SERVER_ERROR,
+    )
+  }
+}
+
+/**
+ * Gets all schedules without pagination
+ */
+export const GetAllSchedulesHandler: AppRouteHandler<typeof getAllSchedulesRoute> = async (c) => {
+  try {
+    const scheduleService = new ScheduleService(c)
+    const schedules = await scheduleService.getAllSchedules()
+
+    return c.json(
+      {
+        message: 'All schedules retrieved successfully',
+        data: schedules,
+      },
+      httpStatusCodes.OK,
+    )
+  }
+  catch (err) {
+    c.var.logger.error('Failed to retrieve all schedules', {
+      error: (err as Error).message,
       timestamp: new Date().toISOString(),
     })
 

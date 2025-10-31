@@ -4,29 +4,15 @@
  */
 
 import type { Context } from 'hono'
+import type { z } from 'zod'
+import type { patchScheduleSchema, scheduleInsertSchema } from '@/db/schema'
 import { count, eq } from 'drizzle-orm'
 import { createDb, createServerlessDb } from '@/db'
 import { schedule } from '@/db/schema'
 
-export interface CreateScheduleData {
-  laboratory_id: string
-  teacher_id: string
-  subject_id: string
-  section: string
-  start_time: Date
-  end_time: Date
-  status?: string | null
-}
+export type CreateScheduleData = z.infer<typeof scheduleInsertSchema>
 
-export interface UpdateScheduleData {
-  laboratory_id?: string
-  teacher_id?: string
-  subject_id?: string
-  section?: string
-  start_time?: Date
-  end_time?: Date
-  status?: string | null
-}
+export type UpdateScheduleData = z.infer<typeof patchScheduleSchema>
 
 export interface ListSchedulesParams {
   page: number
@@ -46,14 +32,28 @@ export interface ListSchedulesResult {
 }
 
 export class ScheduleService {
-  private db: ReturnType<typeof createDb>
-  private serverlessDb: ReturnType<typeof createServerlessDb>
+  private _db?: ReturnType<typeof createDb>
+  private _serverlessDb?: ReturnType<typeof createServerlessDb>
   private logger: any
+  private context: Context
 
   constructor(c: Context) {
-    this.db = createDb(c)
-    this.serverlessDb = createServerlessDb(c)
+    this.context = c
     this.logger = c.var.logger
+  }
+
+  private get db() {
+    if (!this._db) {
+      this._db = createDb(this.context)
+    }
+    return this._db
+  }
+
+  private get serverlessDb() {
+    if (!this._serverlessDb) {
+      this._serverlessDb = createServerlessDb(this.context)
+    }
+    return this._serverlessDb
   }
 
   /**
@@ -245,6 +245,34 @@ export class ScheduleService {
         error: (error as Error).message,
         page,
         limit,
+        timestamp: new Date().toISOString(),
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Retrieves all schedules without pagination
+   * @returns {Promise<Array<typeof schedule.$inferSelect>>} Array of all schedule records
+   * @throws {Error} If the retrieval fails
+   */
+  async getAllSchedules() {
+    try {
+      const schedules = await this.db
+        .select()
+        .from(schedule)
+        .orderBy(schedule.created_at)
+
+      this.logger.info('All schedules retrieved successfully', {
+        count: schedules.length,
+        timestamp: new Date().toISOString(),
+      })
+
+      return schedules
+    }
+    catch (error) {
+      this.logger.error('Failed to retrieve all schedules', {
+        error: (error as Error).message,
         timestamp: new Date().toISOString(),
       })
       throw error
