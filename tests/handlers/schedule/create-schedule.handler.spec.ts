@@ -1,16 +1,7 @@
+import type { ScheduleSchemaData } from '@tests/types/test-helpers.types'
 import type { Context } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CreateScheduleHandler } from '@/handlers/schedule/schedule.handler'
-
-interface CreateScheduleSchemaData {
-  laboratory_id: string
-  teacher_id: string
-  subject_id: string
-  section: string
-  start_time: Date
-  end_time: Date
-  status?: string | null
-}
 
 const mockCreateSchedule = vi.fn()
 vi.mock('@/services/ScheduleService', () => ({
@@ -19,7 +10,7 @@ vi.mock('@/services/ScheduleService', () => ({
   })),
 }))
 
-function createMockContext(validatedData: CreateScheduleSchemaData): Context {
+function createMockContext(validatedData: ScheduleSchemaData): Context {
   return {
     req: {
       valid: vi.fn().mockReturnValue(validatedData),
@@ -40,7 +31,7 @@ describe('createScheduleHandler Integration Tests', () => {
   })
 
   it('successfully creates schedule with complete schema data', async () => {
-    const schemaData: CreateScheduleSchemaData = {
+    const schemaData: ScheduleSchemaData = {
       laboratory_id: 'lab001',
       teacher_id: 'teacher123',
       subject_id: 'subj456',
@@ -75,7 +66,7 @@ describe('createScheduleHandler Integration Tests', () => {
   })
 
   it('successfully creates schedule without optional status field', async () => {
-    const schemaData: CreateScheduleSchemaData = {
+    const schemaData: ScheduleSchemaData = {
       laboratory_id: 'lab002',
       teacher_id: 'teacher456',
       subject_id: 'subj789',
@@ -110,7 +101,7 @@ describe('createScheduleHandler Integration Tests', () => {
   })
 
   it('handles database constraint errors correctly', async () => {
-    const schemaData: CreateScheduleSchemaData = {
+    const schemaData: ScheduleSchemaData = {
       laboratory_id: 'invalid_lab',
       teacher_id: 'teacher123',
       subject_id: 'subj456',
@@ -141,7 +132,7 @@ describe('createScheduleHandler Integration Tests', () => {
   })
 
   it('handles overlapping schedule conflicts', async () => {
-    const schemaData: CreateScheduleSchemaData = {
+    const schemaData: ScheduleSchemaData = {
       laboratory_id: 'lab001',
       teacher_id: 'teacher123',
       subject_id: 'subj456',
@@ -172,7 +163,7 @@ describe('createScheduleHandler Integration Tests', () => {
   })
 
   it('handles general service errors correctly', async () => {
-    const schemaData: CreateScheduleSchemaData = {
+    const schemaData: ScheduleSchemaData = {
       laboratory_id: 'lab001',
       teacher_id: 'teacher123',
       subject_id: 'subj456',

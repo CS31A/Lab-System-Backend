@@ -1,17 +1,7 @@
-import type { ParamData } from '@tests/types/test-helpers.types'
+import type { ParamData, ScheduleSchemaData } from '@tests/types/test-helpers.types'
 import type { Context } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { UpdateScheduleHandler } from '@/handlers/schedule/schedule.handler'
-
-interface UpdateScheduleSchemaData {
-  laboratory_id?: string
-  teacher_id?: string
-  subject_id?: string
-  section?: string
-  start_time?: Date
-  end_time?: Date
-  status?: string | null
-}
 
 const mockUpdateSchedule = vi.fn()
 vi.mock('@/services/ScheduleService', () => ({
@@ -20,7 +10,7 @@ vi.mock('@/services/ScheduleService', () => ({
   })),
 }))
 
-function createMockContext(paramData: ParamData, validatedData: UpdateScheduleSchemaData): Context {
+function createMockContext(paramData: ParamData, validatedData: ScheduleSchemaData): Context {
   return {
     req: {
       valid: vi.fn().mockImplementation((type: string) => {
@@ -48,7 +38,7 @@ describe('updateScheduleHandler Integration Tests', () => {
 
   it('successfully updates all schedule fields', async () => {
     const paramData: ParamData = { id: 'schedule123' }
-    const schemaData: UpdateScheduleSchemaData = {
+    const schemaData: ScheduleSchemaData = {
       laboratory_id: 'lab002',
       teacher_id: 'teacher789',
       subject_id: 'subj456',
@@ -84,7 +74,7 @@ describe('updateScheduleHandler Integration Tests', () => {
 
   it('successfully updates only laboratory_id field', async () => {
     const paramData: ParamData = { id: 'schedule456' }
-    const schemaData: UpdateScheduleSchemaData = {
+    const schemaData: ScheduleSchemaData = {
       laboratory_id: 'lab003',
     }
 
@@ -120,7 +110,7 @@ describe('updateScheduleHandler Integration Tests', () => {
 
   it('successfully updates only time fields', async () => {
     const paramData: ParamData = { id: 'schedule789' }
-    const schemaData: UpdateScheduleSchemaData = {
+    const schemaData: ScheduleSchemaData = {
       start_time: new Date('2025-10-29T14:00:00Z'),
       end_time: new Date('2025-10-29T16:00:00Z'),
     }
@@ -157,7 +147,7 @@ describe('updateScheduleHandler Integration Tests', () => {
 
   it('successfully updates status to null', async () => {
     const paramData: ParamData = { id: 'schedule111' }
-    const schemaData: UpdateScheduleSchemaData = {
+    const schemaData: ScheduleSchemaData = {
       status: null,
     }
 
@@ -193,7 +183,7 @@ describe('updateScheduleHandler Integration Tests', () => {
 
   it('returns 404 when schedule to update is not found', async () => {
     const paramData: ParamData = { id: 'nonexistent_schedule' }
-    const schemaData: UpdateScheduleSchemaData = {
+    const schemaData: ScheduleSchemaData = {
       section: 'CS104-D',
     }
 
@@ -213,7 +203,7 @@ describe('updateScheduleHandler Integration Tests', () => {
 
   it('handles database constraint errors correctly', async () => {
     const paramData: ParamData = { id: 'schedule123' }
-    const schemaData: UpdateScheduleSchemaData = {
+    const schemaData: ScheduleSchemaData = {
       laboratory_id: 'invalid_lab',
     }
 
@@ -240,7 +230,7 @@ describe('updateScheduleHandler Integration Tests', () => {
 
   it('handles general service errors correctly', async () => {
     const paramData: ParamData = { id: 'schedule123' }
-    const schemaData: UpdateScheduleSchemaData = {
+    const schemaData: ScheduleSchemaData = {
       section: 'CS105-E',
     }
 
@@ -267,7 +257,7 @@ describe('updateScheduleHandler Integration Tests', () => {
 
   it('handles empty update data (no fields to update)', async () => {
     const paramData: ParamData = { id: 'schedule123' }
-    const schemaData: UpdateScheduleSchemaData = {}
+    const schemaData: ScheduleSchemaData = {}
 
     const mockUpdatedSchedule = {
       id: 'schedule123',
