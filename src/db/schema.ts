@@ -780,13 +780,14 @@ export const scheduleSelectSchema = createSelectSchema(schedule)
  * Zod schema for inserting new schedule data
  *
  * @description Schema that validates schedule data when creating new schedule records
+ * Accepts ISO date strings for start_time and end_time and coerces them to Date objects
  *
  * @property {string} laboratory_id - Reference to the associated laboratory (required)
  * @property {string} teacher_id - Reference to the associated teacher (required)
  * @property {string} subject_id - Reference to the associated subject (required)
  * @property {string} section - Class section for the schedule (required)
- * @property {Date} start_time - Start time of the schedule (required)
- * @property {Date} end_time - End time of the schedule (required)
+ * @property {Date|string} start_time - Start time of the schedule (accepts ISO date string, required)
+ * @property {Date|string} end_time - End time of the schedule (accepts ISO date string, required)
  *
  * @example
  * {
@@ -812,11 +813,16 @@ export const scheduleInsertSchema = createInsertSchema(schedule)
     created_at: true,
     updated_at: true,
   })
+  .extend({
+    start_time: z.coerce.date(),
+    end_time: z.coerce.date(),
+  })
 
 /**
  * Zod schema for updating schedule data (partial update)
  *
  * @description Schema that validates schedule data when updating existing schedule records (all fields are optional)
+ * Accepts ISO date strings for start_time and end_time and coerces them to Date objects
  *
  * @example
  * {
@@ -826,7 +832,12 @@ export const scheduleInsertSchema = createInsertSchema(schedule)
  *   status: "rescheduled"
  * }
  */
-export const patchScheduleSchema = createInsertSchema(schedule).partial()
+export const patchScheduleSchema = createInsertSchema(schedule)
+  .partial()
+  .extend({
+    start_time: z.coerce.date().optional(),
+    end_time: z.coerce.date().optional(),
+  })
 
 /**
  * Seating plan table schema definition
