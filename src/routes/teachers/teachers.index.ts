@@ -1,3 +1,4 @@
+import * as labAvailabilityHandlers from '@/handlers/teachers/get-lab-availability.handler'
 import * as labScheduleHandlers from '@/handlers/teachers/get-lab-schedule.handler'
 import * as dashboardHandlers from '@/handlers/teachers/get-teacher-dashboard.handler'
 import * as laboratoriesHandlers from '@/handlers/teachers/get-teacher-laboratories.handler'
@@ -5,7 +6,7 @@ import * as teachersHandlers from '@/handlers/teachers/get-teachers.handler'
 
 import { createRouter } from '@/lib/create-app'
 import { authMiddleware, requireRole } from '@/middleware/auth'
-import { getLabScheduleRoute, getTeacherDashboardRoute, getTeacherLaboratoriesRoute, getTeachersRoute } from '@/routes/teachers/teachers.routes'
+import { getLabAvailabilityRoute, getLabScheduleRoute, getTeacherDashboardRoute, getTeacherLaboratoriesRoute, getTeachersRoute } from '@/routes/teachers/teachers.routes'
 
 const router = createRouter()
 
@@ -22,5 +23,6 @@ router.openapi(getTeachersRoute, teachersHandlers.GetTeachersHandler)
 router.openapi(getTeacherDashboardRoute, dashboardHandlers.GetTeacherDashboardHandler)
 router.openapi(getTeacherLaboratoriesRoute, laboratoriesHandlers.GetTeacherLaboratoriesHandler)
 router.openapi(getLabScheduleRoute, labScheduleHandlers.GetLabScheduleHandler)
+router.openapi(getLabAvailabilityRoute, labAvailabilityHandlers.GetLabAvailabilityHandler)
 
 export default router

@@ -433,4 +433,116 @@ export class TeacherService {
       throw error
     }
   }
+
+  /**
+   * Checks the availability status of a specific laboratory
+   * @param {string} labId - The laboratory ID
+   * @returns {Promise<any>} The availability status of the laboratory
+   * @throws {Error} If the retrieval fails or laboratory not found
+   */
+  async getLabAvailability(labId: string) {
+    try {
+      const now = new Date()
+
+      // Get laboratory with current schedule (if any)
+      const [labWithSchedule] = await this.db
+        .select({
+          id: laboratory.id,
+          name: laboratory.name,
+          status: laboratory.status,
+          created_at: laboratory.created_at,
+          updated_at: laboratory.updated_at,
+          // Current schedule information (if active)
+          scheduleId: schedule.id,
+          section: schedule.section,
+          startTime: schedule.start_time,
+          endTime: schedule.end_time,
+          scheduleStatus: schedule.status,
+          // Subject and teacher information
+          subjectName: subjects.subject_name,
+          subjectCode: subjects.subject_code,
+          teacherFirstname: teachers.firstname,
+          teacherLastname: teachers.lastname,
+        })
+        .from(laboratory)
+        .leftJoin(
+          schedule,
+          and(
+            eq(laboratory.id, schedule.laboratory_id),
+            lte(schedule.start_time, now),
+            gte(schedule.end_time, now),
+          ),
+        )
+        .leftJoin(subjects, eq(schedule.subject_id, subjects.id))
+        .leftJoin(teachers, eq(schedule.teacher_id, teachers.id))
+        .where(eq(laboratory.id, labId))
+        .limit(1)
+
+      if (!labWithSchedule) {
+        throw new Error('Laboratory not found')
+      }
+
+      // Determine availability status
+      let availabilityStatus: 'available' | 'occupied' | 'maintenance'
+      let currentSchedule = null
+      let isAvailable = false
+
+      if (!labWithSchedule.status) {
+        availabilityStatus = 'maintenance'
+        isAvailable = false
+      }
+      else if (labWithSchedule.scheduleId && labWithSchedule.startTime && labWithSchedule.endTime) {
+        availabilityStatus = 'occupied'
+        isAvailable = false
+        currentSchedule = {
+          id: labWithSchedule.scheduleId,
+          section: labWithSchedule.section || '',
+          start_time: labWithSchedule.startTime.toISOString(),
+          end_time: labWithSchedule.endTime.toISOString(),
+          status: labWithSchedule.scheduleStatus,
+          subject: {
+            name: labWithSchedule.subjectName || '',
+            code: labWithSchedule.subjectCode || '',
+          },
+          teacher: {
+            name: `${labWithSchedule.teacherFirstname || ''} ${labWithSchedule.teacherLastname || ''}`.trim() || 'Unknown',
+          },
+        }
+      }
+      else {
+        availabilityStatus = 'available'
+        isAvailable = true
+      }
+
+      const result = {
+        laboratory: {
+          id: labWithSchedule.id,
+          name: labWithSchedule.name,
+          status: labWithSchedule.status,
+        },
+        is_available: isAvailable,
+        availability_status: availabilityStatus,
+        current_schedule: currentSchedule,
+        checked_at: now.toISOString(),
+      }
+
+      this.logger.info('Laboratory availability checked successfully', {
+        laboratoryId: labId,
+        laboratoryName: labWithSchedule.name,
+        availabilityStatus,
+        isAvailable,
+        timestamp: now.toISOString(),
+      })
+
+      return result
+    }
+    catch (error) {
+      this.logger.error('Failed to check laboratory availability', {
+        error: (error as Error).message,
+        laboratoryId: labId,
+        timestamp: new Date().toISOString(),
+      })
+      throw error
+    }
+  }
 }

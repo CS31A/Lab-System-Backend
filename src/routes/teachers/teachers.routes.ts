@@ -211,3 +211,84 @@ export type GetTeacherLaboratories = typeof getTeacherLaboratoriesRoute
  * @description Type definition for the get lab schedule route
  */
 export type GetLabSchedule = typeof getLabScheduleRoute
+
+/**
+ * Route definition for checking laboratory availability
+ * @description Checks if a laboratory is currently available or occupied
+ */
+export const getLabAvailabilityRoute = createRoute({
+  tags: ['Teachers'],
+  method: 'get',
+  path: '/teachers/laboratories/{labId}/availability',
+  request: {
+    params: z.object({
+      labId: z
+        .string()
+        .trim()
+        .min(1, 'labId is required')
+        .openapi({
+          param: {
+            name: 'labId',
+            in: 'path',
+            required: true,
+          },
+          example: 'lab123456789',
+        }),
+    }),
+  },
+  responses: {
+    [httpStatusCodes.OK]: jsonContent(
+      z.object({
+        message: z.string(),
+        data: z.object({
+          laboratory: z.object({
+            id: z.string(),
+            name: z.string(),
+            status: z.boolean().nullable(),
+          }),
+          is_available: z.boolean(),
+          availability_status: z.enum(['available', 'occupied', 'maintenance']),
+          current_schedule: z.object({
+            id: z.string(),
+            section: z.string(),
+            start_time: z.string(),
+            end_time: z.string(),
+            status: z.string().nullable(),
+            subject: z.object({
+              name: z.string(),
+              code: z.string(),
+            }),
+            teacher: z.object({
+              name: z.string(),
+            }),
+          }).nullable(),
+          checked_at: z.string(),
+        }),
+      }),
+      'Laboratory availability checked successfully',
+    ),
+    [httpStatusCodes.BAD_REQUEST]: jsonContent(
+      errorSchema,
+      'Invalid labId parameter',
+    ),
+    [httpStatusCodes.NOT_FOUND]: jsonContent(
+      z.object({
+        message: z.string(),
+      }),
+      'Laboratory not found',
+    ),
+    [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({
+        message: z.string(),
+        errors: z.any(),
+      }),
+      'Internal Server Error',
+    ),
+  },
+})
+
+/**
+ * @typedef {typeof getLabAvailabilityRoute} GetLabAvailability
+ * @description Type definition for the get lab availability route
+ */
+export type GetLabAvailability = typeof getLabAvailabilityRoute
