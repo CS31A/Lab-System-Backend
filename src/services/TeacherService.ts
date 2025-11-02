@@ -363,4 +363,74 @@ export class TeacherService {
       throw error
     }
   }
+
+  /**
+   * Retrieves all schedules for a specific laboratory
+   * @param {string} labId - The laboratory ID
+   * @returns {Promise<any[]>} The list of schedules for the laboratory
+   * @throws {Error} If the retrieval fails or laboratory not found
+   */
+  async getLabScheduleById(labId: string) {
+    try {
+      // Verify laboratory exists
+      const [labExists] = await this.db
+        .select({ id: laboratory.id, name: laboratory.name })
+        .from(laboratory)
+        .where(eq(laboratory.id, labId))
+        .limit(1)
+
+      if (!labExists) {
+        throw new Error('Laboratory not found')
+      }
+
+      // Get all schedules for the laboratory with related information
+      const schedules = await this.db
+        .select({
+          id: schedule.id,
+          section: schedule.section,
+          start_time: schedule.start_time,
+          end_time: schedule.end_time,
+          status: schedule.status,
+          created_at: schedule.created_at,
+          updated_at: schedule.updated_at,
+          subject: {
+            id: subjects.id,
+            name: subjects.subject_name,
+            code: subjects.subject_code,
+          },
+          teacher: {
+            id: teachers.id,
+            firstname: teachers.firstname,
+            lastname: teachers.lastname,
+          },
+          laboratory: {
+            id: laboratory.id,
+            name: laboratory.name,
+          },
+        })
+        .from(schedule)
+        .innerJoin(subjects, eq(schedule.subject_id, subjects.id))
+        .innerJoin(teachers, eq(schedule.teacher_id, teachers.id))
+        .innerJoin(laboratory, eq(schedule.laboratory_id, laboratory.id))
+        .where(eq(schedule.laboratory_id, labId))
+        .orderBy(schedule.start_time)
+
+      this.logger.info('Laboratory schedules retrieved successfully', {
+        laboratoryId: labId,
+        laboratoryName: labExists.name,
+        schedulesCount: schedules.length,
+        timestamp: new Date().toISOString(),
+      })
+
+      return schedules
+    }
+    catch (error) {
+      this.logger.error('Failed to retrieve laboratory schedules', {
+        error: (error as Error).message,
+        laboratoryId: labId,
+        timestamp: new Date().toISOString(),
+      })
+      throw error
+    }
+  }
 }
