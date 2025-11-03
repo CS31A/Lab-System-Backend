@@ -35,3 +35,21 @@ export {
   teacherDashboardQuerySchema,
   teacherDashboardResponseSchema,
 } from './teacher-dashboard.schema'
+
+/**
+ * @module Teacher Labs Schemas
+ * Export schemas related to teacher laboratory functionality
+ */
+export {
+  currentScheduleSchema,
+  labAvailabilityDataSchema,
+  labAvailabilityResponseSchema,
+  laboratorySchema,
+  laboratoryWithStatusSchema,
+  labScheduleSchema,
+  labSchedulesResponseSchema,
+  subjectMinimalSchema,
+  subjectSchema,
+  teacherMinimalSchema,
+  teacherSchema,
+} from './teacher-labs.schema'
