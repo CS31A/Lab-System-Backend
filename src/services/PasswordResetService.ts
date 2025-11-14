@@ -54,14 +54,12 @@ export interface PasswordResetConfirm {
  */
 export class PasswordResetService {
   private db: ReturnType<typeof createDb>
-  private serverlessDb: ReturnType<typeof createServerlessDb>
   private emailService: EmailService
   private c: Context<AppBindings>
   private logger: any
 
   constructor(c: Context<AppBindings>) {
     this.db = createDb(c)
-    this.serverlessDb = createServerlessDb(c)
     this.emailService = new EmailService(c)
     this.c = c
     this.logger = c.var.logger
@@ -243,6 +241,7 @@ export class PasswordResetService {
     if (validTokens.length === 0) {
       this.logger.warn('Invalid or expired reset token used', {
         selector,
+        allTokensCount: allTokens.length,
         timestamp: new Date().toISOString(),
       })
       throw new Error('Invalid or expired reset token')
@@ -278,21 +277,20 @@ export class PasswordResetService {
       const bcryptCost = Number.parseInt(this.c.env.BCRYPT_COST || '10')
       const hashedPassword = await bcrypt.hash(newPassword, bcryptCost)
 
-      // Update user password and mark token as used in a transaction
-      await this.serverlessDb.transaction(async (tx) => {
-        await tx
-          .update(users)
-          .set({
-            password: hashedPassword,
-            updated_at: now,
-          })
-          .where(eq(users.id, user.id))
+      // Update user password
+      await this.db
+        .update(users)
+        .set({
+          password: hashedPassword,
+          updated_at: now,
+        })
+        .where(eq(users.id, user.id))
 
-        await tx
-          .update(passwordResetTokens)
-          .set({ used_at: now })
-          .where(eq(passwordResetTokens.id, tokenRecord.id))
-      })
+      // Mark token as used
+      await this.db
+        .update(passwordResetTokens)
+        .set({ used_at: now })
+        .where(eq(passwordResetTokens.id, tokenRecord.id))
 
       this.logger.info('Password reset completed successfully', {
         user_id: user.id,
@@ -302,10 +300,11 @@ export class PasswordResetService {
       })
     }
     catch (error) {
-      this.logger.error('Failed to reset password', {
+      this.logger.error('Failed to reset password - database update error', {
         user_id: user.id,
         token_id: tokenRecord.id,
         error: (error as Error).message,
+        stack: (error as Error).stack,
         timestamp: new Date().toISOString(),
       })
       throw new Error('Failed to reset password')

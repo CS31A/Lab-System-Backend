@@ -1,11 +1,10 @@
 /**
  * @fileoverview EmailService - Handles email sending for password reset and other notifications
- * Supports both Resend (recommended) and SMTP configurations
+ * Uses SendGrid for email delivery
  */
 
 import type { Context } from 'hono'
 import type { AppBindings } from '@/lib/types/app-types'
-import { maskEmail } from '@/lib/utils/email'
 
 export interface EmailOptions {
   to: string
@@ -29,22 +28,20 @@ function escapeHTML(str: string): string {
   return str.replace(
     /[&<>"']/g,
     match =>
-      ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        '\'': '&#39;',
-      }[match]!),
+    ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      '\'': '&#39;',
+    }[match]!),
   )
 }
 
 /**
  * EmailService - Handles email sending functionality
  *
- * Supports multiple email providers:
- * - Resend (recommended for production)
- * - SMTP (fallback option)
+ * Uses SendGrid for email delivery with template support
  *
  * @example
  * ```typescript
@@ -63,6 +60,20 @@ export class EmailService {
   constructor(c: Context<AppBindings>) {
     this.c = c
     this.logger = c.var.logger
+  }
+
+  private maskEmail(email: string): string {
+    if (!email.includes('@')) {
+      // Not a valid email format, return a generic masked string
+      return '***'
+    }
+    const [localPart, domain] = email.split('@')
+    if (!localPart || !domain) {
+      return '***'
+    }
+    // Always show exactly 2 characters (or pad if shorter)
+    const prefix = localPart.length >= 2 ? localPart.substring(0, 2) : localPart.padEnd(2, '*')
+    return `${prefix}***@${domain}`
   }
 
   /**
@@ -97,14 +108,14 @@ export class EmailService {
       }
 
       this.logger.info('Password reset email sent successfully', {
-        email: maskEmail(email),
+        email: this.maskEmail(email),
         username: data.username,
         timestamp: new Date().toISOString(),
       })
     }
     catch (error) {
       this.logger.error('Failed to send password reset email', {
-        email: maskEmail(email),
+        email: this.maskEmail(email),
         username: data.username,
         error: (error as Error).message,
         timestamp: new Date().toISOString(),
@@ -123,9 +134,14 @@ export class EmailService {
    */
   private async sendPasswordResetWithTemplate(email: string, data: PasswordResetEmailData): Promise<void> {
     const { SENDGRID_API_KEY, SENDGRID_TEMPLATE_ID, SMTP_FROM } = this.c.env
+
+    if (!SENDGRID_TEMPLATE_ID) {
+      throw new Error('SENDGRID_TEMPLATE_ID is required for template-based emails')
+    }
+
     const { username, resetUrl } = data
     const fromEmail = SMTP_FROM || 'noreply@yourdomain.com'
-    const templateId = SENDGRID_TEMPLATE_ID || 'd-07f4668c32d94aac9d7d93dcf19b7ab4' // Default to your template
+    const templateId = SENDGRID_TEMPLATE_ID
 
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
@@ -141,7 +157,7 @@ export class EmailService {
         body: JSON.stringify({
           personalizations: [{
             to: [{ email }],
-            subject: 'Reset',
+            subject: 'Password Reset Request',
             dynamic_template_data: {
               username,
               reset_link: resetUrl,
@@ -152,43 +168,43 @@ export class EmailService {
         }),
       })
 
+      clearTimeout(timeoutId)
+
       if (!response.ok) {
         const errorData = await response.text()
         throw new Error(`SendGrid template API error: ${response.status} - ${errorData}`)
       }
 
       this.logger.info('Password reset email sent via SendGrid template', {
-        to: maskEmail(email),
+        to: this.maskEmail(email),
         template_id: templateId,
         username,
       })
     }
-    finally {
+    catch (error) {
       clearTimeout(timeoutId)
+      throw error
     }
   }
 
   /**
-   * Sends an email using the configured email provider
+   * Sends an email using SendGrid
    *
    * @param options - Email options
    * @returns Promise that resolves when email is sent
    * @throws {Error} When email sending fails
    */
   async sendEmail(options: EmailOptions): Promise<void> {
-    const { RESEND_API_KEY, SENDGRID_API_KEY } = this.c.env
+    const { SENDGRID_API_KEY } = this.c.env
 
     try {
       if (SENDGRID_API_KEY) {
         await this.sendWithSendGrid(options)
       }
-      else if (RESEND_API_KEY) {
-        await this.sendWithResend(options)
-      }
       else {
         // Development mode - log email instead of sending
         this.logger.warn('No email provider configured - logging email content', {
-          to: maskEmail(options.to),
+          to: this.maskEmail(options.to),
           subject: options.subject,
           html: options.html,
           text: options.text,
@@ -197,57 +213,12 @@ export class EmailService {
     }
     catch (error) {
       this.logger.error('Failed to send email', {
-        to: maskEmail(options.to),
+        to: this.maskEmail(options.to),
         subject: options.subject,
         error: (error as Error).message,
         timestamp: new Date().toISOString(),
       })
       throw new Error('Failed to send email')
-    }
-  }
-
-  /**
-   * Sends email using Resend service (recommended for production)
-   */
-  private async sendWithResend(options: EmailOptions): Promise<void> {
-    const { RESEND_API_KEY, SMTP_FROM } = this.c.env
-    const fromEmail = SMTP_FROM || 'onboarding@resend.dev' // Default Resend domain for testing
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
-
-    try {
-      const response = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        signal: controller.signal,
-        headers: {
-          'Authorization': `Bearer ${RESEND_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: fromEmail,
-          to: [options.to],
-          subject: options.subject,
-          html: options.html,
-          text: options.text,
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.text()
-        throw new Error(`Resend API error: ${response.status} - ${errorData}`)
-      }
-
-      const result = await response.json() as { id?: string }
-
-      this.logger.info('Email sent via Resend', {
-        to: maskEmail(options.to),
-        subject: options.subject,
-        messageId: result.id,
-
-      })
-    }
-    finally {
-      clearTimeout(timeoutId)
     }
   }
 
@@ -262,48 +233,44 @@ export class EmailService {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
 
-    try {
-      const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-        method: 'POST',
-        signal: controller.signal,
-        headers: {
-          'Authorization': `Bearer ${SENDGRID_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          personalizations: [{
-            to: [{ email: options.to }],
-            subject: options.subject,
-          }],
-          from: { email: fromEmail },
-          content: [
-            ...(options.text
-              ? [{
-                  type: 'text/plain',
-                  value: options.text,
-                }]
-              : []),
-            {
-              type: 'text/html',
-              value: options.html,
-            },
-          ],
-        }),
-      })
+    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Authorization': `Bearer ${SENDGRID_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        personalizations: [{
+          to: [{ email: options.to }],
+          subject: options.subject,
+        }],
+        from: { email: fromEmail },
+        content: [
+          ...(options.text
+            ? [{
+              type: 'text/plain',
+              value: options.text,
+            }]
+            : []),
+          {
+            type: 'text/html',
+            value: options.html,
+          },
+        ],
+      }),
+    })
 
-      if (!response.ok) {
-        const errorData = await response.text()
-        throw new Error(`SendGrid API error: ${response.status} - ${errorData}`)
-      }
+    if (!response.ok) {
+      const errorData = await response.text()
+      throw new Error(`SendGrid API error: ${response.status} - ${errorData}`)
+    }
 
-      this.logger.info('Email sent via SendGrid', {
-        to: maskEmail(options.to),
-        subject: options.subject,
-      })
-    }
-    finally {
-      clearTimeout(timeoutId)
-    }
+    this.logger.info('Email sent via SendGrid', {
+      to: this.maskEmail(options.to),
+      subject: options.subject,
+    })
+    clearTimeout(timeoutId)
   }
 
   /**
