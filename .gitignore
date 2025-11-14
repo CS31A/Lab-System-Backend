@@ -31,3 +31,14 @@ lerna-debug.log*
 
 # misc
 .DS_Store
+
+# Debug and test files (development only)
+src/handlers/auth/debug-*.handler.ts
+debug-*.js
+test-*.js
+test-*.html
+*-debug.js
+*-test.js
+frontend-examples/
+check-*.js
+README-BUN.md
