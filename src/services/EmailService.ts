@@ -94,7 +94,7 @@ export class EmailService {
             } else {
                 // Fallback to inline HTML for other providers
                 const { username, resetUrl, expiryHours } = data
-                const subject = 'Reset'
+                const subject = 'Password Reset Request'
                 const html = this.generatePasswordResetHTML(username, resetUrl, expiryHours)
                 const text = this.generatePasswordResetText(username, resetUrl, expiryHours)
 
