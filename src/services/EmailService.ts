@@ -5,6 +5,7 @@
 
 import type { Context } from 'hono'
 import type { AppBindings } from '@/lib/types/app-types'
+import { maskEmail } from '@/lib/utils/email'
 
 export interface EmailOptions {
   to: string
@@ -64,18 +65,6 @@ export class EmailService {
     this.logger = c.var.logger
   }
 
-  private maskEmail(email: string): string {
-    const [localPart, domain] = email.split('@')
-    if (!localPart || !domain) {
-      // Not a valid email format, return a generic masked string
-      return '***@***'
-    }
-    if (localPart.length <= 1) {
-      return `${localPart}***@${domain}`
-    }
-    return `${localPart.substring(0, 2)}***@${domain}`
-  }
-
   /**
    * Sends a password reset email to the user using SendGrid template or fallback to inline HTML
    *
@@ -108,14 +97,14 @@ export class EmailService {
       }
 
       this.logger.info('Password reset email sent successfully', {
-        email: this.maskEmail(email),
+        email: maskEmail(email),
         username: data.username,
         timestamp: new Date().toISOString(),
       })
     }
     catch (error) {
       this.logger.error('Failed to send password reset email', {
-        email: this.maskEmail(email),
+        email: maskEmail(email),
         username: data.username,
         error: (error as Error).message,
         timestamp: new Date().toISOString(),
@@ -169,7 +158,7 @@ export class EmailService {
       }
 
       this.logger.info('Password reset email sent via SendGrid template', {
-        to: this.maskEmail(email),
+        to: maskEmail(email),
         template_id: templateId,
         username,
       })
@@ -199,7 +188,7 @@ export class EmailService {
       else {
         // Development mode - log email instead of sending
         this.logger.warn('No email provider configured - logging email content', {
-          to: options.to.replace(/(.{2}).*(@.*)/, '$1***$2'),
+          to: maskEmail(options.to),
           subject: options.subject,
           html: options.html,
           text: options.text,
@@ -208,7 +197,7 @@ export class EmailService {
     }
     catch (error) {
       this.logger.error('Failed to send email', {
-        to: options.to.replace(/(.{2}).*(@.*)/, '$1***$2'),
+        to: maskEmail(options.to),
         subject: options.subject,
         error: (error as Error).message,
         timestamp: new Date().toISOString(),
@@ -251,7 +240,7 @@ export class EmailService {
       const result = await response.json() as { id?: string }
 
       this.logger.info('Email sent via Resend', {
-        to: options.to.replace(/(.{2}).*(@.*)/, '$1***$2'),
+        to: maskEmail(options.to),
         subject: options.subject,
         messageId: result.id,
 
@@ -308,7 +297,7 @@ export class EmailService {
       }
 
       this.logger.info('Email sent via SendGrid', {
-        to: options.to.replace(/(.{2}).*(@.*)/, '$1***$2'),
+        to: maskEmail(options.to),
         subject: options.subject,
       })
     }

@@ -4,6 +4,7 @@
 
 import type { AppRouteHandler } from '@/lib/types/app-types'
 import type { ForgotPasswordRoute } from '@/routes/auth/auth.routes'
+import { maskEmail } from '@/lib/utils/email'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 import { PasswordResetService } from '@/services/PasswordResetService'
 
@@ -37,7 +38,7 @@ export const ForgotPasswordHandler: AppRouteHandler<ForgotPasswordRoute> = async
   }
   catch (error) {
     c.var.logger.error('Forgot password request failed', {
-      email: email.replace(/^(.{1,2})(.*)(@.*)/, '$1***$3'),
+      email: maskEmail(email),
       error: (error as Error).message,
       timestamp: new Date().toISOString(),
     })

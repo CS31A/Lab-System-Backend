@@ -10,6 +10,7 @@ import { and, eq, isNull, lt } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { createDb, createServerlessDb } from '@/db'
 import { passwordResetTokens, users } from '@/db/schema'
+import { maskEmail } from '@/lib/utils/email'
 import { EmailService } from './EmailService'
 
 export interface PasswordResetRequest {
@@ -115,7 +116,7 @@ export class PasswordResetService {
     // Always return success to prevent user enumeration attacks
     if (!user) {
       this.logger.warn('Password reset requested for non-existent user', {
-        email: email.includes('@') ? email.replace(/^(.{1,2})(.*)(@.+)$/, '$1***$3') : '***',
+        email: maskEmail(email),
         timestamp: new Date().toISOString(),
       })
 
@@ -159,7 +160,7 @@ export class PasswordResetService {
       this.logger.info('Password reset token generated and email sent', {
         user_id: user.id,
         username: user.username,
-        email: email.includes('@') ? email.replace(/^(.{1,2})(.*)(@.+)$/, '$1***$3') : '***',
+        email: maskEmail(email),
         expires_at: expiresAt.toISOString(),
         timestamp: new Date().toISOString(),
       })
@@ -167,7 +168,7 @@ export class PasswordResetService {
     catch (error) {
       this.logger.error('Failed to process password reset request', {
         user_id: user.id,
-        email: email.replace(/(.{2}).*(@.*)/, '$1***$2'),
+        email: maskEmail(email),
         error: (error as Error).message,
         timestamp: new Date().toISOString(),
       })
