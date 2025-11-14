@@ -163,8 +163,6 @@ export class EmailService {
         }),
       })
 
-      clearTimeout(timeoutId)
-
       if (!response.ok) {
         const errorData = await response.text()
         throw new Error(`SendGrid template API error: ${response.status} - ${errorData}`)
@@ -176,9 +174,8 @@ export class EmailService {
         username,
       })
     }
-    catch (error) {
+    finally {
       clearTimeout(timeoutId)
-      throw error
     }
   }
 
@@ -228,36 +225,41 @@ export class EmailService {
     const fromEmail = SMTP_FROM || 'onboarding@resend.dev' // Default Resend domain for testing
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: [options.to],
+
+    try {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Authorization': `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: fromEmail,
+          to: [options.to],
+          subject: options.subject,
+          html: options.html,
+          text: options.text,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.text()
+        throw new Error(`Resend API error: ${response.status} - ${errorData}`)
+      }
+
+      const result = await response.json() as { id?: string }
+
+      this.logger.info('Email sent via Resend', {
+        to: options.to.replace(/(.{2}).*(@.*)/, '$1***$2'),
         subject: options.subject,
-        html: options.html,
-        text: options.text,
-      }),
-    })
+        messageId: result.id,
 
-    if (!response.ok) {
-      const errorData = await response.text()
-      throw new Error(`Resend API error: ${response.status} - ${errorData}`)
+      })
     }
-
-    const result = await response.json() as { id?: string }
-
-    this.logger.info('Email sent via Resend', {
-      to: options.to.replace(/(.{2}).*(@.*)/, '$1***$2'),
-      subject: options.subject,
-      messageId: result.id,
-
-    })
-    clearTimeout(timeoutId)
+    finally {
+      clearTimeout(timeoutId)
+    }
   }
 
   /**
@@ -271,44 +273,48 @@ export class EmailService {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
 
-    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'Authorization': `Bearer ${SENDGRID_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        personalizations: [{
-          to: [{ email: options.to }],
-          subject: options.subject,
-        }],
-        from: { email: fromEmail },
-        content: [
-          ...(options.text
-            ? [{
-                type: 'text/plain',
-                value: options.text,
-              }]
-            : []),
-          {
-            type: 'text/html',
-            value: options.html,
-          },
-        ],
-      }),
-    })
+    try {
+      const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Authorization': `Bearer ${SENDGRID_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          personalizations: [{
+            to: [{ email: options.to }],
+            subject: options.subject,
+          }],
+          from: { email: fromEmail },
+          content: [
+            ...(options.text
+              ? [{
+                  type: 'text/plain',
+                  value: options.text,
+                }]
+              : []),
+            {
+              type: 'text/html',
+              value: options.html,
+            },
+          ],
+        }),
+      })
 
-    if (!response.ok) {
-      const errorData = await response.text()
-      throw new Error(`SendGrid API error: ${response.status} - ${errorData}`)
+      if (!response.ok) {
+        const errorData = await response.text()
+        throw new Error(`SendGrid API error: ${response.status} - ${errorData}`)
+      }
+
+      this.logger.info('Email sent via SendGrid', {
+        to: options.to.replace(/(.{2}).*(@.*)/, '$1***$2'),
+        subject: options.subject,
+      })
     }
-
-    this.logger.info('Email sent via SendGrid', {
-      to: options.to.replace(/(.{2}).*(@.*)/, '$1***$2'),
-      subject: options.subject,
-    })
-    clearTimeout(timeoutId)
+    finally {
+      clearTimeout(timeoutId)
+    }
   }
 
   /**
