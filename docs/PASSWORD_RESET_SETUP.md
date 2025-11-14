@@ -68,6 +68,7 @@ npm run dev
 Test the endpoints using your preferred method:
 
 **Request Password Reset:**
+
 ```bash
 curl -X POST http://localhost:8787/auth/forgot-password \
   -H "Content-Type: application/json" \
@@ -75,11 +76,13 @@ curl -X POST http://localhost:8787/auth/forgot-password \
 ```
 
 **Validate Reset Token:**
+
 ```bash
 curl "http://localhost:8787/auth/validate-reset-token?token=your_token_here"
 ```
 
 **Reset Password:**
+
 ```bash
 curl -X POST http://localhost:8787/auth/reset-password \
   -H "Content-Type: application/json" \
@@ -157,6 +160,7 @@ npm run deploy
 Request a password reset email.
 
 **Request:**
+
 ```json
 {
   "email": "user@example.com"
@@ -164,6 +168,7 @@ Request a password reset email.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -176,9 +181,11 @@ Request a password reset email.
 Validate a reset token without consuming it.
 
 **Query Parameters:**
+
 - `token`: The reset token from the email
 
 **Response (Valid):**
+
 ```json
 {
   "valid": true,
@@ -192,6 +199,7 @@ Validate a reset token without consuming it.
 ```
 
 **Response (Invalid):**
+
 ```json
 {
   "valid": false,
@@ -204,6 +212,7 @@ Validate a reset token without consuming it.
 Reset password using a valid token.
 
 **Request:**
+
 ```json
 {
   "token": "selector.verifier",
@@ -212,6 +221,7 @@ Reset password using a valid token.
 ```
 
 **Response (Success):**
+
 ```json
 {
   "success": true,
@@ -220,6 +230,7 @@ Reset password using a valid token.
 ```
 
 **Response (Error):**
+
 ```json
 {
   "success": false,
@@ -230,6 +241,7 @@ Reset password using a valid token.
 ## 🔒 Security Features
 
 ### Token Security
+
 - **Selector/Verifier Pattern**: Tokens are split into public selector and secret verifier
 - **Hashed Storage**: Only verifier hash is stored in database
 - **Time-Limited**: Configurable expiry (default: 1 hour)
@@ -237,11 +249,13 @@ Reset password using a valid token.
 - **Automatic Cleanup**: Expired tokens are automatically removed
 
 ### Anti-Enumeration
+
 - Same response for existing and non-existing emails
 - Timing attack protection with random delays
 - No information leakage about user existence
 
 ### Rate Limiting Friendly
+
 - Constant-time token validation
 - Efficient database queries with proper indexing
 - No user enumeration vectors
@@ -253,7 +267,7 @@ Reset password using a valid token.
 The password reset feature provides three main endpoints for frontend integration:
 
 1. **POST** `/auth/forgot-password` - Request password reset
-2. **GET** `/auth/validate-reset-token` - Validate reset token  
+2. **GET** `/auth/validate-reset-token` - Validate reset token
 3. **POST** `/auth/reset-password` - Complete password reset
 
 See the API documentation for detailed request/response schemas.
@@ -281,7 +295,7 @@ Add tests to your test suite:
 
 ```typescript
 // Example test structure using Bun's built-in test runner
-import { describe, test, expect } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 
 describe('Password Reset', () => {
   test('should request password reset', async () => {
@@ -293,11 +307,11 @@ describe('Password Reset', () => {
     })
     expect(response.status).toBe(200)
   })
-  
+
   test('should validate reset token', async () => {
     // Test token validation
   })
-  
+
   test('should reset password', async () => {
     // Test password reset
   })
@@ -305,6 +319,7 @@ describe('Password Reset', () => {
 ```
 
 Run tests:
+
 ```bash
 # Using Bun
 bun test
@@ -341,7 +356,7 @@ npm run test
 Monitor these metrics in production:
 
 - Password reset request rate
-- Email delivery success rate  
+- Email delivery success rate
 - Token validation success rate
 - Password reset completion rate
 - Database query performance
@@ -358,7 +373,7 @@ Monitor these metrics in production:
 ### Regular Tasks
 
 1. **Monitor expired tokens:** System automatically cleans up expired tokens
-2. **Review email delivery:** Check Resend dashboard for delivery rates and bounces  
+2. **Review email delivery:** Check Resend dashboard for delivery rates and bounces
 3. **Update dependencies:** Keep dependencies updated using Bun or npm
 4. **Security audits:** Regularly review token generation and validation logic
 

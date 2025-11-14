@@ -154,23 +154,27 @@ The system supports both inline HTML emails and SendGrid dynamic templates. Usin
    - `{{reset_link}}` - The password reset URL
 
 **Template HTML Structure** (if creating your own):
+
 ```html
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lab System - Reset Password</title>
-</head>
-<body style="margin:0; padding:0; background-color:#f5f5f5; font-family:Arial, sans-serif;">
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: Arial, sans-serif">
     <!-- Your template content here -->
     <p>Hello <strong>{{username}}</strong>,</p>
     <p>Click the button below to reset your password:</p>
-    <a href="{{reset_link}}" style="background-color:#007bff; color:#ffffff; padding:12px 24px; text-decoration:none; border-radius:5px;">
-        Reset Password
+    <a
+      href="{{reset_link}}"
+      style="background-color: #007bff; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px"
+    >
+      Reset Password
     </a>
     <!-- Rest of your template -->
-</body>
+  </body>
 </html>
 ```
 
@@ -195,6 +199,7 @@ FRONTEND_URL=http://localhost:5173
 ```
 
 **Important Notes**:
+
 - Use the **same verified email** in both `SMTP_FROM` variables
 - The `SMTP_FROM` email must match exactly what you verified in SendGrid
 - For development, ensure `.dev.vars` has the correct `SMTP_FROM` value
@@ -202,6 +207,7 @@ FRONTEND_URL=http://localhost:5173
 #### Step 6: Test Email Configuration
 
 1. Start the development server:
+
    ```bash
    bun run dev
    ```
@@ -209,6 +215,7 @@ FRONTEND_URL=http://localhost:5173
 2. Create a test user (or use existing user)
 
 3. Test password reset:
+
    ```bash
    curl -X POST http://localhost:8787/auth/forgot-password \
      -H "Content-Type: application/json" \
@@ -223,16 +230,20 @@ FRONTEND_URL=http://localhost:5173
 #### Common Issues and Solutions
 
 **Issue**: `403 - The from address does not match a verified Sender Identity`
+
 - **Solution**: Ensure `SMTP_FROM` matches exactly the email you verified in SendGrid
 - **Check**: Both `.env` and `.dev.vars` have the same verified email
 
 **Issue**: `400 - text/plain must be first, followed by text/html`
+
 - **Solution**: This is already fixed in the codebase (content order corrected)
 
 **Issue**: No email received but logs show success
+
 - **Solution**: Check spam folder, verify recipient email exists in database
 
 **Issue**: `401 - Unauthorized`
+
 - **Solution**: Verify your SendGrid API key is correct and has Mail Send permissions
 
 #### Template Customization
@@ -257,13 +268,15 @@ The system also supports **Resend** as a backup email provider:
 RESEND_API_KEY=your_resend_api_key_here
 ```
 
-**Priority Order**: 
+**Priority Order**:
+
 1. **SendGrid with Template** (if `SENDGRID_API_KEY` and `SENDGRID_TEMPLATE_ID` are set)
 2. **SendGrid with Inline HTML** (if only `SENDGRID_API_KEY` is set)
 3. **Resend** (if `RESEND_API_KEY` is set)
 4. **Development logging** (no actual email sent)
 
 **Template Benefits**:
+
 - Professional email design with consistent branding
 - Easy template management through SendGrid interface
 - Better deliverability and spam protection
@@ -283,17 +296,17 @@ The API will be available at `http://localhost:8787`
 
 ### Available Scripts
 
-| Script              | Command              | Description                                       |
-| ------------------- | ------------------------------------------------- |
-| **Development**     | `bun run dev`        | Start development server with hot reload          |
-| **Build & Deploy**  | `bun run deploy`     | Deploy to Cloudflare Workers                      |
-| **Type Generation** | `bun run cf-typegen` | Generate TypeScript types for Cloudflare bindings |
-| **Linting**         | `bun run lint`       | Run ESLint code quality checks                    |
-| **Lint Fix**        | `bun run lint:fix`   | Automatically fix linting issues                  |
-| **Tests**           | `bun run test`       | Run unit and integration tests                    |
-| **Generate Migration** | `bunx drizzle-kit generate` | Generate new migration files             |
-| **Push Schema**     | `bunx drizzle-kit push`     | Push schema changes to database              |
-| **Database Studio** | `bunx drizzle-kit studio`   | Open Drizzle Studio (database GUI)         |
+| Script                 | Command                     | Description                                       |
+| ---------------------- | --------------------------- | ------------------------------------------------- |
+| **Development**        | `bun run dev`               | Start development server with hot reload          |
+| **Build & Deploy**     | `bun run deploy`            | Deploy to Cloudflare Workers                      |
+| **Type Generation**    | `bun run cf-typegen`        | Generate TypeScript types for Cloudflare bindings |
+| **Linting**            | `bun run lint`              | Run ESLint code quality checks                    |
+| **Lint Fix**           | `bun run lint:fix`          | Automatically fix linting issues                  |
+| **Tests**              | `bun run test`              | Run unit and integration tests                    |
+| **Generate Migration** | `bunx drizzle-kit generate` | Generate new migration files                      |
+| **Push Schema**        | `bunx drizzle-kit push`     | Push schema changes to database                   |
+| **Database Studio**    | `bunx drizzle-kit studio`   | Open Drizzle Studio (database GUI)                |
 
 ### API Endpoints
 
@@ -377,6 +390,7 @@ curl "http://localhost:8787/teachers?page=1&limit=10"
 #### Password Reset Flow
 
 1. **Request Password Reset**:
+
 ```bash
 curl -X POST http://localhost:8787/auth/forgot-password \
   -H "Content-Type: application/json" \
@@ -384,6 +398,7 @@ curl -X POST http://localhost:8787/auth/forgot-password \
 ```
 
 2. **Reset Password with Token** (from email):
+
 ```bash
 curl -X POST http://localhost:8787/auth/reset-password \
   -H "Content-Type: application/json" \
@@ -441,6 +456,7 @@ The API provides comprehensive documentation through:
 3. **Built-in Validation**: All endpoints include Zod schema validation with detailed error messages
 
 The documentation includes:
+
 - Detailed endpoint descriptions
 - Request/response schemas
 - Example requests and responses

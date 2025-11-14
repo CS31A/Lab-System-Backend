@@ -3,11 +3,11 @@
  * Handles student data retrieval and operations
  */
 
+import type { InferInsertModel, InferSelectModel } from 'drizzle-orm'
 import type { Context } from 'hono'
 import { count, eq } from 'drizzle-orm'
 import { createDb, createServerlessDb } from '@/db'
 import { students } from '@/db/schema'
-import type { InferInsertModel, InferSelectModel } from 'drizzle-orm'
 
 export interface ListStudentsParams {
   page: number

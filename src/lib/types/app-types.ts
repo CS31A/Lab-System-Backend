@@ -18,7 +18,7 @@ import type { Environment } from '@/middleware/env'
  */
 export interface AppBindings {
   Bindings: Environment
- Variables: {
+  Variables: {
     logger: PinoLogger
   }
 }

@@ -7,16 +7,16 @@ import type { Context } from 'hono'
 import type { AppBindings } from '@/lib/types/app-types'
 
 export interface EmailOptions {
-    to: string
-    subject: string
-    html: string
-    text?: string
+  to: string
+  subject: string
+  html: string
+  text?: string
 }
 
 export interface PasswordResetEmailData {
-    username: string
-    resetUrl: string
-    expiryHours: number
+  username: string
+  resetUrl: string
+  expiryHours: number
 }
 
 /**
@@ -25,17 +25,17 @@ export interface PasswordResetEmailData {
  * @returns The escaped string.
  */
 function escapeHTML(str: string): string {
-    return str.replace(
-        /[&<>"']/g,
-        (match) =>
-        ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#39;',
-        }[match]!)
-    )
+  return str.replace(
+    /[&<>"']/g,
+    match =>
+      ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        '\'': '&#39;',
+      }[match]!),
+  )
 }
 
 /**
@@ -56,264 +56,270 @@ function escapeHTML(str: string): string {
  * ```
  */
 export class EmailService {
-    private c: Context<AppBindings>
-    private logger: any
+  private c: Context<AppBindings>
+  private logger: any
 
-    constructor(c: Context<AppBindings>) {
-        this.c = c
-        this.logger = c.var.logger
+  constructor(c: Context<AppBindings>) {
+    this.c = c
+    this.logger = c.var.logger
+  }
+
+  private maskEmail(email: string): string {
+    const [localPart, domain] = email.split('@')
+    if (!localPart || !domain) {
+      // Not a valid email format, return a generic masked string
+      return '***@***'
     }
-
-    private maskEmail(email: string): string {
-        const [localPart, domain] = email.split('@');
-        if (!localPart || !domain) {
-            // Not a valid email format, return a generic masked string
-            return '***@***';
-        }
-        if (localPart.length <= 1) {
-            return `${localPart}***@${domain}`;
-        }
-        return `${localPart.substring(0, 2)}***@${domain}`;
+    if (localPart.length <= 1) {
+      return `${localPart}***@${domain}`
     }
+    return `${localPart.substring(0, 2)}***@${domain}`
+  }
 
-    /**
-     * Sends a password reset email to the user using SendGrid template or fallback to inline HTML
-     *
-     * @param email - Recipient email address
-     * @param data - Password reset email data
-     * @returns Promise that resolves when email is sent
-     * @throws {Error} When email sending fails
-     */
-    async sendPasswordResetEmail(email: string, data: PasswordResetEmailData): Promise<void> {
-        const { SENDGRID_API_KEY } = this.c.env
+  /**
+   * Sends a password reset email to the user using SendGrid template or fallback to inline HTML
+   *
+   * @param email - Recipient email address
+   * @param data - Password reset email data
+   * @returns Promise that resolves when email is sent
+   * @throws {Error} When email sending fails
+   */
+  async sendPasswordResetEmail(email: string, data: PasswordResetEmailData): Promise<void> {
+    const { SENDGRID_API_KEY } = this.c.env
 
-        try {
-            if (SENDGRID_API_KEY) {
-                // Use SendGrid template for better email design
-                await this.sendPasswordResetWithTemplate(email, data)
-            } else {
-                // Fallback to inline HTML for other providers
-                const { username, resetUrl, expiryHours } = data
-                const subject = 'Password Reset Request'
-                const html = this.generatePasswordResetHTML(username, resetUrl, expiryHours)
-                const text = this.generatePasswordResetText(username, resetUrl, expiryHours)
+    try {
+      if (SENDGRID_API_KEY) {
+        // Use SendGrid template for better email design
+        await this.sendPasswordResetWithTemplate(email, data)
+      }
+      else {
+        // Fallback to inline HTML for other providers
+        const { username, resetUrl, expiryHours } = data
+        const subject = 'Password Reset Request'
+        const html = this.generatePasswordResetHTML(username, resetUrl, expiryHours)
+        const text = this.generatePasswordResetText(username, resetUrl, expiryHours)
 
-                await this.sendEmail({
-                    to: email,
-                    subject,
-                    html,
-                    text,
-                })
-            }
+        await this.sendEmail({
+          to: email,
+          subject,
+          html,
+          text,
+        })
+      }
 
-            this.logger.info('Password reset email sent successfully', {
-                email: this.maskEmail(email),
-                username: data.username,
-                timestamp: new Date().toISOString(),
-            })
-        } catch (error) {
-            this.logger.error('Failed to send password reset email', {
-                email: this.maskEmail(email),
-                username: data.username,
-                error: (error as Error).message,
-                timestamp: new Date().toISOString(),
-            })
-            throw error
-        }
+      this.logger.info('Password reset email sent successfully', {
+        email: this.maskEmail(email),
+        username: data.username,
+        timestamp: new Date().toISOString(),
+      })
     }
-
-    /**
-     * Sends password reset email using SendGrid template
-     *
-     * @param email - Recipient email address
-     * @param data - Password reset email data
-     * @returns Promise that resolves when email is sent
-     * @throws {Error} When email sending fails
-     */
-    private async sendPasswordResetWithTemplate(email: string, data: PasswordResetEmailData): Promise<void> {
-        const { SENDGRID_API_KEY, SENDGRID_TEMPLATE_ID, SMTP_FROM } = this.c.env
-        const { username, resetUrl } = data
-        const fromEmail = SMTP_FROM || 'noreply@yourdomain.com'
-        const templateId = SENDGRID_TEMPLATE_ID || 'd-07f4668c32d94aac9d7d93dcf19b7ab4' // Default to your template
-
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
-
-        try {
-            const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-                method: 'POST',
-                signal: controller.signal,
-                headers: {
-                    'Authorization': `Bearer ${SENDGRID_API_KEY}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    personalizations: [{
-                        to: [{ email }],
-                        subject: 'Reset',
-                        dynamic_template_data: {
-                            username,
-                            reset_link: resetUrl,
-                        },
-                    }],
-                    from: { email: fromEmail, name: 'Aclc Technical' },
-                    template_id: templateId,
-                }),
-            })
-
-            clearTimeout(timeoutId)
-
-            if (!response.ok) {
-                const errorData = await response.text()
-                throw new Error(`SendGrid template API error: ${response.status} - ${errorData}`)
-            }
-
-            this.logger.info('Password reset email sent via SendGrid template', {
-                to: this.maskEmail(email),
-                template_id: templateId,
-                username,
-            })
-        } catch (error) {
-            clearTimeout(timeoutId)
-            throw error
-        }
+    catch (error) {
+      this.logger.error('Failed to send password reset email', {
+        email: this.maskEmail(email),
+        username: data.username,
+        error: (error as Error).message,
+        timestamp: new Date().toISOString(),
+      })
+      throw error
     }
+  }
 
-    /**
-     * Sends an email using the configured email provider
-     *
-     * @param options - Email options
-     * @returns Promise that resolves when email is sent
-     * @throws {Error} When email sending fails
-     */
-    async sendEmail(options: EmailOptions): Promise<void> {
-        const { RESEND_API_KEY, SENDGRID_API_KEY } = this.c.env
+  /**
+   * Sends password reset email using SendGrid template
+   *
+   * @param email - Recipient email address
+   * @param data - Password reset email data
+   * @returns Promise that resolves when email is sent
+   * @throws {Error} When email sending fails
+   */
+  private async sendPasswordResetWithTemplate(email: string, data: PasswordResetEmailData): Promise<void> {
+    const { SENDGRID_API_KEY, SENDGRID_TEMPLATE_ID, SMTP_FROM } = this.c.env
+    const { username, resetUrl } = data
+    const fromEmail = SMTP_FROM || 'noreply@yourdomain.com'
+    const templateId = SENDGRID_TEMPLATE_ID || 'd-07f4668c32d94aac9d7d93dcf19b7ab4' // Default to your template
 
-        try {
-            if (SENDGRID_API_KEY) {
-                await this.sendWithSendGrid(options)
-            } else if (RESEND_API_KEY) {
-                await this.sendWithResend(options)
-            } else {
-                // Development mode - log email instead of sending
-                this.logger.warn('No email provider configured - logging email content', {
-                    to: options.to.replace(/(.{2}).*(@.*)/, '$1***$2'),
-                    subject: options.subject,
-                    html: options.html,
-                    text: options.text,
-                })
-            }
-        } catch (error) {
-            this.logger.error('Failed to send email', {
-                to: options.to.replace(/(.{2}).*(@.*)/, '$1***$2'),
-                subject: options.subject,
-                error: (error as Error).message,
-                timestamp: new Date().toISOString(),
-            })
-            throw new Error('Failed to send email')
-        }
-    }
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
 
-    /**
-     * Sends email using Resend service (recommended for production)
-     */
-    private async sendWithResend(options: EmailOptions): Promise<void> {
-        const { RESEND_API_KEY, SMTP_FROM } = this.c.env
-        const fromEmail = SMTP_FROM || 'onboarding@resend.dev' // Default Resend domain for testing
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
-        const response = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            signal: controller.signal,
-            headers: {
-                'Authorization': `Bearer ${RESEND_API_KEY}`,
-                'Content-Type': 'application/json',
+    try {
+      const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Authorization': `Bearer ${SENDGRID_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          personalizations: [{
+            to: [{ email }],
+            subject: 'Reset',
+            dynamic_template_data: {
+              username,
+              reset_link: resetUrl,
             },
-            body: JSON.stringify({
-                from: fromEmail,
-                to: [options.to],
-                subject: options.subject,
-                html: options.html,
-                text: options.text,
-            }),
+          }],
+          from: { email: fromEmail, name: 'Aclc Technical' },
+          template_id: templateId,
+        }),
+      })
+
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        const errorData = await response.text()
+        throw new Error(`SendGrid template API error: ${response.status} - ${errorData}`)
+      }
+
+      this.logger.info('Password reset email sent via SendGrid template', {
+        to: this.maskEmail(email),
+        template_id: templateId,
+        username,
+      })
+    }
+    catch (error) {
+      clearTimeout(timeoutId)
+      throw error
+    }
+  }
+
+  /**
+   * Sends an email using the configured email provider
+   *
+   * @param options - Email options
+   * @returns Promise that resolves when email is sent
+   * @throws {Error} When email sending fails
+   */
+  async sendEmail(options: EmailOptions): Promise<void> {
+    const { RESEND_API_KEY, SENDGRID_API_KEY } = this.c.env
+
+    try {
+      if (SENDGRID_API_KEY) {
+        await this.sendWithSendGrid(options)
+      }
+      else if (RESEND_API_KEY) {
+        await this.sendWithResend(options)
+      }
+      else {
+        // Development mode - log email instead of sending
+        this.logger.warn('No email provider configured - logging email content', {
+          to: options.to.replace(/(.{2}).*(@.*)/, '$1***$2'),
+          subject: options.subject,
+          html: options.html,
+          text: options.text,
         })
+      }
+    }
+    catch (error) {
+      this.logger.error('Failed to send email', {
+        to: options.to.replace(/(.{2}).*(@.*)/, '$1***$2'),
+        subject: options.subject,
+        error: (error as Error).message,
+        timestamp: new Date().toISOString(),
+      })
+      throw new Error('Failed to send email')
+    }
+  }
 
-        if (!response.ok) {
-            const errorData = await response.text()
-            throw new Error(`Resend API error: ${response.status} - ${errorData}`)
-        }
+  /**
+   * Sends email using Resend service (recommended for production)
+   */
+  private async sendWithResend(options: EmailOptions): Promise<void> {
+    const { RESEND_API_KEY, SMTP_FROM } = this.c.env
+    const fromEmail = SMTP_FROM || 'onboarding@resend.dev' // Default Resend domain for testing
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: [options.to],
+        subject: options.subject,
+        html: options.html,
+        text: options.text,
+      }),
+    })
 
-        const result = await response.json() as { id?: string }
-
-        this.logger.info('Email sent via Resend', {
-            to: options.to.replace(/(.{2}).*(@.*)/, '$1***$2'),
-            subject: options.subject,
-            messageId: result.id,
-
-        })
-        clearTimeout(timeoutId)
+    if (!response.ok) {
+      const errorData = await response.text()
+      throw new Error(`Resend API error: ${response.status} - ${errorData}`)
     }
 
-    /**
-     * Sends email using SendGrid service (for non-template emails)
-     * Note: Password reset emails use SendGrid templates via sendPasswordResetWithTemplate()
-     */
-    private async sendWithSendGrid(options: EmailOptions): Promise<void> {
-        const { SENDGRID_API_KEY, SMTP_FROM } = this.c.env
-        const fromEmail = SMTP_FROM || 'noreply@yourdomain.com'
+    const result = await response.json() as { id?: string }
 
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+    this.logger.info('Email sent via Resend', {
+      to: options.to.replace(/(.{2}).*(@.*)/, '$1***$2'),
+      subject: options.subject,
+      messageId: result.id,
 
-        const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-            method: 'POST',
-            signal: controller.signal,
-            headers: {
-                'Authorization': `Bearer ${SENDGRID_API_KEY}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                personalizations: [{
-                    to: [{ email: options.to }],
-                    subject: options.subject,
-                }],
-                from: { email: fromEmail },
-                content: [
-                    ...(options.text ? [{
-                        type: 'text/plain',
-                        value: options.text,
-                    }] : []),
-                    {
-                        type: 'text/html',
-                        value: options.html,
-                    },
-                ],
-            }),
-        })
+    })
+    clearTimeout(timeoutId)
+  }
 
-        if (!response.ok) {
-            const errorData = await response.text()
-            throw new Error(`SendGrid API error: ${response.status} - ${errorData}`)
-        }
+  /**
+   * Sends email using SendGrid service (for non-template emails)
+   * Note: Password reset emails use SendGrid templates via sendPasswordResetWithTemplate()
+   */
+  private async sendWithSendGrid(options: EmailOptions): Promise<void> {
+    const { SENDGRID_API_KEY, SMTP_FROM } = this.c.env
+    const fromEmail = SMTP_FROM || 'noreply@yourdomain.com'
 
-        this.logger.info('Email sent via SendGrid', {
-            to: options.to.replace(/(.{2}).*(@.*)/, '$1***$2'),
-            subject: options.subject,
-        })
-        clearTimeout(timeoutId)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+
+    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Authorization': `Bearer ${SENDGRID_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        personalizations: [{
+          to: [{ email: options.to }],
+          subject: options.subject,
+        }],
+        from: { email: fromEmail },
+        content: [
+          ...(options.text
+            ? [{
+                type: 'text/plain',
+                value: options.text,
+              }]
+            : []),
+          {
+            type: 'text/html',
+            value: options.html,
+          },
+        ],
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.text()
+      throw new Error(`SendGrid API error: ${response.status} - ${errorData}`)
     }
 
+    this.logger.info('Email sent via SendGrid', {
+      to: options.to.replace(/(.{2}).*(@.*)/, '$1***$2'),
+      subject: options.subject,
+    })
+    clearTimeout(timeoutId)
+  }
 
+  /**
+   * Generates HTML content for password reset email
+   */
+  private generatePasswordResetHTML(username: string, resetUrl: string, expiryHours: number): string {
+    // Escape user-controlled data to prevent XSS
+    const safeUsername = escapeHTML(username)
+    const safeResetUrl = escapeHTML(resetUrl)
 
-    /**
-     * Generates HTML content for password reset email
-     */
-    private generatePasswordResetHTML(username: string, resetUrl: string, expiryHours: number): string {
-        // Escape user-controlled data to prevent XSS
-        const safeUsername = escapeHTML(username);
-        const safeResetUrl = escapeHTML(resetUrl);
-
-        return `
+    return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -359,13 +365,13 @@ export class EmailService {
 </body>
 </html>
     `.trim()
-    }
+  }
 
-    /**
-     * Generates plain text content for password reset email
-     */
-    private generatePasswordResetText(username: string, resetUrl: string, expiryHours: number): string {
-        return `
+  /**
+   * Generates plain text content for password reset email
+   */
+  private generatePasswordResetText(username: string, resetUrl: string, expiryHours: number): string {
+    return `
 Lab System - Reset Your Password
 
 Hello ${username},
@@ -386,5 +392,5 @@ The Lab System Team
 This is an automated message. Please do not reply to this email.
 © ${new Date().getFullYear()} Lab System. All rights reserved.
     `.trim()
-    }
+  }
 }
