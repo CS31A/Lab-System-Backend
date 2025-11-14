@@ -110,6 +110,165 @@ bunx drizzle-kit generate
 bunx drizzle-kit push
 ```
 
+### 5. Email Configuration (SendGrid)
+
+The system uses SendGrid for sending password reset emails. Follow these steps to configure email functionality:
+
+#### Step 1: Create SendGrid Account
+
+1. Sign up at [SendGrid](https://sendgrid.com/)
+2. Complete account verification
+3. Navigate to Settings > API Keys
+
+#### Step 2: Generate API Key
+
+1. Click "Create API Key"
+2. Choose "Restricted Access"
+3. Grant the following permissions:
+   - **Mail Send**: Full Access
+   - **Sender Authentication**: Read Access (optional, for verification)
+4. Copy the generated API key
+
+#### Step 3: Verify Sender Identity
+
+**Important**: SendGrid requires sender verification to prevent spam.
+
+1. Go to Settings > Sender Authentication
+2. Click "Verify a Single Sender"
+3. Fill in your details:
+   - **From Name**: Your organization name (e.g., "Lab System")
+   - **From Email**: Your verified email address
+   - **Reply To**: Same as From Email (recommended)
+   - **Company Address**: Your organization's address
+4. Click "Create" and check your email for verification
+5. Click the verification link in the email
+
+#### Step 4: Create SendGrid Template (Optional but Recommended)
+
+The system supports both inline HTML emails and SendGrid dynamic templates. Using templates provides better email design and easier management.
+
+1. **Navigate to Email API > Dynamic Templates** in SendGrid
+2. **Create a new template** or use the existing template ID: `d-07f4668c32d94aac9d7d93dcf19b7ab4`
+3. **Template Variables**: The system passes these variables to your template:
+   - `{{username}}` - The user's username
+   - `{{reset_link}}` - The password reset URL
+
+**Template HTML Structure** (if creating your own):
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab System - Reset Password</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f5f5f5; font-family:Arial, sans-serif;">
+    <!-- Your template content here -->
+    <p>Hello <strong>{{username}}</strong>,</p>
+    <p>Click the button below to reset your password:</p>
+    <a href="{{reset_link}}" style="background-color:#007bff; color:#ffffff; padding:12px 24px; text-decoration:none; border-radius:5px;">
+        Reset Password
+    </a>
+    <!-- Rest of your template -->
+</body>
+</html>
+```
+
+#### Step 5: Configure Environment Variables
+
+Add the following to both `.env` and `.dev.vars` files:
+
+```bash
+# Email Configuration - Priority: SendGrid > Resend > SMTP
+# SendGrid (recommended for production)
+SENDGRID_API_KEY=your_sendgrid_api_key_here
+SENDGRID_TEMPLATE_ID=d-07f4668c32d94aac9d7d93dcf19b7ab4
+SMTP_FROM=your_verified_email@domain.com
+
+# Password Reset Configuration
+BCRYPT_COST=10
+APP_URL=http://localhost:5173
+RESET_TOKEN_EXPIRY_HOURS=1
+
+# Frontend URL (for CORS and redirects)
+FRONTEND_URL=http://localhost:5173
+```
+
+**Important Notes**:
+- Use the **same verified email** in both `SMTP_FROM` variables
+- The `SMTP_FROM` email must match exactly what you verified in SendGrid
+- For development, ensure `.dev.vars` has the correct `SMTP_FROM` value
+
+#### Step 6: Test Email Configuration
+
+1. Start the development server:
+   ```bash
+   bun run dev
+   ```
+
+2. Create a test user (or use existing user)
+
+3. Test password reset:
+   ```bash
+   curl -X POST http://localhost:8787/auth/forgot-password \
+     -H "Content-Type: application/json" \
+     -d '{"email":"user@example.com"}'
+   ```
+
+4. Check the server logs for success message:
+   ```
+   Password reset token generated and email sent
+   ```
+
+#### Common Issues and Solutions
+
+**Issue**: `403 - The from address does not match a verified Sender Identity`
+- **Solution**: Ensure `SMTP_FROM` matches exactly the email you verified in SendGrid
+- **Check**: Both `.env` and `.dev.vars` have the same verified email
+
+**Issue**: `400 - text/plain must be first, followed by text/html`
+- **Solution**: This is already fixed in the codebase (content order corrected)
+
+**Issue**: No email received but logs show success
+- **Solution**: Check spam folder, verify recipient email exists in database
+
+**Issue**: `401 - Unauthorized`
+- **Solution**: Verify your SendGrid API key is correct and has Mail Send permissions
+
+#### Template Customization
+
+To customize the email template:
+
+1. **Log into SendGrid** and navigate to Email API > Dynamic Templates
+2. **Find your template** (ID: `d-07f4668c32d94aac9d7d93dcf19b7ab4`) or create a new one
+3. **Edit the template** using SendGrid's drag-and-drop editor or HTML editor
+4. **Use these variables** in your template:
+   - `{{username}}` - User's display name
+   - `{{reset_link}}` - Complete password reset URL
+5. **Test the template** using SendGrid's preview feature
+6. **Update the template ID** in your environment variables if you create a new template
+
+#### Alternative Email Providers
+
+The system also supports **Resend** as a backup email provider:
+
+```bash
+# Resend Configuration (alternative to SendGrid)
+RESEND_API_KEY=your_resend_api_key_here
+```
+
+**Priority Order**: 
+1. **SendGrid with Template** (if `SENDGRID_API_KEY` and `SENDGRID_TEMPLATE_ID` are set)
+2. **SendGrid with Inline HTML** (if only `SENDGRID_API_KEY` is set)
+3. **Resend** (if `RESEND_API_KEY` is set)
+4. **Development logging** (no actual email sent)
+
+**Template Benefits**:
+- Professional email design with consistent branding
+- Easy template management through SendGrid interface
+- Better deliverability and spam protection
+- Responsive design for mobile devices
+
 ## Usage
 
 ### Development Server
@@ -149,6 +308,9 @@ The API will be available at `http://localhost:8787`
 - `POST /auth/refresh` - Refresh authentication token
 - `POST /auth/logout` - User logout
 - `GET /auth/me` - Get current user information
+- `POST /auth/forgot-password` - Request password reset email
+- `POST /auth/reset-password` - Reset password with token
+- `GET /auth/validate-reset-token` - Validate reset token
 
 #### User Management Endpoints
 
@@ -212,6 +374,25 @@ curl -X POST http://localhost:8787/users \
 curl "http://localhost:8787/teachers?page=1&limit=10"
 ```
 
+#### Password Reset Flow
+
+1. **Request Password Reset**:
+```bash
+curl -X POST http://localhost:8787/auth/forgot-password \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com"}'
+```
+
+2. **Reset Password with Token** (from email):
+```bash
+curl -X POST http://localhost:8787/auth/reset-password \
+  -H "Content-Type: application/json" \
+  -d '{
+    "token":"selector.verifier_from_email",
+    "newPassword":"NewSecurePassword123"
+  }'
+```
+
 ## Project Structure
 
 ```
@@ -245,7 +426,9 @@ src/
 │   ├── UserService.ts         # User business logic
 │   ├── TeacherService.ts      # Teacher business logic
 │   ├── LaboratoryService.ts   # Laboratory business logic
-│   └── SubjectService.ts      # Subject business logic
+│   ├── SubjectService.ts      # Subject business logic
+│   ├── EmailService.ts        # Email sending functionality
+│   └── PasswordResetService.ts # Password reset logic
 └── openapi/                   # OpenAPI utilities
 ```
 

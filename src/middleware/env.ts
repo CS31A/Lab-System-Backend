@@ -12,6 +12,14 @@ const EnvSchema = z.object({
   DATABASE_URL: z.string(),
   JWT_SECRET: z.string(),
   BCRYPT_COST: z.string().default('10'),
+  // Email configuration
+  SENDGRID_API_KEY: z.string().optional(), // For SendGrid email service
+  SENDGRID_TEMPLATE_ID: z.string().optional(), // SendGrid template ID for password reset
+  RESEND_API_KEY: z.string().optional(), // For Resend email service
+  SMTP_FROM: z.string().optional(), // Email sender address
+  // App configuration
+  APP_URL: z.string().default('http://localhost:5173'), // Frontend URL for reset links
+  RESET_TOKEN_EXPIRY_HOURS: z.string().default('1'), // Token expiry in hours
 })
 
 /**
