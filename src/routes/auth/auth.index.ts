@@ -4,12 +4,12 @@
  * the root registrar can mount it at "/" and still get "/auth/*" paths.
  */
 
+import { ForgotPasswordHandler } from '@/handlers/auth/forgot-password.handler'
 // Import handlers
 import { GetCurrentUserHandler } from '@/handlers/auth/get-current-user.handler'
 import { LoginHandler } from '@/handlers/auth/login.handler'
 import { LogoutHandler } from '@/handlers/auth/logout.handler'
 import { RefreshHandler } from '@/handlers/auth/refresh.handler'
-import { ForgotPasswordHandler } from '@/handlers/auth/forgot-password.handler'
 import { ResetPasswordHandler } from '@/handlers/auth/reset-password.handler'
 import { ValidateResetTokenHandler } from '@/handlers/auth/validate-reset-token.handler'
 import { createRouter } from '@/lib/create-app'

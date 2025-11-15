@@ -190,7 +190,7 @@ export const resetPasswordRoute = createRoute({
           .min(8, 'Password must be at least 8 characters')
           .regex(
             /^(?=.*[A-Z])(?=.*\d)/,
-            'Password must contain at least one uppercase letter and one number'
+            'Password must contain at least one uppercase letter and one number',
           ),
       }),
       'Reset token and new password',

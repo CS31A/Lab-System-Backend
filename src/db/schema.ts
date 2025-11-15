@@ -140,7 +140,7 @@ export const userInsertSchema = createInsertSchema(users, {
  */
 export const patchUserSchema = z.object({
   // Email - only validate format when provided
- email: z.string()
+  email: z.string()
     .optional()
     .refine(
       val => !val || val === '' || z.string().email().safeParse(val).success,
@@ -158,7 +158,7 @@ export const patchUserSchema = z.object({
     .transform(val => val === '' ? undefined : val),
 
   // Username - only validate length and transform when provided
- username: z.string()
+  username: z.string()
     .optional()
     .refine(
       val => !val || val === '' || val.length >= 8,
@@ -172,7 +172,7 @@ export const patchUserSchema = z.object({
     .transform(val => val === '' ? undefined : val?.toLowerCase()),
 
   // First name - validate when provided
- firstname: z.string()
+  firstname: z.string()
     .optional()
     .refine(
       val => !val || val === '' || val.length >= 1,
@@ -181,7 +181,7 @@ export const patchUserSchema = z.object({
     .transform(val => val === '' ? undefined : val),
 
   // Last name - validate when provided
- lastname: z.string()
+  lastname: z.string()
     .optional()
     .refine(
       val => !val || val === '' || val.length >= 1,
@@ -190,7 +190,7 @@ export const patchUserSchema = z.object({
     .transform(val => val === '' ? undefined : val),
 
   // Confirm password - for password updates
- confirm_password: z.string()
+  confirm_password: z.string()
     .optional()
     .transform(val => val === '' ? undefined : val),
 })
@@ -688,7 +688,7 @@ export const subjectSelectSchema = createSelectSchema(subjects)
  * }
  */
 export const subjectInsertSchema = createInsertSchema(subjects)
- .required({
+  .required({
     subject_name: true,
     subject_code: true,
   })
@@ -1033,7 +1033,7 @@ export const seatingHistoryInsertSchema = createInsertSchema(seating_history)
     // seat_number
     seating_id: true,
     // session_date: true,
- })
+  })
   .omit({
     id: true,
     created_at: true,
@@ -1070,7 +1070,7 @@ export const patchSeatingHistorySchema
  * @property {Date} updated_at - Timestamp when the activity log was last updated (auto-generated and auto-updated)
  */
 export const lab_activity_log = pgTable('lab_activity_log', {
- id: varchar({ length: 12 })
+  id: varchar({ length: 12 })
     .primaryKey()
     .$default(() => nanoid(12)),
   laboratory_id: varchar({ length: 12 })
@@ -1252,7 +1252,7 @@ export const usersRelations = relations(users, ({ many }) => ({
  *
  * @description Defines the relationship between refresh tokens and users
  *
- * @property {Object} user - Many-to-one relationship with users
+ * @property {object} user - Many-to-one relationship with users
  */
 export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
   user: one(users, {
@@ -1297,4 +1297,3 @@ export const passwordResetTokensRelations = relations(passwordResetTokens, ({ on
     references: [users.id],
   }),
 }))
-

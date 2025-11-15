@@ -22,7 +22,7 @@ router.use('/students/*', authMiddleware)
 /**
  * @description Admin-only guard for non-GET methods
  */
-router.use('/students', adminOnlyForNonGet)  // Apply admin-only restriction for POST/PUT/DELETE methods
+router.use('/students', adminOnlyForNonGet) // Apply admin-only restriction for POST/PUT/DELETE methods
 router.use('/students/*', adminOnlyForNonGet)
 
 /**

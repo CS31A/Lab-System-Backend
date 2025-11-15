@@ -3,11 +3,11 @@
  */
 
 import { createRoute, z } from '@hono/zod-openapi'
-import { studentSelectSchema, studentInsertSchema, patchStudentSchema } from '@/db/schema'
+import { patchStudentSchema, studentInsertSchema, studentSelectSchema } from '@/db/schema'
 import { pagination, paginationQuery } from '@/lib/zod-schemas'
 import { errorSchema } from '@/lib/zod-schemas/error.schema'
 import IdParamsSchema from '@/middleware/utils/id-params-validator'
-import jsonContent, { jsonContentRequired } from '@/middleware/utils/json-content'
+import jsonContent from '@/middleware/utils/json-content'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 
 /**
@@ -17,7 +17,7 @@ import * as httpStatusCodes from '@/openapi/http-status-codes'
 export const createStudentRoute = createRoute({
   tags: ['Students'],
   method: 'post',
- path: '/students',
+  path: '/students',
   request: {
     body: {
       content: {
@@ -52,7 +52,7 @@ export const getAllStudentsRoute = createRoute({
   path: '/students',
   request: {
     query: paginationQuery,
- },
+  },
   responses: {
     [httpStatusCodes.OK]: jsonContent(
       z.object({
@@ -77,7 +77,7 @@ export const getAllStudentsNoPaginationRoute = createRoute({
   tags: ['Students'],
   method: 'get',
   path: '/students/all',
- responses: {
+  responses: {
     [httpStatusCodes.OK]: jsonContent(
       z.object({
         message: z.string(),
@@ -97,7 +97,7 @@ export const getAllStudentsNoPaginationRoute = createRoute({
  * @description Retrieves a specific student by its ID
  */
 export const getStudentRoute = createRoute({
- tags: ['Students'],
+  tags: ['Students'],
   method: 'get',
   path: '/students/{id}',
   request: {

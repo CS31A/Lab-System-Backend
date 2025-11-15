@@ -566,7 +566,7 @@ describe('userService.hardDeleteUser', () => {
     expect(ctx.var.logger.info).toHaveBeenCalled()
 
     // Verify we deleted role profile first, then the user
-    expect(deleteSequence.map((c) => c.table)).toEqual([teachers, users])
+    expect(deleteSequence.map(c => c.table)).toEqual([teachers, users])
     expect(deleteSequence.length).toBe(2)
   })
 
