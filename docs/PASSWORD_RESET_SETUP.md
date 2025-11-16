@@ -13,9 +13,10 @@ Update your `.dev.vars` file with the required variables:
 JWT_SECRET=dev-jwt-secret-key-change-in-production
 BCRYPT_COST=10
 
-# Email Configuration - Resend (recommended)
-RESEND_API_KEY=re_your_resend_api_key_here
-SMTP_FROM=onboarding@resend.dev
+# Email Configuration - SendGrid
+SENDGRID_API_KEY=your_sendgrid_api_key_here
+SENDGRID_TEMPLATE_ID=your_sendgrid_template_id_here
+SMTP_FROM=your_verified_email@domain.com
 
 # App Configuration
 APP_URL=http://localhost:5173
@@ -36,22 +37,32 @@ npm run db:generate
 npm run db:migrate
 ```
 
-### 3. Email Provider Setup - Resend
+### 3. Email Provider Setup - SendGrid
 
-1. Sign up at [resend.com](https://resend.com)
-2. Get your API key from the dashboard
-3. Add it to your `.dev.vars` file as `RESEND_API_KEY`
-4. For development, use `onboarding@resend.dev` as the sender
-
-### 4. Install Dependencies
-
-```bash
-# Using Bun (recommended)
-bun add resend
-
-# Or using npm
-npm install resend --legacy-peer-deps
-```
+1. Sign up at [sendgrid.com](https://sendgrid.com)
+2. Create an API key from the dashboard:
+   - Navigate to Settings > API Keys
+   - Click "Create API Key"
+   - Select "Restricted Access" and enable the "Mail Send" scope
+   - Optionally enable "Template Read" if you plan to dynamically manage templates
+   - Copy the generated API key (you won't be able to see it again)
+3. Create a SendGrid Dynamic Template:
+   - Navigate to Email API > Dynamic Templates
+   - Click "Create a Dynamic Template"
+   - Give it a name (e.g., "Password Reset Email")
+   - Click "Add Version" and choose a design method
+   - Create your email template with these required variables:
+     - `{{username}}` - User's username
+     - `{{resetUrl}}` - The password reset link
+     - `{{expiryHours}}` - Token expiry time in hours
+   - Copy the Template ID from the template settings
+4. (Development) For testing: you can use any email as `SMTP_FROM` initially
+5. (Production) Verify your sender identity in SendGrid dashboard before deploying:
+   - Navigate to Settings > Sender Authentication
+   - Verify a Single Sender or authenticate your domain
+6. Add the API key to your `.dev.vars` file as `SENDGRID_API_KEY`
+7. Add the Template ID to your `.dev.vars` file as `SENDGRID_TEMPLATE_ID`
+8. Set `SMTP_FROM` to your email address (must be verified for production)
 
 ### 5. Test the Implementation
 
@@ -101,7 +112,8 @@ JWT_SECRET=your-super-secure-jwt-secret-here
 BCRYPT_COST=12
 
 # Email Configuration
-RESEND_API_KEY=re_your_production_resend_api_key
+SENDGRID_API_KEY=your_production_sendgrid_api_key
+SENDGRID_TEMPLATE_ID=your_sendgrid_template_id
 SMTP_FROM=noreply@yourdomain.com
 
 # App Configuration
@@ -113,12 +125,14 @@ RESET_TOKEN_EXPIRY_HOURS=1
 
 Set secrets using Wrangler CLI:
 
+> **Note:** When creating your SendGrid API key, ensure it has the "Mail Send" scope enabled. Optionally grant "Template Read" if you plan to dynamically manage templates.
+
 ```bash
 # Set JWT secret
 wrangler secret put JWT_SECRET
 
-# Set Resend API key
-wrangler secret put RESEND_API_KEY
+# Set SendGrid API key
+wrangler secret put SENDGRID_API_KEY
 
 # Set other environment variables
 wrangler secret put APP_URL
@@ -127,9 +141,9 @@ wrangler secret put SMTP_FROM
 
 ### 3. Domain Configuration
 
-1. Add your domain in Resend dashboard
-2. Configure DNS records as instructed by Resend
-3. Update `SMTP_FROM` to use your domain: `noreply@yourdomain.com`
+1. Verify your domain in SendGrid dashboard
+2. Configure DNS records as instructed by SendGrid
+3. Update `SMTP_FROM` to use your verified domain: `noreply@yourdomain.com`
 
 ### 4. Database Migration
 
@@ -333,8 +347,10 @@ npm run test
 ### Common Issues
 
 1. **Email not sending:**
-   - Check Resend API key in environment variables
-   - Verify domain configuration in Resend dashboard
+   - Verify environment variables are set: `SENDGRID_API_KEY`, `SENDGRID_TEMPLATE_ID`, `SMTP_FROM`
+   - Check API key has "Mail Send" scope enabled in SendGrid dashboard
+   - Verify the Template ID matches your SendGrid dynamic template
+   - (Production only) Verify sender identity in SendGrid dashboard
    - Check server logs for email service errors
 
 2. **Token validation fails:**
@@ -363,7 +379,7 @@ Monitor these metrics in production:
 
 ## 📚 Additional Resources
 
-- [Resend Documentation](https://resend.com/docs)
+- [SendGrid Documentation](https://docs.sendgrid.com/)
 - [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
 - [Drizzle ORM Documentation](https://orm.drizzle.team/)
 - [Hono Framework Documentation](https://hono.dev/)
@@ -373,7 +389,7 @@ Monitor these metrics in production:
 ### Regular Tasks
 
 1. **Monitor expired tokens:** System automatically cleans up expired tokens
-2. **Review email delivery:** Check Resend dashboard for delivery rates and bounces
+2. **Review email delivery:** Check SendGrid dashboard for delivery rates and bounces
 3. **Update dependencies:** Keep dependencies updated using Bun or npm
 4. **Security audits:** Regularly review token generation and validation logic
 

@@ -183,8 +183,7 @@ The system supports both inline HTML emails and SendGrid dynamic templates. Usin
 Add the following to both `.env` and `.dev.vars` files:
 
 ```bash
-# Email Configuration - Priority: SendGrid > Resend > SMTP
-# SendGrid (recommended for production)
+# Email Configuration - SendGrid
 SENDGRID_API_KEY=your_sendgrid_api_key_here
 SENDGRID_TEMPLATE_ID=d-07f4668c32d94aac9d7d93dcf19b7ab4
 SMTP_FROM=your_verified_email@domain.com
@@ -259,9 +258,9 @@ To customize the email template:
 5. **Test the template** using SendGrid's preview feature
 6. **Update the template ID** in your environment variables if you create a new template
 
-#### Alternative Email Providers
+#### Email Provider Configuration
 
-The system also supports **Resend** as a backup email provider:
+The system uses **SendGrid** for email delivery:
 
 ```bash
 # Resend Configuration (alternative to SendGrid)
@@ -272,8 +271,7 @@ RESEND_API_KEY=your_resend_api_key_here
 
 1. **SendGrid with Template** (if `SENDGRID_API_KEY` and `SENDGRID_TEMPLATE_ID` are set)
 2. **SendGrid with Inline HTML** (if only `SENDGRID_API_KEY` is set)
-3. **Resend** (if `RESEND_API_KEY` is set)
-4. **Development logging** (no actual email sent)
+3. **Development logging** (no actual email sent)
 
 **Template Benefits**:
 

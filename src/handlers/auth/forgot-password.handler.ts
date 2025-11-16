@@ -4,9 +4,9 @@
 
 import type { AppRouteHandler } from '@/lib/types/app-types'
 import type { ForgotPasswordRoute } from '@/routes/auth/auth.routes'
-import { maskEmail } from '@/lib/utils/email'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 import { PasswordResetService } from '@/services/PasswordResetService'
+import { maskEmail } from '@/lib/utils/email'
 
 /**
  * Handler for initiating password reset requests

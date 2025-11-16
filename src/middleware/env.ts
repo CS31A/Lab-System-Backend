@@ -15,7 +15,6 @@ const EnvSchema = z.object({
   // Email configuration
   SENDGRID_API_KEY: z.string().optional(), // For SendGrid email service
   SENDGRID_TEMPLATE_ID: z.string().optional(), // SendGrid template ID for password reset
-  RESEND_API_KEY: z.string().optional(), // For Resend email service
   SMTP_FROM: z.string().optional(), // Email sender address
   // App configuration
   APP_URL: z.string().default('http://localhost:5173'), // Frontend URL for reset links
