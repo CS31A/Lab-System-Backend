@@ -10,3 +10,16 @@ LOG_LEVEL=debug
 NODE_ENV=development
 
 BCRYPT_COST=10
+JWT_SECRET=dev-jwt-secret-key-change-in-production
+
+# Email Configuration
+# SendGrid (can be used for both development and production)
+SENDGRID_API_KEY=your_sendgrid_api_key_here
+# Get your template ID from SendGrid dashboard: Email API > Dynamic Templates
+# See docs/PASSWORD_RESET_SETUP.md for setup instructions
+SENDGRID_TEMPLATE_ID=your_sendgrid_template_id_here
+SMTP_FROM=your_verified_email@domain.com
+
+# App Configuration
+APP_URL=http://localhost:5173
+RESET_TOKEN_EXPIRY_HOURS=1

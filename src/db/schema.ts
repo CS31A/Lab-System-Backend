@@ -140,7 +140,7 @@ export const userInsertSchema = createInsertSchema(users, {
  */
 export const patchUserSchema = z.object({
   // Email - only validate format when provided
- email: z.string()
+  email: z.string()
     .optional()
     .refine(
       val => !val || val === '' || z.string().email().safeParse(val).success,
@@ -158,7 +158,7 @@ export const patchUserSchema = z.object({
     .transform(val => val === '' ? undefined : val),
 
   // Username - only validate length and transform when provided
- username: z.string()
+  username: z.string()
     .optional()
     .refine(
       val => !val || val === '' || val.length >= 8,
@@ -172,7 +172,7 @@ export const patchUserSchema = z.object({
     .transform(val => val === '' ? undefined : val?.toLowerCase()),
 
   // First name - validate when provided
- firstname: z.string()
+  firstname: z.string()
     .optional()
     .refine(
       val => !val || val === '' || val.length >= 1,
@@ -181,7 +181,7 @@ export const patchUserSchema = z.object({
     .transform(val => val === '' ? undefined : val),
 
   // Last name - validate when provided
- lastname: z.string()
+  lastname: z.string()
     .optional()
     .refine(
       val => !val || val === '' || val.length >= 1,
@@ -190,7 +190,7 @@ export const patchUserSchema = z.object({
     .transform(val => val === '' ? undefined : val),
 
   // Confirm password - for password updates
- confirm_password: z.string()
+  confirm_password: z.string()
     .optional()
     .transform(val => val === '' ? undefined : val),
 })
@@ -688,7 +688,7 @@ export const subjectSelectSchema = createSelectSchema(subjects)
  * }
  */
 export const subjectInsertSchema = createInsertSchema(subjects)
- .required({
+  .required({
     subject_name: true,
     subject_code: true,
   })
@@ -780,13 +780,14 @@ export const scheduleSelectSchema = createSelectSchema(schedule)
  * Zod schema for inserting new schedule data
  *
  * @description Schema that validates schedule data when creating new schedule records
+ * Accepts ISO date strings for start_time and end_time and coerces them to Date objects
  *
  * @property {string} laboratory_id - Reference to the associated laboratory (required)
  * @property {string} teacher_id - Reference to the associated teacher (required)
  * @property {string} subject_id - Reference to the associated subject (required)
  * @property {string} section - Class section for the schedule (required)
- * @property {Date} start_time - Start time of the schedule (required)
- * @property {Date} end_time - End time of the schedule (required)
+ * @property {Date|string} start_time - Start time of the schedule (accepts ISO date string, required)
+ * @property {Date|string} end_time - End time of the schedule (accepts ISO date string, required)
  *
  * @example
  * {
@@ -812,11 +813,16 @@ export const scheduleInsertSchema = createInsertSchema(schedule)
     created_at: true,
     updated_at: true,
   })
+  .extend({
+    start_time: z.coerce.date(),
+    end_time: z.coerce.date(),
+  })
 
 /**
  * Zod schema for updating schedule data (partial update)
  *
  * @description Schema that validates schedule data when updating existing schedule records (all fields are optional)
+ * Accepts ISO date strings for start_time and end_time and coerces them to Date objects
  *
  * @example
  * {
@@ -826,7 +832,12 @@ export const scheduleInsertSchema = createInsertSchema(schedule)
  *   status: "rescheduled"
  * }
  */
-export const patchScheduleSchema = createInsertSchema(schedule).partial()
+export const patchScheduleSchema = createInsertSchema(schedule)
+  .partial()
+  .extend({
+    start_time: z.coerce.date().optional(),
+    end_time: z.coerce.date().optional(),
+  })
 
 /**
  * Seating plan table schema definition
@@ -1022,7 +1033,7 @@ export const seatingHistoryInsertSchema = createInsertSchema(seating_history)
     // seat_number
     seating_id: true,
     // session_date: true,
- })
+  })
   .omit({
     id: true,
     created_at: true,
@@ -1059,7 +1070,7 @@ export const patchSeatingHistorySchema
  * @property {Date} updated_at - Timestamp when the activity log was last updated (auto-generated and auto-updated)
  */
 export const lab_activity_log = pgTable('lab_activity_log', {
- id: varchar({ length: 12 })
+  id: varchar({ length: 12 })
     .primaryKey()
     .$default(() => nanoid(12)),
   laboratory_id: varchar({ length: 12 })
@@ -1241,11 +1252,48 @@ export const usersRelations = relations(users, ({ many }) => ({
  *
  * @description Defines the relationship between refresh tokens and users
  *
- * @property {Object} user - Many-to-one relationship with users
+ * @property {object} user - Many-to-one relationship with users
  */
 export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
   user: one(users, {
     fields: [refreshTokens.user_id],
+    references: [users.id],
+  }),
+}))
+
+// Password Reset Tokens Table
+export const passwordResetTokens = pgTable('password_reset_tokens', {
+  id: varchar({ length: 12 })
+    .primaryKey()
+    .$default(() => nanoid(12)),
+  user_id: varchar('user_id', { length: 12 })
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  selector: varchar('selector', { length: 12 })
+    .notNull()
+    .unique(), // Public part for O(1) lookups
+  token_hash: varchar('token_hash', { length: 255 })
+    .notNull(), // Hash of the secret verifier part
+  expires_at: timestamp('expires_at', { mode: 'date' })
+    .notNull(),
+  used_at: timestamp('used_at', { mode: 'date' }), // Track when token was used
+  created_at: timestamp({ mode: 'date' })
+    .notNull()
+    .defaultNow(),
+}, table => ({
+  selectorIdx: uniqueIndex('password_reset_tokens_selector_idx').on(table.selector),
+  expiresAtIdx: index('password_reset_tokens_expires_at_idx').on(table.expires_at),
+  userIdIdx: index('password_reset_tokens_user_id_idx').on(table.user_id),
+}))
+
+export const passwordResetTokenSelectSchema = createSelectSchema(passwordResetTokens)
+export const passwordResetTokenInsertSchema = createInsertSchema(passwordResetTokens)
+  .omit({ id: true, created_at: true, used_at: true })
+
+// Relations for password reset tokens
+export const passwordResetTokensRelations = relations(passwordResetTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [passwordResetTokens.user_id],
     references: [users.id],
   }),
 }))

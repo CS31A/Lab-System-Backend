@@ -4,13 +4,13 @@
 
 import type { AppRouteHandler } from '@/lib/types/app-types'
 import type {
- CreateStudentRoute,
-  GetAllStudentsRoute,
+  CreateStudentRoute,
   GetAllStudentsNoPaginationRoute,
+  GetAllStudentsRoute,
   GetStudentRoute,
-  UpdateStudentRoute,
-  SoftDeleteStudentRoute,
   HardDeleteStudentRoute,
+  SoftDeleteStudentRoute,
+  UpdateStudentRoute,
 } from '@/routes/students/students.route'
 import * as httpStatusCodes from '@/openapi/http-status-codes'
 import { StudentService } from '@/services/StudentService'
@@ -145,7 +145,7 @@ export const GetStudentHandler: AppRouteHandler<GetStudentRoute> = async (c) => 
       },
       httpStatusCodes.OK,
     )
- }
+  }
   catch (err) {
     c.var.logger.error('Failed to retrieve student', {
       error: (err as Error).message,

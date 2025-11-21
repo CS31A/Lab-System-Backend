@@ -12,7 +12,7 @@ import * as schema from './schema'
  * Creates a database connection using the HTTP driver for Neon database.
  * @param {Context} c - The Hono context containing environment variables
  * @returns {ReturnType<drizzleHttp>} The configured Drizzle ORM instance
-* @throws {Error} If DATABASE_URL is not provided in the context environment
+ * @throws {Error} If DATABASE_URL is not provided in the context environment
  */
 export function createDb(c: Context) {
   if (!c.env.DATABASE_URL)

@@ -5,9 +5,9 @@ import { CreateStudentHandler } from '@/handlers/students/students.handler'
 interface CreateStudentSchemaData {
   firstname: string
   lastname: string
- student_id: string
+  student_id: string
   section: string
- course: string
+  course: string
 }
 
 // Mock the StudentService
@@ -33,10 +33,10 @@ function createMockContext(validatedData: CreateStudentSchemaData): Context {
   } as unknown as Context
 }
 
-describe('CreateStudentHandler Integration Tests', () => {
+describe('createStudentHandler Integration Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks()
- })
+  })
 
   it('successfully creates student with complete schema data', async () => {
     const schemaData: CreateStudentSchemaData = {
@@ -44,7 +44,7 @@ describe('CreateStudentHandler Integration Tests', () => {
       lastname: 'Doe',
       student_id: 'S12345678',
       section: 'CS101-A',
-      course: 'Computer Science'
+      course: 'Computer Science',
     }
 
     const mockStudent = {
@@ -80,7 +80,7 @@ describe('CreateStudentHandler Integration Tests', () => {
       lastname: 'Smith',
       student_id: 'S87654321',
       section: 'CS101-B',
-      course: 'Computer Science'
+      course: 'Computer Science',
     }
 
     mockCreateStudent.mockRejectedValue(new Error('Database connection failed'))

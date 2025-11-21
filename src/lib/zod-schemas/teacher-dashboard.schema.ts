@@ -22,7 +22,7 @@ import { z } from '@hono/zod-openapi'
  */
 export const scheduleWithDetailsSchema = z.object({
   scheduleId: z.string(),
- labId: z.string(),
+  labId: z.string(),
   subjectCode: z.string(),
   subjectName: z.string(),
   section: z.string(),
@@ -49,7 +49,7 @@ export const currentLabSessionSchema = z.object({
   labSessionId: z.string(),
   scheduleId: z.string().nullable(),
   labId: z.string(),
- labName: z.string(),
+  labName: z.string(),
   status: z.string(),
   sessionStartTime: z.iso.datetime().nullable(),
   sessionEndTime: z.iso.datetime().nullable(),
