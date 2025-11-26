@@ -212,6 +212,297 @@ export const getLabAvailabilityRoute = createRoute({
   },
 })
 
+export const getScheduleStudentsRoute = createRoute({
+  tags: ['Teachers'],
+  method: 'get',
+  path: '/teachers/schedules/{scheduleId}/students',
+  request: {
+    params: z.object({
+      scheduleId: z
+        .string()
+        .trim()
+        .min(1, 'scheduleId is required')
+        .openapi({
+          param: {
+            name: 'scheduleId',
+            in: 'path',
+            required: true,
+          },
+          example: 'sched1234567',
+        }),
+    }),
+  },
+  responses: {
+    [httpStatusCodes.OK]: jsonContent(
+      z.object({
+        message: z.string(),
+        data: z.array(
+          z.object({
+            seating_plan_id: z.string(),
+            student_id: z.string(),
+            firstname: z.string(),
+            lastname: z.string(),
+            student_number: z.string(),
+            section: z.string(),
+            course: z.string(),
+            seat_number: z.string(),
+            monitor_status: z.string(),
+            mouse_status: z.string(),
+            keyboard_status: z.string(),
+            cables_status: z.string(),
+          }),
+        ),
+      }),
+      'Schedule students retrieved successfully',
+    ),
+    [httpStatusCodes.NOT_FOUND]: jsonContent(
+      z.object({
+        message: z.string(),
+      }),
+      'Schedule not found',
+    ),
+    [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({
+        message: z.string(),
+        errors: z.any(),
+      }),
+      'Internal Server Error',
+    ),
+  },
+})
+
+/**
+ * Route definition for adding students to a schedule
+ * @description Adds one or more students to a specific schedule
+ */
+export const addScheduleStudentsRoute = createRoute({
+  tags: ['Teachers'],
+  method: 'post',
+  path: '/teachers/schedules/{scheduleId}/students',
+  request: {
+    params: z.object({
+      scheduleId: z
+        .string()
+        .trim()
+        .min(1, 'scheduleId is required')
+        .openapi({
+          param: {
+            name: 'scheduleId',
+            in: 'path',
+            required: true,
+          },
+          example: 'sched1234567',
+        }),
+    }),
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            students: z.array(
+              z.object({
+                student_id: z.string().min(1, 'student_id is required'),
+                seat_number: z.string().min(1, 'seat_number is required'),
+                monitor_status: z.string().default('Good condition'),
+                mouse_status: z.string().default('Good condition'),
+                keyboard_status: z.string().default('Good condition'),
+                cables_status: z.string().default('Good condition'),
+              }),
+            ).min(1, 'At least one student is required'),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    [httpStatusCodes.CREATED]: jsonContent(
+      z.object({
+        message: z.string(),
+        data: z.object({
+          added_count: z.number(),
+          seating_plans: z.array(z.any()),
+        }),
+      }),
+      'Students added to schedule successfully',
+    ),
+    [httpStatusCodes.BAD_REQUEST]: jsonContent(
+      z.object({
+        message: z.string(),
+        errors: z.any(),
+      }),
+      'Bad Request',
+    ),
+    [httpStatusCodes.NOT_FOUND]: jsonContent(
+      z.object({
+        message: z.string(),
+      }),
+      'Schedule not found',
+    ),
+    [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({
+        message: z.string(),
+        errors: z.any(),
+      }),
+      'Internal Server Error',
+    ),
+  },
+})
+
+/**
+ * Route definition for updating a student in a schedule
+ * @description Updates a student's seating information in a specific schedule
+ */
+export const updateScheduleStudentRoute = createRoute({
+  tags: ['Teachers'],
+  method: 'put',
+  path: '/teachers/schedules/{scheduleId}/students/{studentId}',
+  request: {
+    params: z.object({
+      scheduleId: z
+        .string()
+        .trim()
+        .min(1, 'scheduleId is required')
+        .openapi({
+          param: {
+            name: 'scheduleId',
+            in: 'path',
+            required: true,
+          },
+          example: 'sched1234567',
+        }),
+      studentId: z
+        .string()
+        .trim()
+        .min(1, 'studentId is required')
+        .openapi({
+          param: {
+            name: 'studentId',
+            in: 'path',
+            required: true,
+          },
+          example: 'student12345',
+        }),
+    }),
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            seat_number: z.string().optional(),
+            monitor_status: z.string().optional(),
+            mouse_status: z.string().optional(),
+            keyboard_status: z.string().optional(),
+            cables_status: z.string().optional(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    [httpStatusCodes.OK]: jsonContent(
+      z.object({
+        message: z.string(),
+        data: z.any(),
+      }),
+      'Student updated in schedule successfully',
+    ),
+    [httpStatusCodes.NOT_FOUND]: jsonContent(
+      z.object({
+        message: z.string(),
+      }),
+      'Schedule or student not found',
+    ),
+    [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({
+        message: z.string(),
+        errors: z.any(),
+      }),
+      'Internal Server Error',
+    ),
+  },
+})
+
+/**
+ * Route definition for removing a student from a schedule
+ * @description Removes a student from a specific schedule
+ */
+export const removeScheduleStudentRoute = createRoute({
+  tags: ['Teachers'],
+  method: 'delete',
+  path: '/teachers/schedules/{scheduleId}/students/{studentId}',
+  request: {
+    params: z.object({
+      scheduleId: z
+        .string()
+        .trim()
+        .min(1, 'scheduleId is required')
+        .openapi({
+          param: {
+            name: 'scheduleId',
+            in: 'path',
+            required: true,
+          },
+          example: 'sched1234567',
+        }),
+      studentId: z
+        .string()
+        .trim()
+        .min(1, 'studentId is required')
+        .openapi({
+          param: {
+            name: 'studentId',
+            in: 'path',
+            required: true,
+          },
+          example: 'student12345',
+        }),
+    }),
+  },
+  responses: {
+    [httpStatusCodes.OK]: jsonContent(
+      z.object({
+        message: z.string(),
+      }),
+      'Student removed from schedule successfully',
+    ),
+    [httpStatusCodes.NOT_FOUND]: jsonContent(
+      z.object({
+        message: z.string(),
+      }),
+      'Schedule or student not found',
+    ),
+    [httpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({
+        message: z.string(),
+        errors: z.any(),
+      }),
+      'Internal Server Error',
+    ),
+  },
+})
+
+/**
+ * @typedef {typeof getScheduleStudentsRoute} GetScheduleStudentsRoute
+ * @description Type definition for the get schedule students route
+ */
+export type GetScheduleStudentsRoute = typeof getScheduleStudentsRoute
+
+/**
+ * @typedef {typeof addScheduleStudentsRoute} AddScheduleStudentsRoute
+ * @description Type definition for the add schedule students route
+ */
+export type AddScheduleStudentsRoute = typeof addScheduleStudentsRoute
+
+/**
+ * @typedef {typeof updateScheduleStudentRoute} UpdateScheduleStudentRoute
+ * @description Type definition for the update schedule student route
+ */
+export type UpdateScheduleStudentRoute = typeof updateScheduleStudentRoute
+
+/**
+ * @typedef {typeof removeScheduleStudentRoute} RemoveScheduleStudentRoute
+ * @description Type definition for the remove schedule student route
+ */
+export type RemoveScheduleStudentRoute = typeof removeScheduleStudentRoute
+
 /**
  * @typedef {typeof getTeachersRoute} GetTeachers
  * @description Type definition for the get teachers route
@@ -241,3 +532,8 @@ export type GetLabSchedule = typeof getLabScheduleRoute
  * @description Type definition for the get lab availability route
  */
 export type GetLabAvailability = typeof getLabAvailabilityRoute
+
+/**
+ * Route definition for getting students in a schedule
+ * @description Retrieves all students enrolled in a specific schedule
+ */
