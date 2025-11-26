@@ -331,3 +331,520 @@ describe('teacherService.getLaboratoriesWithCurrentStatus', () => {
     expect(result[2].vacancy_status).toBe('maintenance')
   })
 })
+
+describe('teacherService.getScheduleStudents', () => {
+  it('should successfully retrieve students for a schedule', async () => {
+    const mockContext = createFakeContext()
+    const scheduleId = 'sched123'
+    const mockStudents = [
+      {
+        seating_plan_id: 'seat001',
+        student_id: 'student001',
+        firstname: 'John',
+        lastname: 'Doe',
+        student_number: 'S2024001',
+        section: 'CS-3A',
+        course: 'Computer Science',
+        seat_number: 'A1',
+        monitor_status: 'Good condition',
+        mouse_status: 'Good condition',
+        keyboard_status: 'Good condition',
+        cables_status: 'Good condition',
+      },
+    ]
+
+    const mockDb = {
+      select: vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn().mockResolvedValue([{ id: scheduleId }]),
+          })),
+          innerJoin: vi.fn(() => ({
+            where: vi.fn(() => ({
+              orderBy: vi.fn().mockResolvedValue(mockStudents),
+            })),
+          })),
+        })),
+      })),
+    }
+
+    const teacherService = new TeacherService(mockContext)
+    ;(teacherService as any).db = mockDb
+
+    const result = await teacherService.getScheduleStudents(scheduleId)
+
+    expect(result).toEqual(mockStudents)
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      'Schedule students retrieved successfully',
+      {
+        scheduleId,
+        studentsCount: 1,
+        timestamp: expect.any(String),
+      },
+    )
+  })
+
+  it('should return empty array when no students enrolled', async () => {
+    const mockContext = createFakeContext()
+    const scheduleId = 'sched123'
+
+    const mockDb = {
+      select: vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn().mockResolvedValue([{ id: scheduleId }]),
+          })),
+          innerJoin: vi.fn(() => ({
+            where: vi.fn(() => ({
+              orderBy: vi.fn().mockResolvedValue([]),
+            })),
+          })),
+        })),
+      })),
+    }
+
+    const teacherService = new TeacherService(mockContext)
+    ;(teacherService as any).db = mockDb
+
+    const result = await teacherService.getScheduleStudents(scheduleId)
+
+    expect(result).toEqual([])
+  })
+
+  it('should throw error when schedule not found', async () => {
+    const mockContext = createFakeContext()
+    const scheduleId = 'nonexistent'
+
+    const mockDb = {
+      select: vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn().mockResolvedValue([]),
+          })),
+        })),
+      })),
+    }
+
+    const teacherService = new TeacherService(mockContext)
+    ;(teacherService as any).db = mockDb
+
+    await expect(teacherService.getScheduleStudents(scheduleId)).rejects.toThrow('Schedule not found')
+    expect(mockLogger.error).toHaveBeenCalled()
+  })
+})
+
+describe('teacherService.addStudentsToSchedule', () => {
+  it('should successfully add students to schedule', async () => {
+    const mockContext = createFakeContext()
+    const scheduleId = 'sched123'
+    const laboratoryId = 'lab001'
+    const requestData = {
+      students: [
+        {
+          student_id: 'student001',
+          seat_number: 'A1',
+          monitor_status: 'Good condition',
+          mouse_status: 'Good condition',
+          keyboard_status: 'Good condition',
+          cables_status: 'Good condition',
+        },
+      ],
+    }
+
+    const mockSeatingPlans = [
+      {
+        id: 'seat001',
+        laboratory_id: laboratoryId,
+        schedule_id: scheduleId,
+        student_id: 'student001',
+        seat_number: 'A1',
+        monitor_status: 'Good condition',
+        mouse_status: 'Good condition',
+        keyboard_status: 'Good condition',
+        cables_status: 'Good condition',
+      },
+    ]
+
+    let callCount = 0
+    const mockDb = {
+      select: vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => {
+            callCount++
+            // First call: schedule validation
+            if (callCount === 1) {
+              return { limit: vi.fn().mockResolvedValue([{ id: scheduleId, laboratory_id: laboratoryId }]) }
+            }
+            // Second call: student validation
+            if (callCount === 2) {
+              return Promise.resolve([{ id: 'student001' }])
+            }
+            // Third call: enrollment check
+            return Promise.resolve([])
+          }),
+        })),
+      })),
+      insert: vi.fn(() => ({
+        values: vi.fn(() => ({
+          returning: vi.fn().mockResolvedValue(mockSeatingPlans),
+        })),
+      })),
+    }
+
+    const teacherService = new TeacherService(mockContext)
+    ;(teacherService as any).db = mockDb
+
+    const result = await teacherService.addStudentsToSchedule(scheduleId, requestData)
+
+    expect(result.added_count).toBe(1)
+    expect(result.seating_plans).toEqual(mockSeatingPlans)
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      'Students added to schedule successfully',
+      {
+        scheduleId,
+        addedCount: 1,
+        timestamp: expect.any(String),
+      },
+    )
+  })
+
+  it('should throw error when schedule not found', async () => {
+    const mockContext = createFakeContext()
+    const scheduleId = 'nonexistent'
+    const requestData = {
+      students: [{ student_id: 'student001', seat_number: 'A1' }],
+    }
+
+    const mockDb = {
+      select: vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn().mockResolvedValue([]),
+          })),
+        })),
+      })),
+    }
+
+    const teacherService = new TeacherService(mockContext)
+    ;(teacherService as any).db = mockDb
+
+    await expect(teacherService.addStudentsToSchedule(scheduleId, requestData)).rejects.toThrow(
+      'Schedule not found',
+    )
+  })
+
+  it('should throw error when student not found', async () => {
+    const mockContext = createFakeContext()
+    const scheduleId = 'sched123'
+    const requestData = {
+      students: [{ student_id: 'nonexistent', seat_number: 'A1' }],
+    }
+
+    let callCount = 0
+    const mockDb = {
+      select: vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => {
+            callCount++
+            // First call: schedule validation
+            if (callCount === 1) {
+              return { limit: vi.fn().mockResolvedValue([{ id: scheduleId, laboratory_id: 'lab001' }]) }
+            }
+            // Second call: student validation - return empty (student not found)
+            return Promise.resolve([])
+          }),
+        })),
+      })),
+    }
+
+    const teacherService = new TeacherService(mockContext)
+    ;(teacherService as any).db = mockDb
+
+    await expect(teacherService.addStudentsToSchedule(scheduleId, requestData)).rejects.toThrow(
+      'Students not found',
+    )
+  })
+
+  it('should apply default equipment status when not provided', async () => {
+    const mockContext = createFakeContext()
+    const scheduleId = 'sched123'
+    const requestData = {
+      students: [
+        {
+          student_id: 'student001',
+          seat_number: 'A1',
+          // Equipment status not provided
+        },
+      ],
+    }
+
+    let insertedValues: any[] = []
+    let callCount = 0
+    const mockDb = {
+      select: vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => {
+            callCount++
+            // First call: schedule validation
+            if (callCount === 1) {
+              return { limit: vi.fn().mockResolvedValue([{ id: scheduleId, laboratory_id: 'lab001' }]) }
+            }
+            // Second call: student validation
+            if (callCount === 2) {
+              return Promise.resolve([{ id: 'student001' }])
+            }
+            // Third call: enrollment check
+            return Promise.resolve([])
+          }),
+        })),
+      })),
+      insert: vi.fn(() => ({
+        values: vi.fn((values: any) => {
+          insertedValues = values
+          return {
+            returning: vi.fn().mockResolvedValue([
+              {
+                id: 'seat001',
+                ...values[0],
+              },
+            ]),
+          }
+        }),
+      })),
+    }
+
+    const teacherService = new TeacherService(mockContext)
+    ;(teacherService as any).db = mockDb
+
+    await teacherService.addStudentsToSchedule(scheduleId, requestData)
+
+    expect(insertedValues[0].monitor_status).toBe('Good condition')
+    expect(insertedValues[0].mouse_status).toBe('Good condition')
+    expect(insertedValues[0].keyboard_status).toBe('Good condition')
+    expect(insertedValues[0].cables_status).toBe('Good condition')
+  })
+})
+
+describe('teacherService.updateStudentInSchedule', () => {
+  it('should successfully update student seating information', async () => {
+    const mockContext = createFakeContext()
+    const scheduleId = 'sched123'
+    const studentId = 'student001'
+    const updateData = {
+      seat_number: 'B2',
+      monitor_status: 'Defective',
+    }
+
+    const mockSeatingPlan = {
+      id: 'seat001',
+      laboratory_id: 'lab001',
+      schedule_id: scheduleId,
+      student_id: studentId,
+      seat_number: 'A1',
+      monitor_status: 'Good condition',
+      mouse_status: 'Good condition',
+      keyboard_status: 'Good condition',
+      cables_status: 'Good condition',
+    }
+
+    const mockUpdatedPlan = {
+      ...mockSeatingPlan,
+      seat_number: 'B2',
+      monitor_status: 'Defective',
+    }
+
+    let callCount = 0
+    const mockDb = {
+      select: vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => {
+            callCount++
+            // First call: schedule validation
+            if (callCount === 1) {
+              return { limit: vi.fn().mockResolvedValue([{ id: scheduleId }]) }
+            }
+            // Second call: seating plan lookup
+            return { limit: vi.fn().mockResolvedValue([mockSeatingPlan]) }
+          }),
+        })),
+      })),
+      update: vi.fn(() => ({
+        set: vi.fn(() => ({
+          where: vi.fn(() => ({
+            returning: vi.fn().mockResolvedValue([mockUpdatedPlan]),
+          })),
+        })),
+      })),
+    }
+
+    const teacherService = new TeacherService(mockContext)
+    ;(teacherService as any).db = mockDb
+
+    const result = await teacherService.updateStudentInSchedule(scheduleId, studentId, updateData)
+
+    expect(result).toEqual(mockUpdatedPlan)
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      'Student updated in schedule successfully',
+      {
+        scheduleId,
+        studentId,
+        timestamp: expect.any(String),
+      },
+    )
+  })
+
+  it('should throw error when schedule not found', async () => {
+    const mockContext = createFakeContext()
+    const scheduleId = 'nonexistent'
+    const studentId = 'student001'
+    const updateData = { seat_number: 'B2' }
+
+    const mockDb = {
+      select: vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn().mockResolvedValue([]),
+          })),
+        })),
+      })),
+    }
+
+    const teacherService = new TeacherService(mockContext)
+    ;(teacherService as any).db = mockDb
+
+    await expect(
+      teacherService.updateStudentInSchedule(scheduleId, studentId, updateData),
+    ).rejects.toThrow('Schedule not found')
+  })
+
+  it('should throw error when student not found in schedule', async () => {
+    const mockContext = createFakeContext()
+    const scheduleId = 'sched123'
+    const studentId = 'nonexistent'
+    const updateData = { seat_number: 'B2' }
+
+    let callCount = 0
+    const mockDb = {
+      select: vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => {
+            callCount++
+            // First call: schedule validation
+            if (callCount === 1) {
+              return { limit: vi.fn().mockResolvedValue([{ id: scheduleId }]) }
+            }
+            // Second call: seating plan lookup - not found
+            return { limit: vi.fn().mockResolvedValue([]) }
+          }),
+        })),
+      })),
+    }
+
+    const teacherService = new TeacherService(mockContext)
+    ;(teacherService as any).db = mockDb
+
+    await expect(
+      teacherService.updateStudentInSchedule(scheduleId, studentId, updateData),
+    ).rejects.toThrow('Student not found in this schedule')
+  })
+})
+
+describe('teacherService.removeStudentFromSchedule', () => {
+  it('should successfully remove student from schedule', async () => {
+    const mockContext = createFakeContext()
+    const scheduleId = 'sched123'
+    const studentId = 'student001'
+
+    const mockDeletedEntry = {
+      id: 'seat001',
+      laboratory_id: 'lab001',
+      schedule_id: scheduleId,
+      student_id: studentId,
+      seat_number: 'A1',
+      monitor_status: 'Good condition',
+      mouse_status: 'Good condition',
+      keyboard_status: 'Good condition',
+      cables_status: 'Good condition',
+    }
+
+    const mockDb = {
+      select: vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn().mockResolvedValue([{ id: scheduleId }]),
+          })),
+        })),
+      })),
+      delete: vi.fn(() => ({
+        where: vi.fn(() => ({
+          returning: vi.fn().mockResolvedValue([mockDeletedEntry]),
+        })),
+      })),
+    }
+
+    const teacherService = new TeacherService(mockContext)
+    ;(teacherService as any).db = mockDb
+
+    await teacherService.removeStudentFromSchedule(scheduleId, studentId)
+
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      'Student removed from schedule successfully',
+      {
+        scheduleId,
+        studentId,
+        timestamp: expect.any(String),
+      },
+    )
+  })
+
+  it('should throw error when schedule not found', async () => {
+    const mockContext = createFakeContext()
+    const scheduleId = 'nonexistent'
+    const studentId = 'student001'
+
+    const mockDb = {
+      select: vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn().mockResolvedValue([]),
+          })),
+        })),
+      })),
+    }
+
+    const teacherService = new TeacherService(mockContext)
+    ;(teacherService as any).db = mockDb
+
+    await expect(teacherService.removeStudentFromSchedule(scheduleId, studentId)).rejects.toThrow(
+      'Schedule not found',
+    )
+  })
+
+  it('should throw error when student not found in schedule', async () => {
+    const mockContext = createFakeContext()
+    const scheduleId = 'sched123'
+    const studentId = 'nonexistent'
+
+    const mockDb = {
+      select: vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn().mockResolvedValue([{ id: scheduleId }]),
+          })),
+        })),
+      })),
+      delete: vi.fn(() => ({
+        where: vi.fn(() => ({
+          returning: vi.fn().mockResolvedValue([]),
+        })),
+      })),
+    }
+
+    const teacherService = new TeacherService(mockContext)
+    ;(teacherService as any).db = mockDb
+
+    await expect(teacherService.removeStudentFromSchedule(scheduleId, studentId)).rejects.toThrow(
+      'Student not found in this schedule',
+    )
+  })
+})

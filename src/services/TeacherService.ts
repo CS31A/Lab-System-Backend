@@ -4,9 +4,9 @@
  */
 
 import type { Context } from 'hono'
-import { and, count, eq, gte, isNull, lte } from 'drizzle-orm'
+import { and, count, eq, gte, inArray, isNull, lte } from 'drizzle-orm'
 import { createDb } from '@/db'
-import { lab_activity_log, laboratory, schedule, subjects, teachers } from '@/db/schema'
+import { lab_activity_log, laboratory, schedule, seating_plan, students, subjects, teachers } from '@/db/schema'
 
 export interface ListTeachersParams {
   page: number
@@ -540,6 +540,301 @@ export class TeacherService {
       this.logger.error('Failed to check laboratory availability', {
         error: (error as Error).message,
         laboratoryId: labId,
+        timestamp: new Date().toISOString(),
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Retrieves all students enrolled in a specific schedule
+   * @param {string} scheduleId - The schedule ID
+   * @returns {Promise<any[]>} The list of students with their seating information
+   * @throws {Error} If the retrieval fails or schedule not found
+   */
+  async getScheduleStudents(scheduleId: string) {
+    try {
+      // Verify schedule exists
+      const [scheduleExists] = await this.db
+        .select({ id: schedule.id })
+        .from(schedule)
+        .where(eq(schedule.id, scheduleId))
+        .limit(1)
+
+      if (!scheduleExists) {
+        throw new Error('Schedule not found')
+      }
+
+      // Get all students in the schedule via seating_plan
+      const scheduleStudents = await this.db
+        .select({
+          seating_plan_id: seating_plan.id,
+          student_id: students.id,
+          firstname: students.firstname,
+          lastname: students.lastname,
+          student_number: students.student_id,
+          section: students.section,
+          course: students.course,
+          seat_number: seating_plan.seat_number,
+          monitor_status: seating_plan.monitor_status,
+          mouse_status: seating_plan.mouse_status,
+          keyboard_status: seating_plan.keyboard_status,
+          cables_status: seating_plan.cables_status,
+        })
+        .from(seating_plan)
+        .innerJoin(students, eq(seating_plan.student_id, students.id))
+        .where(eq(seating_plan.schedule_id, scheduleId))
+        .orderBy(seating_plan.seat_number)
+
+      this.logger.info('Schedule students retrieved successfully', {
+        scheduleId,
+        studentsCount: scheduleStudents.length,
+        timestamp: new Date().toISOString(),
+      })
+
+      return scheduleStudents
+    }
+    catch (error) {
+      this.logger.error('Failed to retrieve schedule students', {
+        error: (error as Error).message,
+        scheduleId,
+        timestamp: new Date().toISOString(),
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Adds students to a specific schedule
+   * @param {string} scheduleId - The schedule ID
+   * @param {object} data - The students data to add
+   * @param {Array<{student_id: string, seat_number: string, monitor_status?: string, mouse_status?: string, keyboard_status?: string, cables_status?: string}>} data.students - Array of student information to add
+   * @returns {Promise<any>} The result of the operation
+   * @throws {Error} If the operation fails or schedule not found
+   */
+  async addStudentsToSchedule(scheduleId: string, data: { students: Array<{
+    student_id: string
+    seat_number: string
+    monitor_status?: string
+    mouse_status?: string
+    keyboard_status?: string
+    cables_status?: string
+  }> }) {
+    try {
+      // Verify schedule exists and get laboratory_id
+      const [scheduleData] = await this.db
+        .select({
+          id: schedule.id,
+          laboratory_id: schedule.laboratory_id,
+        })
+        .from(schedule)
+        .where(eq(schedule.id, scheduleId))
+        .limit(1)
+
+      if (!scheduleData) {
+        throw new Error('Schedule not found')
+      }
+
+      // Verify all students exist
+      const studentIds = data.students.map(s => s.student_id)
+      const existingStudents = await this.db
+        .select({ id: students.id })
+        .from(students)
+        .where(inArray(students.id, studentIds))
+
+      if (existingStudents.length !== studentIds.length) {
+        // Check which students don't exist
+        const foundIds = existingStudents.map(s => s.id)
+        const missingIds = studentIds.filter(id => !foundIds.includes(id))
+        throw new Error(`Students not found: ${missingIds.join(', ')}`)
+      }
+
+      // Check if any students are already enrolled in this schedule
+      const existingEnrollments = await this.db
+        .select({ student_id: seating_plan.student_id })
+        .from(seating_plan)
+        .where(
+          and(
+            eq(seating_plan.schedule_id, scheduleId),
+            inArray(seating_plan.student_id, studentIds),
+          ),
+        )
+
+      const enrolledIds = existingEnrollments.map(e => e.student_id)
+      const duplicates = studentIds.filter(id => enrolledIds.includes(id))
+      if (duplicates.length > 0) {
+        throw new Error(`Students already enrolled in this schedule: ${duplicates.join(', ')}`)
+      }
+
+      // Create seating plan entries for each student
+      const seatingPlans = await this.db
+        .insert(seating_plan)
+        .values(
+          data.students.map(student => ({
+            laboratory_id: scheduleData.laboratory_id,
+            schedule_id: scheduleId,
+            student_id: student.student_id,
+            seat_number: student.seat_number,
+            monitor_status: student.monitor_status || 'Good condition',
+            mouse_status: student.mouse_status || 'Good condition',
+            keyboard_status: student.keyboard_status || 'Good condition',
+            cables_status: student.cables_status || 'Good condition',
+          })),
+        )
+        .returning()
+
+      this.logger.info('Students added to schedule successfully', {
+        scheduleId,
+        addedCount: seatingPlans.length,
+        timestamp: new Date().toISOString(),
+      })
+
+      return {
+        added_count: seatingPlans.length,
+        seating_plans: seatingPlans,
+      }
+    }
+    catch (error) {
+      this.logger.error('Failed to add students to schedule', {
+        error: (error as Error).message,
+        scheduleId,
+        timestamp: new Date().toISOString(),
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Updates a student's seating information in a specific schedule
+   * @param {string} scheduleId - The schedule ID
+   * @param {string} studentId - The student ID
+   * @param {object} data - The data to update
+   * @param {string} data.seat_number - The seat number to assign
+   * @param {string} data.monitor_status - The monitor condition status
+   * @param {string} data.mouse_status - The mouse condition status
+   * @param {string} data.keyboard_status - The keyboard condition status
+   * @param {string} data.cables_status - The cables condition status
+   * @returns {Promise<any>} The updated seating plan
+   * @throws {Error} If the operation fails or not found
+   */
+  async updateStudentInSchedule(
+    scheduleId: string,
+    studentId: string,
+    data: {
+      seat_number?: string
+      monitor_status?: string
+      mouse_status?: string
+      keyboard_status?: string
+      cables_status?: string
+    },
+  ) {
+    try {
+      // Verify schedule exists
+      const [scheduleExists] = await this.db
+        .select({ id: schedule.id })
+        .from(schedule)
+        .where(eq(schedule.id, scheduleId))
+        .limit(1)
+
+      if (!scheduleExists) {
+        throw new Error('Schedule not found')
+      }
+
+      // Find the seating plan entry
+      const [seatingPlanEntry] = await this.db
+        .select()
+        .from(seating_plan)
+        .where(
+          and(
+            eq(seating_plan.schedule_id, scheduleId),
+            eq(seating_plan.student_id, studentId),
+          ),
+        )
+        .limit(1)
+
+      if (!seatingPlanEntry) {
+        throw new Error('Student not found in this schedule')
+      }
+
+      // Update the seating plan
+      const [updatedSeatingPlan] = await this.db
+        .update(seating_plan)
+        .set({
+          ...(data.seat_number && { seat_number: data.seat_number }),
+          ...(data.monitor_status && { monitor_status: data.monitor_status }),
+          ...(data.mouse_status && { mouse_status: data.mouse_status }),
+          ...(data.keyboard_status && { keyboard_status: data.keyboard_status }),
+          ...(data.cables_status && { cables_status: data.cables_status }),
+          updated_at: new Date(),
+        })
+        .where(eq(seating_plan.id, seatingPlanEntry.id))
+        .returning()
+
+      this.logger.info('Student updated in schedule successfully', {
+        scheduleId,
+        studentId,
+        timestamp: new Date().toISOString(),
+      })
+
+      return updatedSeatingPlan
+    }
+    catch (error) {
+      this.logger.error('Failed to update student in schedule', {
+        error: (error as Error).message,
+        scheduleId,
+        studentId,
+        timestamp: new Date().toISOString(),
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Removes a student from a specific schedule
+   * @param {string} scheduleId - The schedule ID
+   * @param {string} studentId - The student ID
+   * @returns {Promise<void>}
+   * @throws {Error} If the operation fails or not found
+   */
+  async removeStudentFromSchedule(scheduleId: string, studentId: string) {
+    try {
+      // Verify schedule exists
+      const [scheduleExists] = await this.db
+        .select({ id: schedule.id })
+        .from(schedule)
+        .where(eq(schedule.id, scheduleId))
+        .limit(1)
+
+      if (!scheduleExists) {
+        throw new Error('Schedule not found')
+      }
+
+      // Find and delete the seating plan entry
+      const [deletedEntry] = await this.db
+        .delete(seating_plan)
+        .where(
+          and(
+            eq(seating_plan.schedule_id, scheduleId),
+            eq(seating_plan.student_id, studentId),
+          ),
+        )
+        .returning()
+
+      if (!deletedEntry) {
+        throw new Error('Student not found in this schedule')
+      }
+
+      this.logger.info('Student removed from schedule successfully', {
+        scheduleId,
+        studentId,
+        timestamp: new Date().toISOString(),
+      })
+    }
+    catch (error) {
+      this.logger.error('Failed to remove student from schedule', {
+        error: (error as Error).message,
+        scheduleId,
+        studentId,
         timestamp: new Date().toISOString(),
       })
       throw error
